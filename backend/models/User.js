@@ -1,67 +1,51 @@
-import { supabase } from '../config/supabase.js';
-
-export class User {
-  static async create(userData) {
-    const { data, error } = await supabase
-      .from('users')
-      .insert([userData])
-      .select();
-    
-    if (error) throw error;
-    return data[0];
+// User model for future database integration
+class User {
+  constructor({
+    student_id,
+    username,
+    email,
+    is_admin = false,
+    profile = '',
+    contribution = 0,
+    created_at = new Date(),
+    updated_at = new Date()
+  }) {
+    this.student_id = student_id;
+    this.username = username;
+    this.email = email;
+    this.is_admin = is_admin;
+    this.profile = profile;
+    this.contribution = contribution;
+    this.created_at = created_at;
+    this.updated_at = updated_at;
   }
 
-  static async findById(id) {
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('student_id', id)
-      .single();
-    
-    if (error) throw error;
-    return data;
-  }
-
-  static async findByUsername(username) {
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('username', username)
-      .single();
-    
-    if (error) throw error;
-    return data;
+  // Static methods for future database operations
+  static async findById(student_id) {
+    // This will be implemented when connecting to the database
+    throw new Error('Database not implemented yet');
   }
 
   static async findByEmail(email) {
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('email', email)
-      .single();
-    
-    if (error) throw error;
-    return data;
+    // This will be implemented when connecting to the database
+    throw new Error('Database not implemented yet');
   }
 
-  static async update(id, updates) {
-    const { data, error } = await supabase
-      .from('users')
-      .update(updates)
-      .eq('student_id', id)
-      .select();
-    
-    if (error) throw error;
-    return data[0];
+  static async create(userData) {
+    // This will be implemented when connecting to the database
+    throw new Error('Database not implemented yet');
   }
 
-  static async delete(id) {
-    const { error } = await supabase
-      .from('users')
-      .delete()
-      .eq('student_id', id);
-    
-    if (error) throw error;
-    return true;
+  // Instance methods
+  toJSON() {
+    const { password, ...userWithoutPassword } = this;
+    return userWithoutPassword;
+  }
+
+  updateContribution(points) {
+    this.contribution += points;
+    this.updated_at = new Date();
   }
 }
+
+export default User;

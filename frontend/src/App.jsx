@@ -1,31 +1,83 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
+import { AuthProvider } from './contexts/AuthContext';
 import Header from './components/common/Header';
+import ProtectedRoute from './components/common/ProtectedRoute';
 import Home from './pages/Home';
-//import Login from './pages/Login';
-//import Register from './pages/Register';
-//import Questions from './pages/Questions';
+import Login from './pages/Login';
+import UserDashboard from './pages/UserDashboard';
+import AdminDashboard from './pages/AdminDashboard';
 import './App.css';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
+});
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
-        <div className="min-h-screen bg-gray-50">
-          <Header />
-          <main>
+        <AuthProvider>
+          <div className="min-h-screen bg-gray-50">
             <Routes>
-              <Route path="/" element={<Home />} />
-              {/* <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/questions" element={<Questions />} /> */}
+              {/* Public routes */}
+              <Route path="/" element={<><Header /><Home /></>} />
+              <Route path="/login" element={<Login />} />
+              
+              {/* Protected routes */}
+              <Route 
+                path="/user/dashboard" 
+                element={
+                  <ProtectedRoute>
+                    <UserDashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/dashboard" 
+                element={
+                  <ProtectedRoute adminOnly>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              {/* Catch all route */}
+              <Route path="*" element={<><Header /><div className="container mx-auto px-4 py-8"><h1 className="text-2xl font-bold text-gray-900">Page Not Found</h1><p className="text-gray-600 mt-2">The page you're looking for doesn't exist.</p></div></>} />
             </Routes>
-          </main>
-          <Toaster position="top-right" />
-        </div>
+            <Toaster 
+              position="top-right"
+              toastOptions={{
+                duration: 4000,
+                style: {
+                  background: '#363636',
+                  color: '#fff',
+                },
+                success: {
+                  duration: 3000,
+                  iconTheme: {
+                    primary: '#4ade80',
+                    secondary: '#fff',
+                  },
+                },
+                error: {
+                  duration: 4000,
+                  iconTheme: {
+                    primary: '#ef4444',
+                    secondary: '#fff',
+                  },
+                },
+              }}
+            />
+          </div>
+        </AuthProvider>
       </Router>
     </QueryClientProvider>
   );
