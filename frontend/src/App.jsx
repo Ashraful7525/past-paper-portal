@@ -4,7 +4,7 @@ import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './contexts/AuthContext';
 import Header from './components/common/Header';
 import ProtectedRoute from './components/common/ProtectedRoute';
-import Home from './pages/Home';
+import HomePage from './pages/HomePage'; // Updated import
 import Login from './pages/Login';
 import UserDashboard from './pages/UserDashboard';
 import AdminDashboard from './pages/AdminDashboard';
@@ -28,8 +28,16 @@ function App() {
           <div className="min-h-screen bg-gray-50">
             <Routes>
               {/* Public routes */}
-              <Route path="/" element={<><Header /><Home /></>} />
+              <Route path="/" element={<HomePage />} />
               <Route path="/login" element={<Login />} />
+              
+              {/* Feed routes */}
+              <Route path="/hot" element={<HomePage />} />
+              <Route path="/new" element={<HomePage />} />
+              <Route path="/top" element={<HomePage />} />
+              
+              {/* Department-specific routes */}
+              <Route path="/r/:department" element={<HomePage />} />
               
               {/* Protected routes */}
               <Route 
@@ -49,8 +57,43 @@ function App() {
                 } 
               />
               
+              {/* User-specific routes */}
+              <Route 
+                path="/saved" 
+                element={
+                  <ProtectedRoute>
+                    <HomePage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/profile" 
+                element={
+                  <ProtectedRoute>
+                    <UserDashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              
               {/* Catch all route */}
-              <Route path="*" element={<><Header /><div className="container mx-auto px-4 py-8"><h1 className="text-2xl font-bold text-gray-900">Page Not Found</h1><p className="text-gray-600 mt-2">The page you're looking for doesn't exist.</p></div></>} />
+              <Route 
+                path="*" 
+                element={
+                  <>
+                    <Header />
+                    <div className="container mx-auto px-4 py-8">
+                      <h1 className="text-2xl font-bold text-gray-900">Page Not Found</h1>
+                      <p className="text-gray-600 mt-2">The page you're looking for doesn't exist.</p>
+                      <button 
+                        onClick={() => window.history.back()}
+                        className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+                      >
+                        Go Back
+                      </button>
+                    </div>
+                  </>
+                } 
+              />
             </Routes>
             <Toaster 
               position="top-right"

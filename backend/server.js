@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
 import authRoutes from './routes/auth.js';
+import postsRoutes from './routes/posts.js';
 
 dotenv.config();
 
@@ -23,11 +24,9 @@ app.use(express.urlencoded({ extended: true }));
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  message: {
-    error: 'Too many requests from this IP, please try again later.'
-  }
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { error: 'Too many requests from this IP, please try again later.' }
 });
 app.use('/api/', limiter);
 
@@ -42,65 +41,49 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Main API entry
+// Root API info
 app.get('/', (req, res) => {
   res.json({ 
     message: 'Past Paper Portal API is running!',
     version: '1.0.0',
     endpoints: {
       auth: '/api/auth',
+      posts: '/api/posts',
       health: '/health'
     }
   });
 });
 
-// Auth routes
+// Mount routers under /api prefix
 app.use('/api/auth', authRoutes);
+app.use('/api/posts', postsRoutes);  // <-- changed here
 
-// Future routes can be added here:
-// import userRoutes from './routes/users.js';
-// app.use('/api/users', userRoutes);
+console.log(typeof postsRoutes); // should be 'function' or 'router'
+console.log(postsRoutes.name);   // typically 'router'
 
 // --- ERROR HANDLING ---
 // Global error handler
 app.use((err, req, res, next) => {
   console.error('Global error handler:', err.stack);
   
-  // JWT errors
   if (err.name === 'JsonWebTokenError') {
-    return res.status(401).json({ 
-      error: 'Invalid token' 
-    });
+    return res.status(401).json({ error: 'Invalid token' });
   }
-  
   if (err.name === 'TokenExpiredError') {
-    return res.status(401).json({ 
-      error: 'Token expired' 
-    });
+    return res.status(401).json({ error: 'Token expired' });
   }
-  
-  // Validation errors
   if (err.name === 'ValidationError') {
-    return res.status(400).json({ 
-      error: 'Validation error',
-      details: err.message 
-    });
+    return res.status(400).json({ error: 'Validation error', details: err.message });
   }
   
-  // Default error
   res.status(err.status || 500).json({ 
-    error: process.env.NODE_ENV === 'production' 
-      ? 'Something went wrong!' 
-      : err.message 
+    error: process.env.NODE_ENV === 'production' ? 'Something went wrong!' : err.message 
   });
 });
 
-// 404 handler
+// 404 handler for unmatched routes
 app.use('*', (req, res) => {
-  res.status(404).json({ 
-    error: 'Route not found',
-    path: req.originalUrl 
-  });
+  res.status(404).json({ error: 'Route not found', path: req.originalUrl });
 });
 
 // Graceful shutdown
@@ -108,7 +91,6 @@ process.on('SIGTERM', () => {
   console.log('SIGTERM received. Shutting down gracefully...');
   process.exit(0);
 });
-
 process.on('SIGINT', () => {
   console.log('SIGINT received. Shutting down gracefully...');
   process.exit(0);
@@ -119,4 +101,5 @@ app.listen(PORT, () => {
   console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🔗 API URL: http://localhost:${PORT}`);
   console.log(`🔐 Auth endpoints: http://localhost:${PORT}/api/auth`);
+  console.log(`📝 Posts endpoints: http://localhost:${PORT}/api/posts`);
 });
