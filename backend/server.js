@@ -56,7 +56,7 @@ app.get('/', (req, res) => {
 
 // Mount routers under /api prefix
 app.use('/api/auth', authRoutes);
-app.use('/api/posts', postsRoutes);  // <-- changed here
+app.use('/api/posts', postsRoutes);
 
 console.log(typeof postsRoutes); // should be 'function' or 'router'
 console.log(postsRoutes.name);   // typically 'router'
