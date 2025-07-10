@@ -1,15 +1,17 @@
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { 
-  BookOpenIcon, 
-  BookmarkIcon, 
+import { Link } from 'react-router-dom';
+import {
+  BookOpenIcon,
+  BookmarkIcon,
   ChatBubbleLeftEllipsisIcon,
   ChartBarIcon,
+  AcademicCapIcon,
   UserCircleIcon,
   Cog6ToothIcon,
-  AcademicCapIcon,
-  ClockIcon
+  ClockIcon,
 } from '@heroicons/react/24/outline';
+
 
 const UserDashboard = () => {
   const { user, logout, isLoggingOut } = useAuth();
@@ -129,10 +131,10 @@ const UserDashboard = () => {
                     <BookmarkIcon className="h-5 w-5 mr-3" />
                     My Bookmarks
                   </button>
-                  <button className="w-full flex items-center px-4 py-2 text-sm text-gray-700 bg-gray-50 rounded-md hover:bg-gray-100 transition-colors">
+                  <Link to="/profile" className="w-full flex items-center px-4 py-2 text-sm text-gray-700 bg-gray-50 rounded-md hover:bg-gray-100 transition-colors">
                     <UserCircleIcon className="h-5 w-5 mr-3" />
                     Profile Settings
-                  </button>
+                  </Link>
                   <button className="w-full flex items-center px-4 py-2 text-sm text-gray-700 bg-gray-50 rounded-md hover:bg-gray-100 transition-colors">
                     <Cog6ToothIcon className="h-5 w-5 mr-3" />
                     Preferences

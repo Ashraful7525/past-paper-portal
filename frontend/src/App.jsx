@@ -9,6 +9,7 @@ import Login from './pages/Login';
 import Register from './pages/Register'; // Add this import
 import UserDashboard from './pages/UserDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import Profile from './pages/Profile';
 import './App.css';
 
 const queryClient = new QueryClient({
@@ -29,7 +30,8 @@ function App() {
           <div className="min-h-screen bg-gray-50">
             <Routes>
               {/* Public routes */}
-              <Route path="/" element={<><Header /><HomePage /></>} />
+              <Route path="/" element={<Login />} />
+              <Route path="/home" element={<><Header /><HomePage /></>} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               
@@ -64,7 +66,7 @@ function App() {
                 path="/profile" 
                 element={
                   <ProtectedRoute>
-                    <><Header /><div>Profile Page</div></>
+                    <><Header /><Profile /></>
                   </ProtectedRoute>
                 } 
               />

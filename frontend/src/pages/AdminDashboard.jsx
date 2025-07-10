@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { Link } from 'react-router-dom';
 import { 
   UsersIcon, 
   DocumentTextIcon, 
@@ -77,6 +78,9 @@ const AdminDashboard = () => {
               <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
             </div>
             <div className="flex items-center space-x-4">
+              <Link to="/profile" className="text-sm font-medium text-gray-700 hover:text-blue-600">
+                Profile
+              </Link>
               <div className="text-right">
                 <span className="text-sm text-gray-600">Administrator,</span>
                 <p className="text-sm font-medium text-gray-900">{user?.username}</p>
