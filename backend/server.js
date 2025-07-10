@@ -6,16 +6,20 @@ import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
 import authRoutes from './routes/auth.js';
 import postsRoutes from './routes/posts.js';
+import { testConnection } from './config/db.js'; // FIXED: Added config/ path
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 6000;
 
+// Test database connection on startup
+testConnection();
+
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   credentials: true
 }));
 app.use(morgan('combined'));
@@ -30,11 +34,33 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
+// Registration-specific rate limiting
+const registrationLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 3, // limit each IP to 3 registration attempts per windowMs
+  message: {
+    error: 'Too many registration attempts from this IP, please try again later.'
+  },
+});
+
+// Login-specific rate limiting
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // limit each IP to 5 login attempts per windowMs
+  message: {
+    error: 'Too many login attempts from this IP, please try again later.'
+  },
+});
+
+// Apply specific rate limiting to auth endpoints
+app.use('/api/auth/register', registrationLimiter);
+app.use('/api/auth/login', loginLimiter);
+
 // --- API ROUTES ---
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
+  res.json({
+    status: 'OK',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     environment: process.env.NODE_ENV || 'development'
@@ -43,7 +69,7 @@ app.get('/health', (req, res) => {
 
 // Root API info
 app.get('/', (req, res) => {
-  res.json({ 
+  res.json({
     message: 'Past Paper Portal API is running!',
     version: '1.0.0',
     endpoints: {
@@ -58,26 +84,25 @@ app.get('/', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/posts', postsRoutes);
 
-console.log(typeof postsRoutes); // should be 'function' or 'router'
-console.log(postsRoutes.name);   // typically 'router'
-
 // --- ERROR HANDLING ---
 // Global error handler
 app.use((err, req, res, next) => {
   console.error('Global error handler:', err.stack);
-  
+
   if (err.name === 'JsonWebTokenError') {
     return res.status(401).json({ error: 'Invalid token' });
   }
+
   if (err.name === 'TokenExpiredError') {
     return res.status(401).json({ error: 'Token expired' });
   }
+
   if (err.name === 'ValidationError') {
     return res.status(400).json({ error: 'Validation error', details: err.message });
   }
-  
-  res.status(err.status || 500).json({ 
-    error: process.env.NODE_ENV === 'production' ? 'Something went wrong!' : err.message 
+
+  res.status(err.status || 500).json({
+    error: process.env.NODE_ENV === 'production' ? 'Something went wrong!' : err.message
   });
 });
 
@@ -91,6 +116,7 @@ process.on('SIGTERM', () => {
   console.log('SIGTERM received. Shutting down gracefully...');
   process.exit(0);
 });
+
 process.on('SIGINT', () => {
   console.log('SIGINT received. Shutting down gracefully...');
   process.exit(0);

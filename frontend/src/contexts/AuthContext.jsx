@@ -5,15 +5,75 @@ import toast from 'react-hot-toast';
 
 const AuthContext = createContext();
 
+// Enhanced validation for registration
+const validateRegistrationData = (userData) => {
+  const errors = [];
+  
+  if (!userData.student_id || userData.student_id.toString().trim() === '') {
+    errors.push('Student ID is required and cannot be empty');
+  }
+  
+  if (!userData.username || userData.username.trim() === '') {
+    errors.push('Username is required and cannot be empty');
+  }
+  
+  if (!userData.email || userData.email.trim() === '') {
+    errors.push('Email is required and cannot be empty');
+  }
+  
+  if (!userData.password || userData.password.trim() === '') {
+    errors.push('Password is required and cannot be empty');
+  }
+  
+  // Additional password strength validation
+  if (userData.password && userData.password.length < 6) {
+    errors.push('Password must be at least 6 characters long');
+  }
+  
+  return errors;
+};
+
 // API functions
 const authAPI = {
+  register: async (userData) => {
+    // Validate data before sending
+    const validationErrors = validateRegistrationData(userData);
+    if (validationErrors.length > 0) {
+      throw new Error(validationErrors.join(', '));
+    }
+
+    const response = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        student_id: parseInt(userData.student_id, 10), // Ensure it's converted to int
+        username: userData.username?.trim(),
+        email: userData.email?.trim().toLowerCase(),
+        password: userData.password?.trim(),
+        profile: userData.profile?.trim() || ''
+      }),
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Registration failed');
+    }
+    
+    return response.json();
+  },
+
   login: async (credentials) => {
     const response = await fetch('/api/auth/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(credentials),
+      body: JSON.stringify({
+        email: credentials.email?.trim().toLowerCase(),
+        password: credentials.password?.trim()
+      }),
     });
     
     if (!response.ok) {
@@ -41,7 +101,56 @@ const authAPI = {
     
     return response.json();
   },
-  
+
+  getUserStats: async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return null;
+    
+    const response = await fetch('/api/auth/stats', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch user stats');
+    }
+    
+    return response.json();
+  },
+
+  updateProfile: async (profileData) => {
+    const token = localStorage.getItem('token');
+    
+    // Filter out null/empty values
+    const cleanData = {};
+    if (profileData.username && profileData.username.trim() !== '') {
+      cleanData.username = profileData.username.trim();
+    }
+    if (profileData.email && profileData.email.trim() !== '') {
+      cleanData.email = profileData.email.trim().toLowerCase();
+    }
+    if (profileData.profile !== undefined) {
+      cleanData.profile = profileData.profile?.trim() || '';
+    }
+
+    const response = await fetch('/api/auth/profile', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(cleanData),
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Profile update failed');
+    }
+    
+    return response.json();
+  },
+
   logout: async () => {
     const token = localStorage.getItem('token');
     if (token) {
@@ -71,7 +180,38 @@ export const AuthProvider = ({ children }) => {
     queryFn: authAPI.getCurrentUser,
     retry: false,
     refetchOnWindowFocus: false,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Get user stats
+  const { data: userStats } = useQuery({
+    queryKey: ['userStats'],
+    queryFn: authAPI.getUserStats,
+    enabled: !!user,
+    retry: false,
+    refetchOnWindowFocus: false,
+    staleTime: 2 * 60 * 1000,
+  });
+
+  // Register mutation
+  const registerMutation = useMutation({
+    mutationFn: authAPI.register,
+    onSuccess: (data) => {
+      localStorage.setItem('token', data.token);
+      queryClient.setQueryData(['user'], data.user);
+      
+      // Redirect based on role
+      if (data.user.is_admin) {
+        navigate('/admin/dashboard');
+      } else {
+        navigate('/user/dashboard');
+      }
+      
+      toast.success('Registration successful! Welcome to Past Paper Portal!');
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Registration failed');
+    },
   });
 
   // Login mutation
@@ -95,11 +235,24 @@ export const AuthProvider = ({ children }) => {
     },
   });
 
+  // Update profile mutation
+  const updateProfileMutation = useMutation({
+    mutationFn: authAPI.updateProfile,
+    onSuccess: (data) => {
+      queryClient.setQueryData(['user'], data.user);
+      toast.success('Profile updated successfully!');
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Profile update failed');
+    },
+  });
+
   // Logout mutation
   const logoutMutation = useMutation({
     mutationFn: authAPI.logout,
     onSuccess: () => {
       queryClient.setQueryData(['user'], null);
+      queryClient.setQueryData(['userStats'], null);
       queryClient.clear();
       navigate('/');
       toast.success('Logged out successfully!');
@@ -108,14 +261,28 @@ export const AuthProvider = ({ children }) => {
       console.error('Logout failed:', error);
       localStorage.removeItem('token');
       queryClient.setQueryData(['user'], null);
+      queryClient.setQueryData(['userStats'], null);
       queryClient.clear();
       navigate('/');
       toast.success('Logged out successfully!');
     },
   });
 
+  const register = (userData) => {
+    const validationErrors = validateRegistrationData(userData);
+    if (validationErrors.length > 0) {
+      toast.error(validationErrors.join(', '));
+      return;
+    }
+    registerMutation.mutate(userData);
+  };
+
   const login = (credentials) => {
     loginMutation.mutate(credentials);
+  };
+
+  const updateProfile = (profileData) => {
+    updateProfileMutation.mutate(profileData);
   };
 
   const logout = () => {
@@ -124,14 +291,19 @@ export const AuthProvider = ({ children }) => {
 
   const value = {
     user,
+    userStats,
     isLoading,
     error,
+    register,
     login,
+    updateProfile,
     logout,
     isAuthenticated: !!user,
     isAdmin: user?.is_admin || false,
     isLoggingIn: loginMutation.isPending,
     isLoggingOut: logoutMutation.isPending,
+    isRegistering: registerMutation.isPending,
+    isUpdatingProfile: updateProfileMutation.isPending,
   };
 
   return (

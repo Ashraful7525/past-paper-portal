@@ -4,8 +4,9 @@ import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './contexts/AuthContext';
 import Header from './components/common/Header';
 import ProtectedRoute from './components/common/ProtectedRoute';
-import HomePage from './pages/HomePage'; // Updated import
+import HomePage from './pages/HomePage';
 import Login from './pages/Login';
+import Register from './pages/Register'; // Add this import
 import UserDashboard from './pages/UserDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import './App.css';
@@ -28,16 +29,17 @@ function App() {
           <div className="min-h-screen bg-gray-50">
             <Routes>
               {/* Public routes */}
-              <Route path="/" element={<HomePage />} />
+              <Route path="/" element={<><Header /><HomePage /></>} />
               <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
               
-              {/* Feed routes */}
-              <Route path="/hot" element={<HomePage />} />
-              <Route path="/new" element={<HomePage />} />
-              <Route path="/top" element={<HomePage />} />
+              {/* Feed routes - if you have these pages, otherwise remove */}
+              <Route path="/feed" element={<><Header /><div>Feed Page</div></>} />
+              <Route path="/feed/create" element={<><Header /><div>Create Post</div></>} />
+              <Route path="/feed/:id" element={<><Header /><div>Post Details</div></>} />
               
-              {/* Department-specific routes */}
-              <Route path="/r/:department" element={<HomePage />} />
+              {/* Department-specific routes - if you have these, otherwise remove */}
+              <Route path="/departments/:dept" element={<><Header /><div>Department Page</div></>} />
               
               {/* Protected routes */}
               <Route 
@@ -57,43 +59,39 @@ function App() {
                 } 
               />
               
-              {/* User-specific routes */}
-              <Route 
-                path="/saved" 
-                element={
-                  <ProtectedRoute>
-                    <HomePage />
-                  </ProtectedRoute>
-                } 
-              />
+              {/* User-specific routes - if you have these pages */}
               <Route 
                 path="/profile" 
                 element={
                   <ProtectedRoute>
-                    <UserDashboard />
+                    <><Header /><div>Profile Page</div></>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/bookmarks" 
+                element={
+                  <ProtectedRoute>
+                    <><Header /><div>Bookmarks Page</div></>
                   </ProtectedRoute>
                 } 
               />
               
               {/* Catch all route */}
-              <Route 
-                path="*" 
-                element={
-                  <>
-                    <Header />
-                    <div className="container mx-auto px-4 py-8">
-                      <h1 className="text-2xl font-bold text-gray-900">Page Not Found</h1>
-                      <p className="text-gray-600 mt-2">The page you're looking for doesn't exist.</p>
-                      <button 
-                        onClick={() => window.history.back()}
-                        className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
-                      >
-                        Go Back
-                      </button>
-                    </div>
-                  </>
-                } 
-              />
+              <Route path="*" element={
+                <><Header />
+                  <div className="container mx-auto px-4 py-8">
+                    <h1 className="text-2xl font-bold text-gray-900">Page Not Found</h1>
+                    <p className="text-gray-600 mt-2">The page you're looking for doesn't exist.</p>
+                    <button
+                      onClick={() => window.history.back()}
+                      className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+                    >
+                      Go Back
+                    </button>
+                  </div>
+                </>
+              } />
             </Routes>
             <Toaster 
               position="top-right"
