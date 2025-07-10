@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { Award, BookOpen, MessageCircle, Bookmark } from 'lucide-react';
 
 const Profile = () => {
-  const { user, logout, isLoggingOut } = useAuth();
+  const { user, logout, isLoggingOut, isAdmin } = useAuth();
   const [profile, setProfile] = useState(null);
   const [stats, setStats] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -49,7 +49,7 @@ const Profile = () => {
     }
   };
 
-  if (!profile) {
+  if (!profile || !user) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -72,6 +72,7 @@ const Profile = () => {
                   <h1 className="text-3xl font-bold text-gray-900">{profile.username}</h1>
                   <p className="text-gray-600">{profile.email}</p>
                   <p className="text-sm text-gray-500">Student ID: {profile.student_id}</p>
+                  <p className="text-sm text-gray-500">Role: {isAdmin ? 'Admin' : 'User'}</p>
                 </div>
               </div>
 
@@ -111,6 +112,14 @@ const Profile = () => {
                     >
                       Edit Description
                     </button>
+                    {isAdmin && (
+                      <Link
+                        to="/admin/dashboard"
+                        className="ml-2 px-4 py-2 rounded-lg text-sm font-medium bg-purple-100 text-purple-800 hover:bg-purple-200 transition-colors"
+                      >
+                        Go to Admin Dashboard
+                      </Link>
+                    )}
                   </div>
                 )}
               </div>

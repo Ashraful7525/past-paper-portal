@@ -369,7 +369,7 @@ const DepartmentSidebar = ({ departments, selectedDepartment, onDepartmentSelect
   );
 };
 
-const HomePage = () => {
+const Newsfeed = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('hot');
   const [timeRange, setTimeRange] = useState('all');
@@ -554,4 +554,4 @@ const HomePage = () => {
   );
 };
 
-export default HomePage;
+export default Newsfeed;

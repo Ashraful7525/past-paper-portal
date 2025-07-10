@@ -4,7 +4,7 @@ import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './contexts/AuthContext';
 import Header from './components/common/Header';
 import ProtectedRoute from './components/common/ProtectedRoute';
-import HomePage from './pages/HomePage';
+import Newsfeed from './pages/Newsfeed';
 import Login from './pages/Login';
 import Register from './pages/Register'; // Add this import
 import UserDashboard from './pages/UserDashboard';
@@ -31,7 +31,7 @@ function App() {
             <Routes>
               {/* Public routes */}
               <Route path="/" element={<Login />} />
-              <Route path="/home" element={<><Header /><HomePage /></>} />
+              <Route path="/home" element={<><Header /><Newsfeed /></>} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               

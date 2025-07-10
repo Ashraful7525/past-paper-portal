@@ -99,7 +99,9 @@ const authAPI = {
       return null;
     }
     
-    return response.json();
+    const userData = await response.json();
+    console.log('getCurrentUser fetched user:', userData);
+    return { ...userData, is_admin: !!userData.is_admin };
   },
 
   getUserStats: async () => {
@@ -198,10 +200,12 @@ export const AuthProvider = ({ children }) => {
     mutationFn: authAPI.register,
     onSuccess: (data) => {
       localStorage.setItem('token', data.token);
-      queryClient.setQueryData(['user'], data.user);
+      const userWithBooleanAdmin = { ...data.user, is_admin: !!data.user.is_admin };
+      queryClient.setQueryData(['user'], userWithBooleanAdmin);
+      console.log('Registered user data:', userWithBooleanAdmin);
       
       // Redirect based on role
-      if (data.user.is_admin) {
+      if (userWithBooleanAdmin.is_admin) {
         navigate('/admin/dashboard');
       } else {
         navigate('/user/dashboard');
@@ -219,10 +223,12 @@ export const AuthProvider = ({ children }) => {
     mutationFn: authAPI.login,
     onSuccess: (data) => {
       localStorage.setItem('token', data.token);
-      queryClient.setQueryData(['user'], data.user);
+      const userWithBooleanAdmin = { ...data.user, is_admin: !!data.user.is_admin };
+      queryClient.setQueryData(['user'], userWithBooleanAdmin);
+      console.log('Logged in user data:', userWithBooleanAdmin);
       
       // Redirect based on role
-      if (data.user.is_admin) {
+      if (userWithBooleanAdmin.is_admin) {
         navigate('/admin/dashboard');
       } else {
         navigate('/user/dashboard');

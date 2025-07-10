@@ -29,7 +29,7 @@ app.use(express.urlencoded({ extended: true }));
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: Infinity, // Relaxed for development
   message: { error: 'Too many requests from this IP, please try again later.' }
 });
 app.use('/api/', limiter);
@@ -37,7 +37,7 @@ app.use('/api/', limiter);
 // Registration-specific rate limiting
 const registrationLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 3, // limit each IP to 3 registration attempts per windowMs
+  max: Infinity, // Relaxed for development
   message: {
     error: 'Too many registration attempts from this IP, please try again later.'
   },
@@ -46,7 +46,7 @@ const registrationLimiter = rateLimit({
 // Login-specific rate limiting
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // limit each IP to 5 login attempts per windowMs
+  max: Infinity, // Relaxed for development
   message: {
     error: 'Too many login attempts from this IP, please try again later.'
   },
