@@ -1,157 +1,137 @@
 import React, { useState, useEffect } from 'react';
 import { Search, TrendingUp, Clock, Award, Users, BookOpen, MessageCircle, ArrowUp, ArrowDown, Bookmark, Eye, Download, Star, Filter, ChevronDown } from 'lucide-react';
 
-// Mock data for demonstration - replace with real API calls
-const mockPosts = [
-  {
-    post_id: 1,
-    title: "CSE 101 Final Exam 2023 - Data Structures and Algorithms",
-    preview_text: "Complete solution set for CSE 101 final exam including all programming problems and theoretical questions. Covers arrays, linked lists, trees, graphs, and dynamic programming concepts.",
-    author_username: "john_doe",
-    department_name: "Computer Science",
-    department_icon: "💻",
-    course_title: "Data Structures & Algorithms",
-    semester_name: "Fall 2023",
-    upvotes: 145,
-    downvotes: 3,
-    view_count: 2850,
-    download_count: 189,
-    comment_count: 23,
-    user_vote: 1,
-    is_saved: false,
-    tags: ["algorithms", "final-exam", "programming", "data-structures"],
-    created_at: "2024-01-15T10:30:00Z",
-    file_url: "/uploads/cse101-final-2023.pdf",
-    is_verified: true,
-    is_featured: false
-  },
-  {
-    post_id: 2,
-    title: "Mathematics 201 - Linear Algebra Mid-term Solutions",
-    preview_text: "Step-by-step solutions for all matrix operations, eigenvalues, and vector space problems. Includes detailed explanations and alternative solution methods.",
-    author_username: "math_wizard",
-    department_name: "Mathematics",
-    department_icon: "📐",
-    course_title: "Linear Algebra",
-    semester_name: "Spring 2023",
-    upvotes: 89,
-    downvotes: 2,
-    view_count: 1450,
-    download_count: 97,
-    comment_count: 15,
-    user_vote: 0,
-    is_saved: true,
-    tags: ["linear-algebra", "matrices", "mid-term", "mathematics"],
-    created_at: "2024-01-14T14:20:00Z",
-    file_url: "/uploads/math201-midterm.pdf",
-    is_verified: true,
-    is_featured: true
-  },
-  {
-    post_id: 3,
-    title: "Physics 301 - Quantum Mechanics Problem Set",
-    preview_text: "Comprehensive solutions for quantum mechanics problems covering wave functions, operators, and measurements. Perfect for exam preparation.",
-    author_username: "physics_pro",
-    department_name: "Physics",
-    department_icon: "⚛️",
-    course_title: "Quantum Mechanics",
-    semester_name: "Fall 2023",
-    upvotes: 67,
-    downvotes: 4,
-    view_count: 1120,
-    download_count: 43,
-    comment_count: 12,
-    user_vote: -1,
-    is_saved: false,
-    tags: ["quantum-mechanics", "problem-set", "physics", "advanced"],
-    created_at: "2024-01-13T09:15:00Z",
-    file_url: "/uploads/physics301-problems.pdf",
-    is_verified: false,
-    is_featured: false
-  }
-];
+// API base URL - adjust this to match your backend
+const API_BASE_URL = 'http://localhost:3000/api';
 
-const mockDepartments = [
-  { 
-    department_id: 1, 
-    department_name: "Computer Science", 
-    icon: "💻", 
-    post_count: 234, 
-    question_count: 456,
-    solution_count: 1890,
-    trend: "+12%"
-  },
-  { 
-    department_id: 2, 
-    department_name: "Mathematics", 
-    icon: "📐", 
-    post_count: 189, 
-    question_count: 367,
-    solution_count: 1456,
-    trend: "+8%"
-  },
-  { 
-    department_id: 3, 
-    department_name: "Physics", 
-    icon: "⚛️", 
-    post_count: 156, 
-    question_count: 289,
-    solution_count: 1123,
-    trend: "+5%"
-  },
-  { 
-    department_id: 4, 
-    department_name: "Chemistry", 
-    icon: "🧪", 
-    post_count: 134, 
-    question_count: 234,
-    solution_count: 987,
-    trend: "+3%"
-  },
-  { 
-    department_id: 5, 
-    department_name: "Biology", 
-    icon: "🧬", 
-    post_count: 98, 
-    question_count: 178,
-    solution_count: 743,
-    trend: "+7%"
-  }
-];
-
-const PostCard = ({ post }) => {
-  const [userVote, setUserVote] = useState(post.user_vote);
-  const [isSaved, setIsSaved] = useState(post.is_saved);
-  const [upvotes, setUpvotes] = useState(post.upvotes);
-  const [downvotes, setDownvotes] = useState(post.downvotes);
-
-  const handleVote = (voteType) => {
-    const newVote = userVote === voteType ? 0 : voteType;
-    
-    // Update vote counts
-    if (userVote === 1 && newVote === 0) {
-      setUpvotes(prev => prev - 1);
-    } else if (userVote === -1 && newVote === 0) {
-      setDownvotes(prev => prev - 1);
-    } else if (userVote === 0 && newVote === 1) {
-      setUpvotes(prev => prev + 1);
-    } else if (userVote === 0 && newVote === -1) {
-      setDownvotes(prev => prev + 1);
-    } else if (userVote === 1 && newVote === -1) {
-      setUpvotes(prev => prev - 1);
-      setDownvotes(prev => prev + 1);
-    } else if (userVote === -1 && newVote === 1) {
-      setDownvotes(prev => prev - 1);
-      setUpvotes(prev => prev + 1);
+// API service functions
+const apiService = {
+  async getFeedPosts(params = {}) {
+    const queryParams = new URLSearchParams(params).toString();
+    const response = await fetch(`${API_BASE_URL}/posts/feed?${queryParams}`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch posts');
     }
+    return response.json();
+  },
+
+  async votePost(postId, voteType) {
+    const response = await fetch(`${API_BASE_URL}/posts/${postId}/vote`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}` // Adjust based on your auth
+      },
+      body: JSON.stringify({ vote_type: voteType })
+    });
+    if (!response.ok) {
+      throw new Error('Failed to vote');
+    }
+    return response.json();
+  },
+
+  async toggleSavePost(postId) {
+    const response = await fetch(`${API_BASE_URL}/posts/${postId}/save`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}` // Adjust based on your auth
+      }
+    });
+    if (!response.ok) {
+      throw new Error('Failed to save post');
+    }
+    return response.json();
+  },
+
+  async trackView(postId) {
+    const response = await fetch(`${API_BASE_URL}/posts/${postId}/view`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    if (!response.ok) {
+      throw new Error('Failed to track view');
+    }
+    return response.json();
+  }
+};
+
+const PostCard = ({ post, onVote, onSave, onView }) => {
+  const [userVote, setUserVote] = useState(post.user_vote || 0);
+  const [isSaved, setIsSaved] = useState(post.is_saved || false);
+  const [upvotes, setUpvotes] = useState(post.upvotes || 0);
+  const [downvotes, setDownvotes] = useState(post.downvotes || 0);
+  const [isVoting, setIsVoting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleVote = async (voteType) => {
+    if (isVoting) return;
     
-    setUserVote(newVote);
-    // TODO: API call to update vote
+    setIsVoting(true);
+    try {
+      const newVote = userVote === voteType ? 0 : voteType;
+      
+      // Optimistic update
+      if (userVote === 1 && newVote === 0) {
+        setUpvotes(prev => prev - 1);
+      } else if (userVote === -1 && newVote === 0) {
+        setDownvotes(prev => prev - 1);
+      } else if (userVote === 0 && newVote === 1) {
+        setUpvotes(prev => prev + 1);
+      } else if (userVote === 0 && newVote === -1) {
+        setDownvotes(prev => prev + 1);
+      } else if (userVote === 1 && newVote === -1) {
+        setUpvotes(prev => prev - 1);
+        setDownvotes(prev => prev + 1);
+      } else if (userVote === -1 && newVote === 1) {
+        setDownvotes(prev => prev - 1);
+        setUpvotes(prev => prev + 1);
+      }
+      
+      setUserVote(newVote);
+      
+      // API call
+      await apiService.votePost(post.post_id, newVote);
+      onVote && onVote(post.post_id, newVote);
+    } catch (error) {
+      console.error('Error voting:', error);
+      // Revert optimistic update on error
+      setUserVote(post.user_vote || 0);
+      setUpvotes(post.upvotes || 0);
+      setDownvotes(post.downvotes || 0);
+    } finally {
+      setIsVoting(false);
+    }
   };
 
-  const toggleSave = () => {
-    setIsSaved(!isSaved);
-    // TODO: API call to toggle save
+  const toggleSave = async () => {
+    if (isSaving) return;
+    
+    setIsSaving(true);
+    try {
+      // Optimistic update
+      setIsSaved(!isSaved);
+      
+      // API call
+      await apiService.toggleSavePost(post.post_id);
+      onSave && onSave(post.post_id, !isSaved);
+    } catch (error) {
+      console.error('Error saving:', error);
+      // Revert optimistic update on error
+      setIsSaved(post.is_saved || false);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleView = async () => {
+    try {
+      await apiService.trackView(post.post_id);
+      onView && onView(post.post_id);
+    } catch (error) {
+      console.error('Error tracking view:', error);
+    }
   };
 
   const formatTimeAgo = (dateString) => {
@@ -197,7 +177,10 @@ const PostCard = ({ post }) => {
         </div>
         
         {/* Title and Preview */}
-        <h2 className="text-lg font-semibold text-gray-900 mb-2 hover:text-blue-600 cursor-pointer">
+        <h2 
+          className="text-lg font-semibold text-gray-900 mb-2 hover:text-blue-600 cursor-pointer"
+          onClick={handleView}
+        >
           {post.title}
         </h2>
         <p className="text-gray-600 text-sm mb-3 line-clamp-2">
@@ -226,9 +209,10 @@ const PostCard = ({ post }) => {
           <div className="flex items-center space-x-1">
             <button
               onClick={() => handleVote(1)}
+              disabled={isVoting}
               className={`p-1 rounded transition-colors ${
                 userVote === 1 ? 'text-orange-600 bg-orange-100' : 'text-gray-500 hover:text-orange-600 hover:bg-orange-50'
-              }`}
+              } ${isVoting ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               <ArrowUp className="h-4 w-4" />
             </button>
@@ -237,9 +221,10 @@ const PostCard = ({ post }) => {
             </span>
             <button
               onClick={() => handleVote(-1)}
+              disabled={isVoting}
               className={`p-1 rounded transition-colors ${
                 userVote === -1 ? 'text-blue-600 bg-blue-100' : 'text-gray-500 hover:text-blue-600 hover:bg-blue-50'
-              }`}
+              } ${isVoting ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               <ArrowDown className="h-4 w-4" />
             </button>
@@ -248,28 +233,29 @@ const PostCard = ({ post }) => {
           {/* Comments */}
           <div className="flex items-center space-x-1 text-gray-500 hover:text-blue-600 cursor-pointer">
             <MessageCircle className="h-4 w-4" />
-            <span className="text-sm">{post.comment_count}</span>
+            <span className="text-sm">{post.comment_count || 0}</span>
           </div>
           
           {/* Views */}
           <div className="flex items-center space-x-1 text-gray-500">
             <Eye className="h-4 w-4" />
-            <span className="text-sm">{post.view_count.toLocaleString()}</span>
+            <span className="text-sm">{(post.view_count || 0).toLocaleString()}</span>
           </div>
           
           {/* Downloads */}
           <div className="flex items-center space-x-1 text-gray-500">
             <Download className="h-4 w-4" />
-            <span className="text-sm">{post.download_count}</span>
+            <span className="text-sm">{post.download_count || 0}</span>
           </div>
         </div>
         
         {/* Save Button */}
         <button
           onClick={toggleSave}
+          disabled={isSaving}
           className={`p-2 rounded transition-colors ${
             isSaved ? 'text-green-600 bg-green-100' : 'text-gray-500 hover:text-green-600 hover:bg-green-50'
-          }`}
+          } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
         </button>
@@ -278,7 +264,7 @@ const PostCard = ({ post }) => {
   );
 };
 
-const DepartmentSidebar = ({ departments, selectedDepartment, onDepartmentSelect }) => {
+const DepartmentSidebar = ({ departments, selectedDepartment, onDepartmentSelect, globalStats }) => {
   return (
     <div className="space-y-4">
       {/* Top Departments */}
@@ -345,7 +331,7 @@ const DepartmentSidebar = ({ departments, selectedDepartment, onDepartmentSelect
               <BookOpen className="h-4 w-4 text-blue-600" />
               <span className="text-sm">Total Posts</span>
             </div>
-            <span className="font-medium">1,247</span>
+            <span className="font-medium">{globalStats?.total_posts?.toLocaleString() || 0}</span>
           </div>
           
           <div className="flex items-center justify-between">
@@ -353,15 +339,15 @@ const DepartmentSidebar = ({ departments, selectedDepartment, onDepartmentSelect
               <Users className="h-4 w-4 text-green-600" />
               <span className="text-sm">Active Users</span>
             </div>
-            <span className="font-medium">456</span>
+            <span className="font-medium">{globalStats?.active_users?.toLocaleString() || 0}</span>
           </div>
           
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <MessageCircle className="h-4 w-4 text-purple-600" />
-              <span className="text-sm">Solutions</span>
+              <span className="text-sm">Total Solutions</span>
             </div>
-            <span className="font-medium">3,891</span>
+            <span className="font-medium">{globalStats?.total_solutions?.toLocaleString() || 0}</span>
           </div>
         </div>
       </div>
@@ -374,55 +360,61 @@ const Newsfeed = () => {
   const [sortBy, setSortBy] = useState('hot');
   const [timeRange, setTimeRange] = useState('all');
   const [selectedDepartment, setSelectedDepartment] = useState(null);
-  const [posts, setPosts] = useState(mockPosts);
-  const [departments, setDepartments] = useState(mockDepartments);
+  const [posts, setPosts] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [globalStats, setGlobalStats] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Simulate API calls
-  useEffect(() => {
-    // TODO: Replace with actual API calls
-    const fetchPosts = async () => {
-      setIsLoading(true);
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+  // Fetch posts from API
+  const fetchPosts = async (page = 1, reset = false) => {
+    if (isLoading) return;
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const params = {
+        page,
+        limit: 20,
+        sort: sortBy,
+        time: timeRange,
+        department: selectedDepartment,
+        search: searchQuery || undefined
+      };
+
+      const response = await apiService.getFeedPosts(params);
       
-      let filteredPosts = mockPosts;
-      
-      // Apply filters
-      if (selectedDepartment) {
-        filteredPosts = filteredPosts.filter(post => 
-          post.department_name === departments.find(d => d.department_id === selectedDepartment)?.department_name
-        );
-      }
-      
-      if (searchQuery) {
-        filteredPosts = filteredPosts.filter(post =>
-          post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          post.preview_text.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-      }
-      
-      // Apply sorting
-      filteredPosts.sort((a, b) => {
-        switch (sortBy) {
-          case 'hot':
-            return (b.upvotes - b.downvotes + b.view_count * 0.1) - (a.upvotes - a.downvotes + a.view_count * 0.1);
-          case 'new':
-            return new Date(b.created_at) - new Date(a.created_at);
-          case 'top':
-            return (b.upvotes - b.downvotes) - (a.upvotes - a.downvotes);
-          default:
-            return 0;
+      if (reset) {
+        setPosts(response.posts || []);
+        // Update departments and global stats from API response
+        if (response.departments) {
+          setDepartments(response.departments);
         }
-      });
+        if (response.globalStats) {
+          setGlobalStats(response.globalStats);
+        }
+      } else {
+        setPosts(prev => [...prev, ...(response.posts || [])]);
+      }
       
-      setPosts(filteredPosts);
+      setHasMore(response.pagination?.hasMore || false);
+      setCurrentPage(page);
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+      setError('Failed to load posts. Please try again.');
+    } finally {
       setIsLoading(false);
-    };
+    }
+  };
 
-    fetchPosts();
-  }, [searchQuery, sortBy, timeRange, selectedDepartment, departments]);
+  // Initial load and when filters change
+  useEffect(() => {
+    fetchPosts(1, true);
+  }, [searchQuery, sortBy, timeRange, selectedDepartment]);
 
   const handleSearch = (e) => {
     setSearchQuery(e.target.value);
@@ -434,6 +426,39 @@ const Newsfeed = () => {
 
   const handleTimeRangeChange = (newTimeRange) => {
     setTimeRange(newTimeRange);
+  };
+
+  const handleLoadMore = () => {
+    if (hasMore && !isLoading) {
+      fetchPosts(currentPage + 1, false);
+    }
+  };
+
+  const handlePostVote = (postId, newVote) => {
+    // Update local state if needed
+    setPosts(prev => prev.map(post => 
+      post.post_id === postId 
+        ? { ...post, user_vote: newVote }
+        : post
+    ));
+  };
+
+  const handlePostSave = (postId, isSaved) => {
+    // Update local state if needed
+    setPosts(prev => prev.map(post => 
+      post.post_id === postId 
+        ? { ...post, is_saved: isSaved }
+        : post
+    ));
+  };
+
+  const handlePostView = (postId) => {
+    // Update view count in local state
+    setPosts(prev => prev.map(post => 
+      post.post_id === postId 
+        ? { ...post, view_count: (post.view_count || 0) + 1 }
+        : post
+    ));
   };
 
   return (
@@ -516,7 +541,19 @@ const Newsfeed = () => {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Posts Feed */}
           <div className="lg:col-span-3 order-2 lg:order-1">
-            {isLoading ? (
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                <p className="text-red-700">{error}</p>
+                <button 
+                  onClick={() => fetchPosts(1, true)}
+                  className="mt-2 text-red-600 hover:text-red-800 font-medium"
+                >
+                  Try Again
+                </button>
+              </div>
+            )}
+            
+            {isLoading && posts.length === 0 ? (
               <div className="flex items-center justify-center py-12">
                 <div className="text-center">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -534,8 +571,27 @@ const Newsfeed = () => {
             ) : (
               <div>
                 {posts.map((post) => (
-                  <PostCard key={post.post_id} post={post} />
+                  <PostCard 
+                    key={post.post_id} 
+                    post={post} 
+                    onVote={handlePostVote}
+                    onSave={handlePostSave}
+                    onView={handlePostView}
+                  />
                 ))}
+                
+                {/* Load More Button */}
+                {hasMore && (
+                  <div className="text-center mt-6">
+                    <button
+                      onClick={handleLoadMore}
+                      disabled={isLoading}
+                      className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isLoading ? 'Loading...' : 'Load More'}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -546,6 +602,7 @@ const Newsfeed = () => {
               departments={departments}
               selectedDepartment={selectedDepartment}
               onDepartmentSelect={setSelectedDepartment}
+              globalStats={globalStats}
             />
           </div>
         </div>

@@ -92,7 +92,7 @@ const authController = {
   async login(req, res) {
     try {
       const { email, password } = req.body;
-
+      console.log('ami ki pagol hoye zbo');
       // Validate input
       if (!email || !password) {
         return res.status(400).json({
@@ -117,7 +117,7 @@ const authController = {
       }
 
       const token = generateToken(user);
-
+      
       res.json({
         token,
         user: user.toJSON(),
