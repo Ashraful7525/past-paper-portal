@@ -165,41 +165,39 @@ const PostCard = ({ post, onVote, onSave, onView }) => {
   };
 
   return (
-    <div ref={cardRef} className="bg-white rounded-lg shadow-sm border border-gray-200 mb-4 hover:shadow-md transition-shadow">
+    <div ref={cardRef} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-4 hover:shadow-md dark:hover:shadow-gray-900/20 transition-shadow">
       {/* Post Header */}
-      <div className="p-4 border-b border-gray-100">
+      <div className="p-4 border-b border-gray-100 dark:border-gray-700">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center space-x-3">
             <span className="text-2xl">{post.department_icon}</span>
             <div>
               <div className="flex items-center space-x-2">
-                <span className="font-medium text-gray-900">{post.department_name}</span>
+                <span className="font-medium text-gray-900 dark:text-white">{post.department_name}</span>
                 {post.is_verified && (
                   <Star className="h-4 w-4 text-yellow-500 fill-current" />
                 )}
                 {post.is_featured && (
-                  <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full font-medium">
+                  <span className="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 text-xs px-2 py-1 rounded-full font-medium">
                     Featured
                   </span>
                 )}
               </div>
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-gray-500 dark:text-gray-400">
                 {post.course_title} • {post.semester_name}
               </div>
             </div>
           </div>
-          <div className="text-sm text-gray-500">
+          <div className="text-sm text-gray-500 dark:text-gray-400">
             {formatTimeAgo(post.created_at)}
           </div>
         </div>
         
         {/* Title and Preview */}
-        <h2 
-          className="text-lg font-semibold text-gray-900 mb-2"
-        >
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
           {post.title}
         </h2>
-        <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+        <p className="text-gray-600 dark:text-gray-300 text-sm mb-3 line-clamp-2">
           {post.preview_text}
         </p>
         
@@ -209,7 +207,7 @@ const PostCard = ({ post, onVote, onSave, onView }) => {
             {post.tags.map((tag, index) => (
               <span
                 key={index}
-                className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs hover:bg-gray-200 cursor-pointer"
+                className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1 rounded-full text-xs hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer"
               >
                 #{tag}
               </span>
@@ -219,7 +217,7 @@ const PostCard = ({ post, onVote, onSave, onView }) => {
       </div>
 
       {/* Post Actions */}
-      <div className="px-4 py-3 bg-gray-50 flex items-center justify-between">
+      <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800 flex items-center justify-between">
         <div className="flex items-center space-x-4">
           {/* Vote Buttons */}
           <div className="flex items-center space-x-1">
@@ -227,19 +225,19 @@ const PostCard = ({ post, onVote, onSave, onView }) => {
               onClick={() => handleVote(1)}
               disabled={isVoting}
               className={`p-1 rounded transition-colors ${
-                userVote === 1 ? 'text-orange-600 bg-orange-100' : 'text-gray-500 hover:text-orange-600 hover:bg-orange-50'
+                userVote === 1 ? 'text-orange-600 bg-orange-100 dark:bg-orange-900/30' : 'text-gray-500 dark:text-gray-400 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20'
               } ${isVoting ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               <ArrowUp className="h-4 w-4" />
             </button>
-            <span className="text-sm font-medium text-gray-700 min-w-[2rem] text-center">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[2rem] text-center">
               {upvotes - downvotes}
             </span>
             <button
               onClick={() => handleVote(-1)}
               disabled={isVoting}
               className={`p-1 rounded transition-colors ${
-                userVote === -1 ? 'text-blue-600 bg-blue-100' : 'text-gray-500 hover:text-blue-600 hover:bg-blue-50'
+                userVote === -1 ? 'text-blue-600 bg-blue-100 dark:bg-blue-900/30' : 'text-gray-500 dark:text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20'
               } ${isVoting ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               <ArrowDown className="h-4 w-4" />
@@ -247,19 +245,19 @@ const PostCard = ({ post, onVote, onSave, onView }) => {
           </div>
           
           {/* Comments */}
-          <div className="flex items-center space-x-1 text-gray-500 hover:text-blue-600 cursor-pointer">
+          <div className="flex items-center space-x-1 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer">
             <MessageCircle className="h-4 w-4" />
             <span className="text-sm">{post.comment_count || 0}</span>
           </div>
           
           {/* Views */}
-          <div className="flex items-center space-x-1 text-gray-500">
+          <div className="flex items-center space-x-1 text-gray-500 dark:text-gray-400">
             <Eye className="h-4 w-4" />
             <span className="text-sm">{(post.view_count || 0).toLocaleString()}</span>
           </div>
           
           {/* Downloads */}
-          <div className="flex items-center space-x-1 text-gray-500">
+          <div className="flex items-center space-x-1 text-gray-500 dark:text-gray-400">
             <Download className="h-4 w-4" />
             <span className="text-sm">{post.download_count || 0}</span>
           </div>
@@ -270,7 +268,7 @@ const PostCard = ({ post, onVote, onSave, onView }) => {
           onClick={toggleSave}
           disabled={isSaving}
           className={`p-2 rounded transition-colors ${
-            isSaved ? 'text-green-600 bg-green-100' : 'text-gray-500 hover:text-green-600 hover:bg-green-50'
+            isSaved ? 'text-green-600 bg-green-100 dark:bg-green-900/30' : 'text-gray-500 dark:text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20'
           } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
@@ -284,9 +282,9 @@ const DepartmentSidebar = ({ departments, selectedDepartment, onDepartmentSelect
   return (
     <div className="space-y-4">
       {/* Top Departments */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-gray-900 flex items-center">
+          <h3 className="font-semibold text-gray-900 dark:text-white flex items-center">
             <TrendingUp className="h-4 w-4 mr-2" />
             Top Departments
           </h3>
@@ -296,13 +294,13 @@ const DepartmentSidebar = ({ departments, selectedDepartment, onDepartmentSelect
           <button
             onClick={() => onDepartmentSelect(null)}
             className={`w-full text-left p-3 rounded-lg transition-colors ${
-              !selectedDepartment ? 'bg-blue-50 text-blue-800 border border-blue-200' : 'hover:bg-gray-50'
+              !selectedDepartment ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-700' : 'hover:bg-gray-50 dark:hover:bg-gray-700'
             }`}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <span className="text-xl">🏠</span>
-                <span className="font-medium">All Departments</span>
+                <span className="font-medium text-gray-900 dark:text-white">All Departments</span>
               </div>
             </div>
           </button>
@@ -312,20 +310,20 @@ const DepartmentSidebar = ({ departments, selectedDepartment, onDepartmentSelect
               key={dept.department_id}
               onClick={() => onDepartmentSelect(dept.department_id)}
               className={`w-full text-left p-3 rounded-lg transition-colors ${
-                selectedDepartment === dept.department_id ? 'bg-blue-50 text-blue-800 border border-blue-200' : 'hover:bg-gray-50'
+                selectedDepartment === dept.department_id ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-700' : 'hover:bg-gray-50 dark:hover:bg-gray-700'
               }`}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <span className="text-xl">{dept.icon}</span>
                   <div>
-                    <div className="font-medium text-sm">{dept.department_name}</div>
-                    <div className="text-xs text-gray-500">
+                    <div className="font-medium text-sm text-gray-900 dark:text-white">{dept.department_name}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
                       {dept.post_count} posts • {dept.solution_count} solutions
                     </div>
                   </div>
                 </div>
-                <div className="text-xs text-green-600 font-medium">
+                <div className="text-xs text-green-600 dark:text-green-400 font-medium">
                   {dept.trend}
                 </div>
               </div>
@@ -335,8 +333,8 @@ const DepartmentSidebar = ({ departments, selectedDepartment, onDepartmentSelect
       </div>
       
       {/* Quick Stats */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-        <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+        <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
           <Award className="h-4 w-4 mr-2" />
           Quick Stats
         </h3>
@@ -345,25 +343,25 @@ const DepartmentSidebar = ({ departments, selectedDepartment, onDepartmentSelect
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <BookOpen className="h-4 w-4 text-blue-600" />
-              <span className="text-sm">Total Posts</span>
+              <span className="text-sm text-gray-700 dark:text-gray-300">Total Posts</span>
             </div>
-            <span className="font-medium">{globalStats?.total_posts?.toLocaleString() || 0}</span>
+            <span className="font-medium text-gray-900 dark:text-white">{globalStats?.total_posts?.toLocaleString() || 0}</span>
           </div>
           
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Users className="h-4 w-4 text-green-600" />
-              <span className="text-sm">Active Users</span>
+              <span className="text-sm text-gray-700 dark:text-gray-300">Active Users</span>
             </div>
-            <span className="font-medium">{globalStats?.active_users?.toLocaleString() || 0}</span>
+            <span className="font-medium text-gray-900 dark:text-white">{globalStats?.active_users?.toLocaleString() || 0}</span>
           </div>
           
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <MessageCircle className="h-4 w-4 text-purple-600" />
-              <span className="text-sm">Total Solutions</span>
+              <span className="text-sm text-gray-700 dark:text-gray-300">Total Solutions</span>
             </div>
-            <span className="font-medium">{globalStats?.total_solutions?.toLocaleString() || 0}</span>
+            <span className="font-medium text-gray-900 dark:text-white">{globalStats?.total_solutions?.toLocaleString() || 0}</span>
           </div>
         </div>
       </div>
@@ -480,24 +478,24 @@ const Newsfeed = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 w-full">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 w-full">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10 w-full">
+      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10 w-full">
         <div className="w-full px-4 py-4">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-bold text-gray-900">Newsfeed</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Newsfeed</h1>
             <div className="flex items-center space-x-4">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
                 <input
                   type="text"
                   placeholder="Search..."
                   value={searchQuery}
                   onChange={handleSearch}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="input-field pl-10"
                 />
               </div>
-              <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+              <button className="btn-primary">
                 Upload Paper
               </button>
             </div>
@@ -515,7 +513,7 @@ const Newsfeed = () => {
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                       sortBy === sort 
                         ? 'bg-blue-600 text-white' 
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                     }`}
                   >
                     {sort.charAt(0).toUpperCase() + sort.slice(1)}
@@ -528,7 +526,7 @@ const Newsfeed = () => {
                 <select
                   value={timeRange}
                   onChange={(e) => handleTimeRangeChange(e.target.value)}
-                  className="appearance-none bg-gray-100 border border-gray-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                  className="appearance-none bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="all">All Time</option>
                   <option value="day">Past Day</option>
@@ -536,13 +534,13 @@ const Newsfeed = () => {
                   <option value="month">Past Month</option>
                   <option value="year">Past Year</option>
                 </select>
-                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500 pointer-events-none" />
               </div>
             </div>
             
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="lg:hidden flex items-center space-x-2 text-gray-600 hover:text-gray-900"
+              className="lg:hidden flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
             >
               <Filter className="h-4 w-4" />
               <span>Filters</span>
@@ -557,11 +555,11 @@ const Newsfeed = () => {
           {/* Posts Feed */}
           <div className="lg:col-span-3 order-2 lg:order-1">
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                <p className="text-red-700">{error}</p>
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
+                <p className="text-red-700 dark:text-red-300">{error}</p>
                 <button 
                   onClick={() => fetchPosts(1, true)}
-                  className="mt-2 text-red-600 hover:text-red-800 font-medium"
+                  className="mt-2 text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 font-medium"
                 >
                   Try Again
                 </button>
@@ -572,14 +570,14 @@ const Newsfeed = () => {
               <div className="flex items-center justify-center py-12">
                 <div className="text-center">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                  <p className="text-gray-600">Loading posts...</p>
+                  <p className="text-gray-600 dark:text-gray-300">Loading posts...</p>
                 </div>
               </div>
             ) : posts.length === 0 ? (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-                <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No posts found</h3>
-                <p className="text-gray-600">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-8 text-center">
+                <BookOpen className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No posts found</h3>
+                <p className="text-gray-600 dark:text-gray-300">
                   {searchQuery ? 'Try adjusting your search terms' : 'Try selecting a different department or time range'}
                 </p>
               </div>
@@ -601,7 +599,7 @@ const Newsfeed = () => {
                     <button
                       onClick={handleLoadMore}
                       disabled={isLoading}
-                      className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isLoading ? 'Loading...' : 'Load More'}
                     </button>

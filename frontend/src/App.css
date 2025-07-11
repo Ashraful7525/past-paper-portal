@@ -1,22 +1,23 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
+/* App-specific styles */
 #root {
   width: 100%;
+  min-height: 100vh;
   margin: 0;
-  padding: 0rem;
+  padding: 0;
 }
 
+/* Logo animations for branding */
 .logo {
   height: 6em;
   padding: 1.5em;
   will-change: filter;
   transition: filter 300ms;
 }
+
 .logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+  filter: drop-shadow(0 0 2em #3b82f6aa);
 }
+
 .logo.react:hover {
   filter: drop-shadow(0 0 2em #61dafbaa);
 }
@@ -36,10 +37,23 @@
   }
 }
 
-.card {
-  padding: 2em;
+/* App-specific utility classes with dark mode */
+.app-container {
+  @apply min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200;
 }
 
-.read-the-docs {
-  color: #888;
+.content-wrapper {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+.page-header {
+  @apply mb-8 border-b border-gray-200 dark:border-gray-700 pb-6;
+}
+
+.page-title {
+  @apply text-3xl font-bold text-gray-900 dark:text-white mb-2;
+}
+
+.page-subtitle {
+  @apply text-lg text-gray-600 dark:text-gray-300;
 }
