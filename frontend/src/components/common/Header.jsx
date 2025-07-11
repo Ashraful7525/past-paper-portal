@@ -6,24 +6,24 @@ const Header = () => {
   const { isAuthenticated, user, logout, isLoggingOut } = useAuth();
 
   return (
-    <header className="bg-white dark:bg-gray-800 shadow dark:shadow-gray-900/20 p-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-700">
-      <h1 className="text-xl font-bold text-gray-800 dark:text-white">Past Paper Portal</h1>
+    <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-slate-200 dark:border-gray-700 p-4 flex items-center justify-between">
+      <h1 className="text-xl font-bold text-slate-800 dark:text-white">Past Paper Portal</h1>
       
       <div className="flex items-center space-x-6">
         <nav className="flex items-center space-x-4">
-          <Link to="/home" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Home</Link>
+          <Link to="/home" className="text-slate-600 dark:text-gray-300 hover:text-slate-800 dark:hover:text-slate-100 transition-colors font-medium">Home</Link>
           {isAuthenticated && (
             <>
               {user?.role === 'admin' ? (
-                <Link to="/admin/dashboard" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Dashboard</Link>
+                <Link to="/admin/dashboard" className="text-slate-600 dark:text-gray-300 hover:text-slate-800 dark:hover:text-slate-100 transition-colors font-medium">Dashboard</Link>
               ) : (
-                <Link to="/user/dashboard" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Dashboard</Link>
+                <Link to="/user/dashboard" className="text-slate-600 dark:text-gray-300 hover:text-slate-800 dark:hover:text-slate-100 transition-colors font-medium">Dashboard</Link>
               )}
-              <Link to="/profile" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Profile</Link>
+              <Link to="/profile" className="text-slate-600 dark:text-gray-300 hover:text-slate-800 dark:hover:text-slate-100 transition-colors font-medium">Profile</Link>
               <button
                 onClick={logout}
                 disabled={isLoggingOut}
-                className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors disabled:opacity-50"
+                className="text-slate-600 dark:text-gray-300 hover:text-slate-800 dark:hover:text-slate-100 transition-colors disabled:opacity-50 font-medium"
               >
                 {isLoggingOut ? 'Logging out...' : 'Logout'}
               </button>
@@ -31,8 +31,8 @@ const Header = () => {
           )}
           {!isAuthenticated && (
             <>
-              <Link to="/login" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Login</Link>
-              <Link to="/register" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Register</Link>
+              <Link to="/login" className="text-slate-600 dark:text-gray-300 hover:text-slate-800 dark:hover:text-slate-100 transition-colors font-medium">Login</Link>
+              <Link to="/register" className="bg-slate-700 hover:bg-slate-800 text-white px-4 py-2 rounded-lg transition-colors font-medium">Register</Link>
             </>
           )}
         </nav>

@@ -15,13 +15,16 @@ import {
   UserIcon,
   StarIcon,
   FireIcon,
-  ShieldCheckIcon
+  ShieldCheckIcon,
+  HeartIcon,
+  LightBulbIcon
 } from '@heroicons/react/24/outline';
 import { 
   ChevronUpIcon as ChevronUpSolidIcon,
   ChevronDownIcon as ChevronDownSolidIcon,
   BookmarkIcon as BookmarkSolidIcon,
-  StarIcon as StarSolidIcon
+  StarIcon as StarSolidIcon,
+  HeartIcon as HeartSolidIcon
 } from '@heroicons/react/24/solid';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../utils/api';
@@ -300,21 +303,29 @@ const PostDetail = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400"></div>
+      <div className="min-h-screen bg-slate-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-slate-300 border-t-slate-700 mx-auto mb-4"></div>
+          <p className="text-slate-600 dark:text-gray-400 font-medium">Loading post details...</p>
+        </div>
       </div>
     );
   }
 
   if (postError || !post) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Post Not Found</h1>
-          <p className="text-gray-600 dark:text-gray-300 mb-6">The post you're looking for doesn't exist or has been removed.</p>
+      <div className="min-h-screen bg-slate-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-8">
+          <div className="w-24 h-24 bg-slate-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
+            <LightBulbIcon className="h-12 w-12 text-slate-400 dark:text-gray-500" />
+          </div>
+          <h1 className="text-3xl font-bold text-slate-800 dark:text-white mb-4">Post Not Found</h1>
+          <p className="text-slate-600 dark:text-gray-300 mb-8 leading-relaxed">
+            The academic resource you're looking for doesn't exist or has been removed from our knowledge base.
+          </p>
           <button
             onClick={() => navigate('/feed')}
-            className="btn-primary"
+            className="bg-slate-700 hover:bg-slate-800 text-white px-6 py-3 rounded-lg font-medium transition-colors shadow-lg hover:shadow-xl"
           >
             Back to Feed
           </button>
@@ -324,176 +335,193 @@ const PostDetail = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Back Button */}
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 mb-6 transition-colors"
-        >
-          <ArrowLeftIcon className="h-5 w-5" />
-          <span>Back</span>
-        </button>
-
-        {/* Post Content */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
-          <div className="flex gap-4">
-            {/* Vote Section */}
-            <div className="flex flex-col items-center space-y-2">
-              <button
-                onClick={() => handleVote(1)}
-                className={`p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
-                  post.user_vote === 1 ? 'text-orange-500' : 'text-gray-400 dark:text-gray-500'
-                }`}
-                disabled={votePostMutation.isPending}
-              >
-                {post.user_vote === 1 ? (
-                  <ChevronUpSolidIcon className="h-8 w-8" />
-                ) : (
-                  <ChevronUpIcon className="h-8 w-8" />
-                )}
-              </button>
-              
-              <span className={`text-lg font-bold ${
-                post.user_vote === 1 ? 'text-orange-500' : 
-                post.user_vote === -1 ? 'text-blue-500' : 'text-gray-700 dark:text-gray-300'
-              }`}>
-                {formatNumber((post.upvotes || 0) - (post.downvotes || 0))}
-              </span>
-              
-              <button
-                onClick={() => handleVote(-1)}
-                className={`p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
-                  post.user_vote === -1 ? 'text-blue-500' : 'text-gray-400 dark:text-gray-500'
-                }`}
-                disabled={votePostMutation.isPending}
-              >
-                {post.user_vote === -1 ? (
-                  <ChevronDownSolidIcon className="h-8 w-8" />
-                ) : (
-                  <ChevronDownIcon className="h-8 w-8" />
-                )}
-              </button>
+    <div className="min-h-screen bg-slate-50 dark:bg-gray-900">
+      {/* Header with gradient */}
+      <div className="bg-gradient-to-r from-slate-700 to-slate-800 dark:from-slate-800 dark:to-slate-900 text-white">
+        <div className="max-w-6xl mx-auto px-4 py-6">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center space-x-2 text-slate-200 hover:text-white mb-4 transition-colors group"
+          >
+            <ArrowLeftIcon className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
+            <span className="font-medium">Back to Feed</span>
+          </button>
+          
+          <div className="flex items-center space-x-4">
+            <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center">
+              <span className="text-2xl">{post.department_icon || '📚'}</span>
             </div>
-
-            {/* Content */}
-            <div className="flex-1">
-              {/* Header */}
-              <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-4">
-                <span className="flex items-center">
-                  <span className="mr-1">{post.department_icon || '🏫'}</span>
-                  <span className="font-medium">r/{post.department_name || 'General'}</span>
-                </span>
-                <span className="mx-2">•</span>
-                <span>Posted by u/{post.author_username || 'Unknown'}</span>
-                <span className="mx-2">•</span>
+            <div>
+              <div className="flex items-center space-x-2 text-slate-200 mb-2">
+                <span className="font-semibold">r/{post.department_name || 'General'}</span>
+                <span>•</span>
+                <span>by u/{post.author_username || 'Unknown'}</span>
+                <span>•</span>
                 <span>{formatTimeAgo(post.created_at)}</span>
                 {post.is_verified && (
                   <>
-                    <span className="mx-2">•</span>
-                    <span className="text-green-600 dark:text-green-400 font-medium">✓ Verified</span>
+                    <span>•</span>
+                    <span className="text-emerald-300 font-semibold flex items-center gap-1">
+                      <ShieldCheckIcon className="h-4 w-4" />
+                      Verified
+                    </span>
                   </>
                 )}
               </div>
+              <h1 className="text-3xl font-bold text-white leading-tight">
+                {post.title}
+              </h1>
+            </div>
+          </div>
+        </div>
+      </div>
 
-              {/* Question Information */}
-              {(post.course_title || post.semester_name || post.question_title || post.question_no) && (
-                <div className="mb-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    {post.course_title && (
-                      <div className="flex items-center gap-1 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 px-3 py-1 rounded">
-                        <AcademicCapIcon className="h-4 w-4" />
-                        <span className="font-medium">{post.course_title}</span>
-                      </div>
-                    )}
-                    {post.semester_name && (
-                      <div className="flex items-center gap-1 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 px-3 py-1 rounded">
-                        <CalendarDaysIcon className="h-4 w-4" />
-                        <span className="font-medium">{post.semester_name}</span>
-                      </div>
-                    )}
-                    {post.question_year && (
-                      <div className="flex items-center gap-1 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 px-3 py-1 rounded">
-                        <span className="font-medium">{post.question_year}</span>
-                      </div>
-                    )}
-                    {post.question_no && (
-                      <div className="flex items-center gap-1 bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 px-3 py-1 rounded">
-                        <span className="font-medium">Q{post.question_no}</span>
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        {/* Main Content */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-slate-200 dark:border-gray-700 overflow-hidden mb-8">
+          <div className="p-8">
+            <div className="flex gap-6">
+              {/* Vote Section */}
+              <div className="flex flex-col items-center space-y-3 pt-2">
+                <button
+                  onClick={() => handleVote(1)}
+                  className={`p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-gray-700 transition-all duration-200 ${
+                    post.user_vote === 1 ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 shadow-lg' : 'text-slate-400 dark:text-gray-500'
+                  }`}
+                  disabled={votePostMutation.isPending}
+                >
+                  {post.user_vote === 1 ? (
+                    <ChevronUpSolidIcon className="h-8 w-8" />
+                  ) : (
+                    <ChevronUpIcon className="h-8 w-8" />
+                  )}
+                </button>
+                
+                <span className={`text-xl font-bold ${
+                  post.user_vote === 1 ? 'text-emerald-600' : 
+                  post.user_vote === -1 ? 'text-amber-600' : 'text-slate-700 dark:text-gray-300'
+                }`}>
+                  {formatNumber((post.upvotes || 0) - (post.downvotes || 0))}
+                </span>
+                
+                <button
+                  onClick={() => handleVote(-1)}
+                  className={`p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-gray-700 transition-all duration-200 ${
+                    post.user_vote === -1 ? 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 shadow-lg' : 'text-slate-400 dark:text-gray-500'
+                  }`}
+                  disabled={votePostMutation.isPending}
+                >
+                  {post.user_vote === -1 ? (
+                    <ChevronDownSolidIcon className="h-8 w-8" />
+                  ) : (
+                    <ChevronDownIcon className="h-8 w-8" />
+                  )}
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="flex-1">
+                {/* Question Information */}
+                {(post.course_title || post.semester_name || post.question_title || post.question_no) && (
+                  <div className="mb-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      {post.course_title && (
+                        <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-4 py-2 rounded-full border border-slate-200 dark:border-slate-600">
+                          <AcademicCapIcon className="h-4 w-4" />
+                          <span className="font-semibold">{post.course_title}</span>
+                        </div>
+                      )}
+                      {post.semester_name && (
+                        <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 px-4 py-2 rounded-full border border-blue-200 dark:border-blue-700">
+                          <CalendarDaysIcon className="h-4 w-4" />
+                          <span className="font-semibold">{post.semester_name}</span>
+                        </div>
+                      )}
+                      {post.question_year && (
+                        <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 px-4 py-2 rounded-full border border-emerald-200 dark:border-emerald-700">
+                          <span className="font-semibold">{post.question_year}</span>
+                        </div>
+                      )}
+                      {post.question_no && (
+                        <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 px-4 py-2 rounded-full border border-amber-200 dark:border-amber-700">
+                          <span className="font-semibold">Q{post.question_no}</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {post.question_title && (
+                      <div className="bg-slate-50 dark:bg-gray-700/50 rounded-xl p-4 border border-slate-200 dark:border-gray-600">
+                        <h2 className="text-lg font-semibold text-slate-800 dark:text-white mb-2">
+                          📋 Question: {post.question_title}
+                        </h2>
+                        {post.question_text && (
+                          <p className="text-slate-600 dark:text-gray-300 leading-relaxed">
+                            {post.question_text}
+                          </p>
+                        )}
                       </div>
                     )}
                   </div>
-                  {post.question_title && (
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                      Question: {post.question_title}
-                    </h2>
-                  )}
-                  {post.question_text && (
-                    <div className="text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg mb-4">
-                      {post.question_text}
+                )}
+
+                {/* Content */}
+                {post.content && (
+                  <div className="prose prose-slate dark:prose-invert max-w-none mb-6">
+                    <p className="text-slate-700 dark:text-gray-300 leading-relaxed text-lg">
+                      {post.content}
+                    </p>
+                  </div>
+                )}
+
+                {/* Tags */}
+                {post.tags && post.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-8">
+                    {post.tags.map((tag, index) => (
+                      <span
+                        key={index}
+                        className="inline-block bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm px-4 py-2 rounded-full font-medium border border-slate-200 dark:border-slate-600"
+                      >
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Enhanced Actions */}
+                <div className="flex items-center justify-between bg-slate-50 dark:bg-gray-700/50 rounded-xl p-4 border border-slate-200 dark:border-gray-600">
+                  <div className="flex items-center space-x-6">
+                    <div className="flex items-center space-x-2 text-slate-600 dark:text-gray-400">
+                      <ChatBubbleLeftIcon className="h-5 w-5" />
+                      <span className="font-medium">{formatNumber(solutions?.length || 0)} Solutions</span>
                     </div>
-                  )}
-                </div>
-              )}
 
-              {/* Title */}
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                {post.title}
-              </h1>
+                    <div className="flex items-center space-x-2 text-slate-600 dark:text-gray-400">
+                      <ArrowDownTrayIcon className="h-5 w-5" />
+                      <span className="font-medium">{formatNumber(post.download_count || 0)} Downloads</span>
+                    </div>
 
-              {/* Content */}
-              {post.content && (
-                <div className="prose dark:prose-invert max-w-none mb-6">
-                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                    {post.content}
-                  </p>
-                </div>
-              )}
+                    <div className="flex items-center space-x-2 text-slate-600 dark:text-gray-400">
+                      <EyeIcon className="h-5 w-5" />
+                      <span className="font-medium">{formatNumber(post.view_count || 0)} Views</span>
+                    </div>
+                  </div>
 
-              {/* Tags */}
-              {post.tags && post.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-6">
-                  {post.tags.map((tag, index) => (
-                    <span
-                      key={index}
-                      className="inline-block bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-sm px-3 py-1 rounded-full"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              {/* Actions */}
-              <div className="flex items-center space-x-6 text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-600 pt-4">
-                <div className="flex items-center space-x-2">
-                  <ChatBubbleLeftIcon className="h-5 w-5" />
-                  <span>{formatNumber(solutions?.length || 0)} Solutions</span>
-                </div>
-
-                <button
-                  onClick={handleSave}
-                  className={`flex items-center space-x-2 hover:text-blue-600 dark:hover:text-blue-400 transition-colors ${
-                    post.is_saved ? 'text-yellow-600 dark:text-yellow-400' : ''
-                  }`}
-                  disabled={savePostMutation.isPending}
-                >
-                  {post.is_saved ? (
-                    <BookmarkSolidIcon className="h-5 w-5" />
-                  ) : (
-                    <BookmarkIcon className="h-5 w-5" />
-                  )}
-                  <span>Save</span>
-                </button>
-
-                <div className="flex items-center space-x-2">
-                  <ArrowDownTrayIcon className="h-5 w-5" />
-                  <span>{formatNumber(post.download_count || 0)}</span>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <EyeIcon className="h-5 w-5" />
-                  <span>{formatNumber(post.view_count || 0)}</span>
+                  <button
+                    onClick={handleSave}
+                    className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
+                      post.is_saved 
+                        ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300 shadow-lg' 
+                        : 'bg-slate-200 text-slate-600 hover:bg-slate-300 dark:bg-gray-600 dark:text-gray-300 dark:hover:bg-gray-500'
+                    }`}
+                    disabled={savePostMutation.isPending}
+                  >
+                    {post.is_saved ? (
+                      <BookmarkSolidIcon className="h-5 w-5" />
+                    ) : (
+                      <BookmarkIcon className="h-5 w-5" />
+                    )}
+                    <span>{post.is_saved ? 'Saved' : 'Save Post'}</span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -501,347 +529,386 @@ const PostDetail = () => {
         </div>
 
         {/* Solutions Section */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-              Solutions ({solutions?.length || 0})
-            </h2>
-            {user && (
-              <button
-                onClick={() => setShowSolutionForm(!showSolutionForm)}
-                className="flex items-center space-x-2 bg-blue-600 dark:bg-blue-700 text-white px-4 py-2 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
-              >
-                <PlusIcon className="h-5 w-5" />
-                <span>Add Solution</span>
-              </button>
-            )}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-slate-200 dark:border-gray-700 overflow-hidden">
+          <div className="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800/50 dark:to-slate-700/50 p-6 border-b border-slate-200 dark:border-gray-700">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center">
+                  <LightBulbIcon className="h-6 w-6 text-slate-600 dark:text-slate-400" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-800 dark:text-white">
+                    💡 Solutions & Insights
+                  </h2>
+                  <p className="text-slate-600 dark:text-gray-400">
+                    {solutions?.length || 0} community solutions available
+                  </p>
+                </div>
+              </div>
+              
+              {user && (
+                <button
+                  onClick={() => setShowSolutionForm(!showSolutionForm)}
+                  className="flex items-center space-x-2 bg-slate-700 hover:bg-slate-800 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
+                >
+                  <PlusIcon className="h-5 w-5" />
+                  <span>Share Solution</span>
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* Add Solution Form */}
-          {showSolutionForm && (
-            <div className="mb-6 p-4 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700/50">
-              <textarea
-                value={newSolution}
-                onChange={(e) => setNewSolution(e.target.value)}
-                placeholder="Share your solution..."
-                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                rows="4"
-              />
-              <div className="flex justify-end space-x-3 mt-3">
-                <button
-                  onClick={() => setShowSolutionForm(false)}
-                  className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleAddSolution}
-                  disabled={addSolutionMutation.isPending || !newSolution.trim()}
-                  className="px-4 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {addSolutionMutation.isPending ? 'Adding...' : 'Add Solution'}
-                </button>
+          <div className="p-6">
+            {/* Add Solution Form */}
+            {showSolutionForm && (
+              <div className="mb-8 p-6 border-2 border-slate-200 dark:border-slate-600 rounded-xl bg-slate-50/50 dark:bg-slate-800/50">
+                <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">
+                  ✨ Share Your Solution
+                </h3>
+                <textarea
+                  value={newSolution}
+                  onChange={(e) => setNewSolution(e.target.value)}
+                  placeholder="Share your solution, explanation, or insights that could help fellow students..."
+                  className="w-full p-4 border border-slate-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent resize-none"
+                  rows="6"
+                />
+                <div className="flex justify-end space-x-3 mt-4">
+                  <button
+                    onClick={() => setShowSolutionForm(false)}
+                    className="px-6 py-2 text-slate-600 dark:text-gray-400 hover:text-slate-800 dark:hover:text-gray-200 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleAddSolution}
+                    disabled={addSolutionMutation.isPending || !newSolution.trim()}
+                    className="px-6 py-2 bg-slate-700 hover:bg-slate-800 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg hover:shadow-xl"
+                  >
+                    {addSolutionMutation.isPending ? 'Publishing...' : 'Publish Solution'}
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Solutions List */}
-          {solutionsLoading ? (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400 mx-auto"></div>
-              <p className="text-gray-600 dark:text-gray-400 mt-2">Loading solutions...</p>
-            </div>
-          ) : solutions && solutions.length > 0 ? (
-            <div className="space-y-6">
-              {solutions.map((solution, index) => (
-                <div
-                  key={solution.id || index}
-                  className={`border rounded-lg transition-all duration-200 hover:shadow-md ${
-                    solution.is_verified 
-                      ? 'border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-900/10' 
-                      : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800'
-                  }`}
-                >
-                  <div className="p-6">
-                    <div className="flex gap-4">
-                      {/* Vote Section */}
-                      <div className="flex flex-col items-center space-y-2">
-                        <button
-                          onClick={() => handleVoteSolution(solution.id, 1)}
-                          className={`p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
-                            solution.user_vote === 1 ? 'text-orange-500' : 'text-gray-400 dark:text-gray-500'
-                          }`}
-                          disabled={!user}
-                        >
-                          {solution.user_vote === 1 ? (
-                            <ChevronUpSolidIcon className="h-5 w-5" />
-                          ) : (
-                            <ChevronUpIcon className="h-5 w-5" />
-                          )}
-                        </button>
-                        
-                        <span className={`text-sm font-bold ${
-                          solution.user_vote === 1 ? 'text-orange-500' : 
-                          solution.user_vote === -1 ? 'text-blue-500' : 'text-gray-700 dark:text-gray-300'
-                        }`}>
-                          {formatNumber(solution.net_votes || 0)}
-                        </span>
-                        
-                        <button
-                          onClick={() => handleVoteSolution(solution.id, -1)}
-                          className={`p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
-                            solution.user_vote === -1 ? 'text-blue-500' : 'text-gray-400 dark:text-gray-500'
-                          }`}
-                          disabled={!user}
-                        >
-                          {solution.user_vote === -1 ? (
-                            <ChevronDownSolidIcon className="h-5 w-5" />
-                          ) : (
-                            <ChevronDownIcon className="h-5 w-5" />
-                          )}
-                        </button>
-                      </div>
-
-                      {/* Content */}
-                      <div className="flex-1">
-                        {/* Header */}
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center space-x-3">
-                            <div className="flex items-center space-x-2">
-                              <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
-                                <UserIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <span className="font-medium text-gray-900 dark:text-white">
-                                  {solution.author_username || 'Anonymous'}
-                                </span>
-                                {solution.author_contribution > 100 && (
-                                  <div className="flex items-center space-x-1">
-                                    <FireIcon className="h-3 w-3 text-orange-500" />
-                                    <span className="text-xs text-orange-600 dark:text-orange-400 font-medium">
-                                      {solution.author_contribution}
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                            <span className="text-sm text-gray-500 dark:text-gray-400">
-                              {formatTimeAgo(solution.created_at)}
-                            </span>
-                          </div>
+            {/* Solutions List */}
+            {solutionsLoading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-300 border-t-slate-700 mx-auto mb-4"></div>
+                <p className="text-slate-600 dark:text-gray-400 font-medium">Loading solutions...</p>
+              </div>
+            ) : solutions && solutions.length > 0 ? (
+              <div className="space-y-6">
+                {solutions.map((solution, index) => (
+                  <div
+                    key={solution.id || index}
+                    className={`border-2 rounded-xl transition-all duration-300 hover:shadow-lg ${
+                      solution.is_verified 
+                        ? 'border-emerald-200 dark:border-emerald-700 bg-emerald-50/30 dark:bg-emerald-900/10' 
+                        : 'border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-slate-300 dark:hover:border-slate-600'
+                    }`}
+                  >
+                    <div className="p-6">
+                      <div className="flex gap-4">
+                        {/* Vote Section */}
+                        <div className="flex flex-col items-center space-y-2">
+                          <button
+                            onClick={() => handleVoteSolution(solution.id, 1)}
+                            className={`p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-gray-700 transition-colors ${
+                              solution.user_vote === 1 ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20' : 'text-slate-400 dark:text-gray-500'
+                            }`}
+                            disabled={!user}
+                          >
+                            {solution.user_vote === 1 ? (
+                              <ChevronUpSolidIcon className="h-5 w-5" />
+                            ) : (
+                              <ChevronUpIcon className="h-5 w-5" />
+                            )}
+                          </button>
                           
-                          <div className="flex items-center space-x-2">
-                            {solution.is_verified && (
-                              <div className="flex items-center space-x-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 px-2 py-1 rounded text-xs">
-                                <ShieldCheckIcon className="h-3 w-3" />
-                                <span>Verified</span>
-                              </div>
+                          <span className={`text-sm font-bold ${
+                            solution.user_vote === 1 ? 'text-emerald-600' : 
+                            solution.user_vote === -1 ? 'text-amber-600' : 'text-slate-700 dark:text-gray-300'
+                          }`}>
+                            {formatNumber(solution.net_votes || 0)}
+                          </span>
+                          
+                          <button
+                            onClick={() => handleVoteSolution(solution.id, -1)}
+                            className={`p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-gray-700 transition-colors ${
+                              solution.user_vote === -1 ? 'text-amber-600 bg-amber-50 dark:bg-amber-900/20' : 'text-slate-400 dark:text-gray-500'
+                            }`}
+                            disabled={!user}
+                          >
+                            {solution.user_vote === -1 ? (
+                              <ChevronDownSolidIcon className="h-5 w-5" />
+                            ) : (
+                              <ChevronDownIcon className="h-5 w-5" />
                             )}
-                            {solution.rating > 0 && (
-                              <div className="flex items-center space-x-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 px-2 py-1 rounded text-xs">
-                                <StarIcon className="h-3 w-3" />
-                                <span>{solution.rating}</span>
+                          </button>
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1">
+                          {/* Enhanced Header */}
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-10 h-10 bg-gradient-to-r from-slate-600 to-slate-700 rounded-full flex items-center justify-center">
+                                <UserIcon className="h-5 w-5 text-white" />
                               </div>
-                            )}
-                            <button
-                              onClick={() => handleBookmarkSolution(solution.id)}
-                              className={`p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
-                                solution.is_bookmarked ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-400 dark:text-gray-500'
-                              }`}
-                              disabled={!user}
-                            >
-                              {solution.is_bookmarked ? (
-                                <BookmarkSolidIcon className="h-4 w-4" />
-                              ) : (
-                                <BookmarkIcon className="h-4 w-4" />
-                              )}
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Solution Title */}
-                        {solution.solution_title && (
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-                            {solution.solution_title}
-                          </h3>
-                        )}
-
-                        {/* Solution Content */}
-                        <div className="prose dark:prose-invert max-w-none mb-4">
-                          <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
-                            {solution.content}
-                          </p>
-                        </div>
-
-                        {/* Tags */}
-                        {solution.tags && solution.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-2 mb-4">
-                            {solution.tags.map((tag, tagIndex) => (
-                              <span
-                                key={tagIndex}
-                                className="inline-block bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs px-2 py-1 rounded"
-                              >
-                                {tag}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-
-                        {/* Solution Actions */}
-                        <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-600 pt-3">
-                          <div className="flex items-center space-x-1">
-                            <ChatBubbleLeftIcon className="h-4 w-4" />
-                            <span>{solution.comment_count || 0} comments</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <ChevronUpIcon className="h-4 w-4" />
-                            <span>{formatNumber(solution.upvotes || 0)}</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <ChevronDownIcon className="h-4 w-4" />
-                            <span>{formatNumber(solution.downvotes || 0)}</span>
-                          </div>
-                          {user && (
-                            <button
-                              onClick={() => toggleCommentForm(solution.id)}
-                              className="flex items-center space-x-1 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                            >
-                              <PlusIcon className="h-4 w-4" />
-                              <span>Add Comment</span>
-                            </button>
-                          )}
-                        </div>
-
-                        {/* Add Comment Form */}
-                        {showCommentForm[solution.id] && (
-                          <div className="mt-4 p-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700/50">
-                            <textarea
-                              value={newComment}
-                              onChange={(e) => setNewComment(e.target.value)}
-                              placeholder="Add a comment..."
-                              className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                              rows="3"
-                            />
-                            <div className="flex justify-end space-x-2 mt-2">
-                              <button
-                                onClick={() => toggleCommentForm(solution.id)}
-                                className="px-3 py-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
-                              >
-                                Cancel
-                              </button>
-                              <button
-                                onClick={() => handleAddComment(solution.id)}
-                                disabled={addCommentMutation.isPending || !newComment.trim()}
-                                className="px-3 py-1 text-sm bg-blue-600 dark:bg-blue-700 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                              >
-                                {addCommentMutation.isPending ? 'Adding...' : 'Comment'}
-                              </button>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Comments Section */}
-                        {solution.comments && solution.comments.length > 0 && (
-                          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
-                            <h4 className="font-medium text-gray-900 dark:text-white mb-3">
-                              Comments ({solution.comments.length})
-                            </h4>
-                            <div className="space-y-3">
-                              {solution.comments.map((comment) => (
-                                <div key={comment.id} className="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg">
-                                  <div className="flex items-center justify-between mb-2">
-                                    <div className="flex items-center space-x-2">
-                                      <span className="font-medium text-sm text-gray-900 dark:text-white">
-                                        {comment.author_username}
-                                      </span>
-                                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                                        {formatTimeAgo(comment.created_at)}
-                                      </span>
-                                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                                        {comment.net_votes} votes
-                                      </span>
-                                    </div>
-                                    {user && (
-                                      <button
-                                        onClick={() => handleReplyClick(comment.id)}
-                                        className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 transition-colors"
-                                      >
-                                        Reply
-                                      </button>
-                                    )}
-                                  </div>
-                                  <p className="text-sm text-gray-700 dark:text-gray-300">
-                                    {comment.content}
-                                  </p>
-                                  
-                                  {/* Reply Form */}
-                                  {replyTo === comment.id && (
-                                    <div className="mt-2 p-2 border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-800">
-                                      <textarea
-                                        value={replyText}
-                                        onChange={(e) => setReplyText(e.target.value)}
-                                        placeholder="Write a reply..."
-                                        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                                        rows="2"
-                                      />
-                                      <div className="flex justify-end space-x-2 mt-2">
-                                        <button
-                                          onClick={() => setReplyTo(null)}
-                                          className="px-2 py-1 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
-                                        >
-                                          Cancel
-                                        </button>
-                                        <button
-                                          onClick={() => handleAddReply(solution.id, comment.id)}
-                                          disabled={addCommentMutation.isPending || !replyText.trim()}
-                                          className="px-2 py-1 text-xs bg-blue-600 dark:bg-blue-700 text-white rounded hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                        >
-                                          {addCommentMutation.isPending ? 'Replying...' : 'Reply'}
-                                        </button>
-                                      </div>
-                                    </div>
-                                  )}
-                                  
-                                  {/* Replies */}
-                                  {comment.replies && comment.replies.length > 0 && (
-                                    <div className="mt-2 ml-4 space-y-2">
-                                      {comment.replies.map((reply) => (
-                                        <div key={reply.id} className="bg-gray-100 dark:bg-gray-600/50 p-2 rounded">
-                                          <div className="flex items-center space-x-2 mb-1">
-                                            <span className="font-medium text-xs text-gray-900 dark:text-white">
-                                              {reply.author_username}
-                                            </span>
-                                            <span className="text-xs text-gray-500 dark:text-gray-400">
-                                              {formatTimeAgo(reply.created_at)}
-                                            </span>
-                                          </div>
-                                          <p className="text-xs text-gray-700 dark:text-gray-300">
-                                            {reply.content}
-                                          </p>
-                                        </div>
-                                      ))}
+                              <div>
+                                <div className="flex items-center space-x-2">
+                                  <span className="font-bold text-slate-800 dark:text-white">
+                                    {solution.author_username || 'Anonymous Scholar'}
+                                  </span>
+                                  {solution.author_contribution > 100 && (
+                                    <div className="flex items-center space-x-1 bg-orange-100 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 px-2 py-1 rounded-full">
+                                      <FireIcon className="h-3 w-3" />
+                                      <span className="text-xs font-bold">{solution.author_contribution}</span>
                                     </div>
                                   )}
                                 </div>
-                              ))}
+                                <span className="text-sm text-slate-500 dark:text-gray-400">
+                                  {formatTimeAgo(solution.created_at)}
+                                </span>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center space-x-2">
+                              {solution.is_verified && (
+                                <div className="flex items-center space-x-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 px-3 py-1 rounded-full">
+                                  <ShieldCheckIcon className="h-4 w-4" />
+                                  <span className="text-sm font-semibold">Verified</span>
+                                </div>
+                              )}
+                              {solution.rating > 0 && (
+                                <div className="flex items-center space-x-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 px-3 py-1 rounded-full">
+                                  <StarIcon className="h-4 w-4" />
+                                  <span className="text-sm font-semibold">{solution.rating}</span>
+                                </div>
+                              )}
+                              <button
+                                onClick={() => handleBookmarkSolution(solution.id)}
+                                className={`p-2 rounded-lg transition-all duration-200 ${
+                                  solution.is_bookmarked 
+                                    ? 'text-amber-600 bg-amber-100 dark:bg-amber-900/20 dark:text-amber-300' 
+                                    : 'text-slate-400 dark:text-gray-500 hover:bg-slate-100 dark:hover:bg-gray-700'
+                                }`}
+                                disabled={!user}
+                              >
+                                {solution.is_bookmarked ? (
+                                  <BookmarkSolidIcon className="h-5 w-5" />
+                                ) : (
+                                  <BookmarkIcon className="h-5 w-5" />
+                                )}
+                              </button>
                             </div>
                           </div>
-                        )}
+
+                          {/* Solution Title */}
+                          {solution.solution_title && (
+                            <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-3">
+                              {solution.solution_title}
+                            </h3>
+                          )}
+
+                          {/* Solution Content */}
+                          <div className="prose prose-slate dark:prose-invert max-w-none mb-4">
+                            <p className="text-slate-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
+                              {solution.content}
+                            </p>
+                          </div>
+
+                          {/* Tags */}
+                          {solution.tags && solution.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mb-4">
+                              {solution.tags.map((tag, tagIndex) => (
+                                <span
+                                  key={tagIndex}
+                                  className="inline-block bg-slate-100 dark:bg-gray-600/50 text-slate-700 dark:text-gray-300 text-xs px-3 py-1 rounded-full font-medium"
+                                >
+                                  #{tag}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Solution Actions */}
+                          <div className="flex items-center justify-between bg-slate-50 dark:bg-gray-700/50 rounded-lg p-3">
+                            <div className="flex items-center space-x-4 text-sm text-slate-600 dark:text-gray-400">
+                              <div className="flex items-center space-x-1">
+                                <ChatBubbleLeftIcon className="h-4 w-4" />
+                                <span className="font-medium">{solution.comment_count || 0}</span>
+                              </div>
+                              <div className="flex items-center space-x-1">
+                                <ChevronUpIcon className="h-4 w-4" />
+                                <span className="font-medium">{formatNumber(solution.upvotes || 0)}</span>
+                              </div>
+                              <div className="flex items-center space-x-1">
+                                <ChevronDownIcon className="h-4 w-4" />
+                                <span className="font-medium">{formatNumber(solution.downvotes || 0)}</span>
+                              </div>
+                            </div>
+                            
+                            {user && (
+                              <button
+                                onClick={() => toggleCommentForm(solution.id)}
+                                className="flex items-center space-x-1 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 transition-colors font-medium"
+                              >
+                                <PlusIcon className="h-4 w-4" />
+                                <span>Comment</span>
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Add Comment Form */}
+                          {showCommentForm[solution.id] && (
+                            <div className="mt-4 p-4 border-2 border-slate-200 dark:border-slate-600 rounded-lg bg-slate-50/50 dark:bg-slate-800/50">
+                              <textarea
+                                value={newComment}
+                                onChange={(e) => setNewComment(e.target.value)}
+                                placeholder="Add a thoughtful comment..."
+                                className="w-full p-3 border border-slate-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent resize-none"
+                                rows="3"
+                              />
+                              <div className="flex justify-end space-x-2 mt-3">
+                                <button
+                                  onClick={() => toggleCommentForm(solution.id)}
+                                  className="px-4 py-2 text-sm text-slate-600 dark:text-gray-400 hover:text-slate-800 dark:hover:text-gray-200 transition-colors"
+                                >
+                                  Cancel
+                                </button>
+                                <button
+                                  onClick={() => handleAddComment(solution.id)}
+                                  disabled={addCommentMutation.isPending || !newComment.trim()}
+                                  className="px-4 py-2 text-sm bg-slate-700 hover:bg-slate-800 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                >
+                                  {addCommentMutation.isPending ? 'Adding...' : 'Add Comment'}
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Comments Section */}
+                          {solution.comments && solution.comments.length > 0 && (
+                            <div className="mt-6 pt-4 border-t border-slate-200 dark:border-gray-600">
+                              <h4 className="font-semibold text-slate-900 dark:text-white mb-4">
+                                Comments ({solution.comments.length})
+                              </h4>
+                              <div className="space-y-4">
+                                {solution.comments.map((comment) => (
+                                  <div key={comment.id} className="bg-slate-50 dark:bg-gray-700/50 p-4 rounded-lg">
+                                    <div className="flex items-center justify-between mb-2">
+                                      <div className="flex items-center space-x-2">
+                                        <div className="w-6 h-6 bg-slate-300 dark:bg-slate-600 rounded-full flex items-center justify-center">
+                                          <UserIcon className="h-3 w-3 text-slate-600 dark:text-slate-400" />
+                                        </div>
+                                        <span className="font-medium text-sm text-slate-900 dark:text-white">
+                                          {comment.author_username}
+                                        </span>
+                                        <span className="text-xs text-slate-500 dark:text-gray-400">
+                                          {formatTimeAgo(comment.created_at)}
+                                        </span>
+                                        {comment.net_votes > 0 && (
+                                          <span className="text-xs text-slate-500 dark:text-gray-400">
+                                            {comment.net_votes} votes
+                                          </span>
+                                        )}
+                                      </div>
+                                      {user && (
+                                        <button
+                                          onClick={() => handleReplyClick(comment.id)}
+                                          className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
+                                        >
+                                          Reply
+                                        </button>
+                                      )}
+                                    </div>
+                                    <p className="text-sm text-slate-700 dark:text-gray-300 leading-relaxed">
+                                      {comment.content}
+                                    </p>
+                                    
+                                    {/* Reply Form */}
+                                    {replyTo === comment.id && (
+                                      <div className="mt-3 p-3 border border-slate-200 dark:border-gray-600 rounded bg-white dark:bg-gray-800">
+                                        <textarea
+                                          value={replyText}
+                                          onChange={(e) => setReplyText(e.target.value)}
+                                          placeholder="Write a reply..."
+                                          className="w-full p-2 border border-slate-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-800 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent resize-none"
+                                          rows="2"
+                                        />
+                                        <div className="flex justify-end space-x-2 mt-2">
+                                          <button
+                                            onClick={() => setReplyTo(null)}
+                                            className="px-3 py-1 text-xs text-slate-600 dark:text-gray-400 hover:text-slate-800 dark:hover:text-gray-200 transition-colors"
+                                          >
+                                            Cancel
+                                          </button>
+                                          <button
+                                            onClick={() => handleAddReply(solution.id, comment.id)}
+                                            disabled={addCommentMutation.isPending || !replyText.trim()}
+                                            className="px-3 py-1 text-xs bg-slate-700 hover:bg-slate-800 text-white rounded font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                          >
+                                            {addCommentMutation.isPending ? 'Replying...' : 'Reply'}
+                                          </button>
+                                        </div>
+                                      </div>
+                                    )}
+                                    
+                                    {/* Replies */}
+                                    {comment.replies && comment.replies.length > 0 && (
+                                      <div className="mt-3 ml-4 space-y-2">
+                                        {comment.replies.map((reply) => (
+                                          <div key={reply.id} className="bg-slate-100 dark:bg-gray-600/50 p-3 rounded">
+                                            <div className="flex items-center space-x-2 mb-1">
+                                              <div className="w-4 h-4 bg-slate-300 dark:bg-slate-600 rounded-full flex items-center justify-center">
+                                                <UserIcon className="h-2 w-2 text-slate-600 dark:text-slate-400" />
+                                              </div>
+                                              <span className="font-medium text-xs text-slate-900 dark:text-white">
+                                                {reply.author_username}
+                                              </span>
+                                              <span className="text-xs text-slate-500 dark:text-gray-400">
+                                                {formatTimeAgo(reply.created_at)}
+                                              </span>
+                                            </div>
+                                            <p className="text-xs text-slate-700 dark:text-gray-300 leading-relaxed">
+                                              {reply.content}
+                                            </p>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-16">
+                <div className="w-20 h-20 bg-slate-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <LightBulbIcon className="h-10 w-10 text-slate-400 dark:text-gray-500" />
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <ChatBubbleLeftIcon className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-              <p className="text-gray-600 dark:text-gray-400 mb-2">No solutions yet</p>
-              <p className="text-sm text-gray-500 dark:text-gray-500">
-                Be the first to share your solution!
-              </p>
-            </div>
-          )}
+                <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">No Solutions Yet</h3>
+                <p className="text-slate-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+                  This academic question is waiting for brilliant minds like yours to share insights and solutions.
+                </p>
+                {user && (
+                  <button
+                    onClick={() => setShowSolutionForm(true)}
+                    className="bg-slate-700 hover:bg-slate-800 text-white px-6 py-3 rounded-lg font-medium transition-colors shadow-lg hover:shadow-xl"
+                  >
+                    Be the First to Help
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

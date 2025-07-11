@@ -1,5 +1,6 @@
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import toast from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
+import { api } from '../utils/api';
 
 const postsAPI = {
   getFeed: async ({ pageParam = 1, ...filters }) => {
@@ -9,43 +10,18 @@ const postsAPI = {
       ...filters
     });
     
-    const response = await fetch(`/api/posts/feed?${params}`);
-    if (!response.ok) {
-      throw new Error('Failed to fetch posts');
-    }
-    return response.json();
+    const response = await api.get(`/posts/feed?${params}`);
+    return response.data;
   },
 
   votePost: async (postId, voteType) => {
-    const token = localStorage.getItem('token');
-    const response = await fetch(`/api/posts/${postId}/vote`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ vote_type: voteType })
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to vote');
-    }
-    return response.json();
+    const response = await api.post(`/posts/${postId}/vote`, { voteType });
+    return response.data;
   },
 
   toggleSave: async (postId) => {
-    const token = localStorage.getItem('token');
-    const response = await fetch(`/api/posts/${postId}/save`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to save');
-    }
-    return response.json();
+    const response = await api.post(`/posts/${postId}/save`);
+    return response.data;
   }
 };
 
@@ -54,7 +30,7 @@ export const usePosts = (filters = {}) => {
     queryKey: ['posts', filters],
     queryFn: ({ pageParam }) => postsAPI.getFeed({ pageParam, ...filters }),
     getNextPageParam: (lastPage) => {
-      return lastPage.pagination.hasMore ? lastPage.pagination.page + 1 : undefined;
+      return lastPage.pagination?.hasMore ? lastPage.pagination.page + 1 : undefined;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     initialPageParam: 1
@@ -71,7 +47,7 @@ export const useVotePost = () => {
       toast.success('Vote recorded!');
     },
     onError: (error) => {
-      toast.error(error.message || 'Failed to vote');
+      toast.error(error.response?.data?.message || 'Failed to vote');
     }
   });
 };
@@ -83,10 +59,10 @@ export const useSavePost = () => {
     mutationFn: (postId) => postsAPI.toggleSave(postId),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
-      toast.success(data.saved ? 'Post saved!' : 'Post unsaved!');
+      toast.success(data.data?.isSaved ? 'Post saved!' : 'Post unsaved!');
     },
     onError: (error) => {
-      toast.error(error.message || 'Failed to save');
+      toast.error(error.response?.data?.message || 'Failed to save');
     }
   });
 };
