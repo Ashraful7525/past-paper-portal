@@ -65,6 +65,7 @@ class Post {
       }
 
       // Add student_id for user-specific data (votes, saves)
+      let studentIdParamIndex = paramIndex;
       if (student_id) {
         queryParams.push(student_id);
       }
@@ -103,8 +104,8 @@ class Post {
         LEFT JOIN public.post_tags pt ON p.post_id = pt.post_id
         LEFT JOIN public.tags t ON pt.tag_id = t.tag_id
         LEFT JOIN public.comments cm ON p.question_id = cm.solution_id
-        ${student_id ? `LEFT JOIN public.post_votes pv ON p.post_id = pv.post_id AND pv.student_id = $${paramIndex}` : ''}
-        ${student_id ? `LEFT JOIN public.saved_posts sp ON p.post_id = sp.post_id AND sp.student_id = $${paramIndex}` : ''}
+        ${student_id ? `LEFT JOIN public.post_votes pv ON p.post_id = pv.post_id AND pv.student_id = ${studentIdParamIndex}` : ''}
+        ${student_id ? `LEFT JOIN public.saved_posts sp ON p.post_id = sp.post_id AND sp.student_id = ${studentIdParamIndex}` : ''}
         WHERE 1=1 
         ${timeFilter}
         ${searchFilter}

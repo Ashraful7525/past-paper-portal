@@ -3,11 +3,12 @@ console.log('✅ posts.js routes loaded');
 import express from 'express';
 import postsController from '../controllers/postsController.js';
 import { authMiddleware } from '../middleware/auth.js';
+import { authOptionalMiddleware } from '../middleware/authOptional.js';
 
 const router = express.Router();
 
 // Public routes
-router.get('/feed', postsController.getFeed);
+router.get('/feed', authOptionalMiddleware, postsController.getFeed);
 router.get('/departments', postsController.getDepartments);
 router.get('/stats', postsController.getStats);
 

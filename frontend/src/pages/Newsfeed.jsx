@@ -64,42 +64,68 @@ const PostCard = ({ post, onVote, onSave, onView }) => {
   const [downvotes, setDownvotes] = useState(post.downvotes || 0);
   const [isVoting, setIsVoting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [hasBeenViewed, setHasBeenViewed] = useState(false);
+  const cardRef = React.useRef(null);
+
+  useEffect(() => {
+    if (!cardRef.current || hasBeenViewed) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setHasBeenViewed(true);
+          apiService.trackView(post.post_id)
+            .then(() => {
+              onView && onView(post.post_id);
+            })
+            .catch(error => {
+              console.error('Error tracking view:', error);
+              setHasBeenViewed(false); // Allow retry on error
+            });
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.5 } // Trigger when 50% of the element is visible
+    );
+
+    observer.observe(cardRef.current);
+
+    return () => observer.disconnect();
+  }, [post.post_id, hasBeenViewed, onView]);
 
   const handleVote = async (voteType) => {
     if (isVoting) return;
-    
+
+    const originalUserVote = userVote;
+    const originalUpvotes = upvotes;
+    const originalDownvotes = downvotes;
+
     setIsVoting(true);
     try {
       const newVote = userVote === voteType ? 0 : voteType;
       
-      // Optimistic update
-      if (userVote === 1 && newVote === 0) {
-        setUpvotes(prev => prev - 1);
-      } else if (userVote === -1 && newVote === 0) {
-        setDownvotes(prev => prev - 1);
-      } else if (userVote === 0 && newVote === 1) {
-        setUpvotes(prev => prev + 1);
-      } else if (userVote === 0 && newVote === -1) {
-        setDownvotes(prev => prev + 1);
-      } else if (userVote === 1 && newVote === -1) {
-        setUpvotes(prev => prev - 1);
-        setDownvotes(prev => prev + 1);
-      } else if (userVote === -1 && newVote === 1) {
-        setDownvotes(prev => prev - 1);
-        setUpvotes(prev => prev + 1);
-      }
-      
+      // Optimistic update for the button state
       setUserVote(newVote);
       
       // API call
-      await apiService.votePost(post.post_id, newVote);
-      onVote && onVote(post.post_id, newVote);
+      const result = await apiService.votePost(post.post_id, newVote);
+      
+      // Update counts from the server's response
+      if (result.data) {
+        setUpvotes(result.data.upvotes);
+        setDownvotes(result.data.downvotes);
+        onVote && onVote(post.post_id, newVote, result.data.upvotes, result.data.downvotes);
+      } else {
+        // Fallback if data object is not in response
+        throw new Error("Invalid response from server");
+      }
+
     } catch (error) {
       console.error('Error voting:', error);
       // Revert optimistic update on error
-      setUserVote(post.user_vote || 0);
-      setUpvotes(post.upvotes || 0);
-      setDownvotes(post.downvotes || 0);
+      setUserVote(originalUserVote);
+      setUpvotes(originalUpvotes);
+      setDownvotes(originalDownvotes);
     } finally {
       setIsVoting(false);
     }
@@ -125,15 +151,6 @@ const PostCard = ({ post, onVote, onSave, onView }) => {
     }
   };
 
-  const handleView = async () => {
-    try {
-      await apiService.trackView(post.post_id);
-      onView && onView(post.post_id);
-    } catch (error) {
-      console.error('Error tracking view:', error);
-    }
-  };
-
   const formatTimeAgo = (dateString) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -148,7 +165,7 @@ const PostCard = ({ post, onVote, onSave, onView }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-4 hover:shadow-md transition-shadow">
+    <div ref={cardRef} className="bg-white rounded-lg shadow-sm border border-gray-200 mb-4 hover:shadow-md transition-shadow">
       {/* Post Header */}
       <div className="p-4 border-b border-gray-100">
         <div className="flex items-center justify-between mb-3">
@@ -178,8 +195,7 @@ const PostCard = ({ post, onVote, onSave, onView }) => {
         
         {/* Title and Preview */}
         <h2 
-          className="text-lg font-semibold text-gray-900 mb-2 hover:text-blue-600 cursor-pointer"
-          onClick={handleView}
+          className="text-lg font-semibold text-gray-900 mb-2"
         >
           {post.title}
         </h2>
@@ -383,8 +399,11 @@ const Newsfeed = () => {
         sort: sortBy,
         time: timeRange,
         department: selectedDepartment,
-        search: searchQuery || undefined
       };
+
+      if (searchQuery) {
+        params.search = searchQuery;
+      }
 
       const response = await apiService.getFeedPosts(params);
       
@@ -434,11 +453,10 @@ const Newsfeed = () => {
     }
   };
 
-  const handlePostVote = (postId, newVote) => {
-    // Update local state if needed
+  const handlePostVote = (postId, newVote, upvotes, downvotes) => {
     setPosts(prev => prev.map(post => 
       post.post_id === postId 
-        ? { ...post, user_vote: newVote }
+        ? { ...post, user_vote: newVote, upvotes, downvotes }
         : post
     ));
   };
@@ -467,22 +485,22 @@ const Newsfeed = () => {
       <div className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10 w-full">
         <div className="w-full px-4 py-4">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-bold text-gray-900">📚 StudyHub</h1>
-            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-              Upload Paper
-            </button>
-          </div>
-          
-          {/* Search Bar */}
-          <div className="relative mb-4">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search past papers, solutions, or topics..."
-              value={searchQuery}
-              onChange={handleSearch}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+            <h1 className="text-2xl font-bold text-gray-900">Newsfeed</h1>
+            <div className="flex items-center space-x-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  value={searchQuery}
+                  onChange={handleSearch}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                Upload Paper
+              </button>
+            </div>
           </div>
           
           {/* Filters */}
@@ -500,9 +518,6 @@ const Newsfeed = () => {
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
-                    {sort === 'hot' && <TrendingUp className="h-4 w-4 mr-1 inline" />}
-                    {sort === 'new' && <Clock className="h-4 w-4 mr-1 inline" />}
-                    {sort === 'top' && <Award className="h-4 w-4 mr-1 inline" />}
                     {sort.charAt(0).toUpperCase() + sort.slice(1)}
                   </button>
                 ))}

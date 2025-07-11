@@ -8,10 +8,17 @@ const postsController = {
         page = 1,
         limit = 20,
         sort = 'hot',
-        time = 'all',
-        department = null,
-        search = null
+        time = 'all'
       } = req.query;
+      let { search = null, department = null } = req.query;
+
+      // Sanitize search and department parameters
+      if (search === 'null' || search === '' || search === 'undefined') {
+        search = null;
+      }
+      if (department === 'null' || department === '') {
+        department = null;
+      }
 
       const student_id = req.user?.student_id || null;
       const offset = (page - 1) * limit;
