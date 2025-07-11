@@ -64,10 +64,21 @@ class Post {
         paramIndex++;
       }
 
-      // Add student_id for user-specific data (votes, saves)
-      let studentIdParamIndex = paramIndex;
+      // Build user-specific joins and selects
+      let userVoteJoin = '';
+      let userSaveJoin = '';
+      let userVoteSelect = '0 as user_vote,';
+      let userSaveSelect = 'false as is_saved,';
+      let groupByUserColumns = '';
+      
       if (student_id) {
+        userVoteJoin = `LEFT JOIN public.post_votes pv ON p.post_id = pv.post_id AND pv.student_id = $${paramIndex}`;
+        userSaveJoin = `LEFT JOIN public.saved_posts sp ON p.post_id = sp.post_id AND sp.student_id = $${paramIndex}`;
+        userVoteSelect = `COALESCE(pv.vote_type, 0) as user_vote,`;
+        userSaveSelect = `CASE WHEN sp.post_id IS NOT NULL THEN true ELSE false END as is_saved,`;
+        groupByUserColumns = ', pv.vote_type, sp.post_id';
         queryParams.push(student_id);
+        paramIndex++;
       }
 
       const query = `
@@ -91,10 +102,14 @@ class Post {
           c.course_title,
           s.semester_name,
           q.is_verified,
-          ${student_id ? `COALESCE(pv.vote_type, 0) as user_vote,` : '0 as user_vote,'}
-          ${student_id ? `CASE WHEN sp.post_id IS NOT NULL THEN true ELSE false END as is_saved,` : 'false as is_saved,'}
+          q.question_title,
+          q.question_text,
+          q.question_no,
+          q.year as question_year,
+          ${userVoteSelect}
+          ${userSaveSelect}
           ARRAY_AGG(DISTINCT t.tag_name) FILTER (WHERE t.tag_name IS NOT NULL) as tags,
-          COUNT(DISTINCT cm.comment_id) as comment_count
+          COUNT(DISTINCT sol.solution_id) as solution_count
         FROM public.posts p
         LEFT JOIN public.users u ON p.student_id = u.student_id
         LEFT JOIN public.departments d ON p.department_id = d.department_id
@@ -103,15 +118,14 @@ class Post {
         LEFT JOIN public.semesters s ON q.semester_id = s.semester_id
         LEFT JOIN public.post_tags pt ON p.post_id = pt.post_id
         LEFT JOIN public.tags t ON pt.tag_id = t.tag_id
-        LEFT JOIN public.comments cm ON p.question_id = cm.solution_id
-        ${student_id ? `LEFT JOIN public.post_votes pv ON p.post_id = pv.post_id AND pv.student_id = ${studentIdParamIndex}` : ''}
-        ${student_id ? `LEFT JOIN public.saved_posts sp ON p.post_id = sp.post_id AND sp.student_id = ${studentIdParamIndex}` : ''}
+        LEFT JOIN public.solutions sol ON p.question_id = sol.question_id
+        ${userVoteJoin}
+        ${userSaveJoin}
         WHERE 1=1 
         ${timeFilter}
         ${searchFilter}
         ${departmentFilter}
-        GROUP BY p.post_id, u.username, d.department_name, d.icon, c.course_title, s.semester_name, q.is_verified
-        ${student_id ? ', pv.vote_type, sp.post_id' : ''}
+        GROUP BY p.post_id, u.username, d.department_name, d.icon, c.course_title, s.semester_name, q.is_verified, q.question_title, q.question_text, q.question_no, q.year${groupByUserColumns}
         ${orderClause}
         LIMIT $1 OFFSET $2
       `;
@@ -121,109 +135,67 @@ class Post {
 
     } catch (error) {
       console.error('Error fetching feed posts:', error);
+      console.error('Query error details:', error.message);
+      console.error('Error stack:', error.stack);
       throw new Error('Database query failed');
     } finally {
       client.release();
     }
   }
 
-  static async votePost(postId, studentId, voteType) {
+  static async getPostById(postId, studentId = null) {
     const client = await pool.connect();
     try {
-      await client.query('BEGIN');
-
-      // Check if user already voted
-      const existingVote = await client.query(
-        'SELECT vote_type FROM public.post_votes WHERE post_id = $1 AND student_id = $2',
-        [postId, studentId]
-      );
-
-      let oldVoteType = 0;
-      if (existingVote.rows.length > 0) {
-        oldVoteType = existingVote.rows[0].vote_type;
-      }
-
-      if (voteType === 0) {
-        // Remove vote
-        await client.query(
-          'DELETE FROM public.post_votes WHERE post_id = $1 AND student_id = $2',
-          [postId, studentId]
-        );
-      } else {
-        // Insert or update vote
-        await client.query(`
-          INSERT INTO public.post_votes (post_id, student_id, vote_type)
-          VALUES ($1, $2, $3)
-          ON CONFLICT (post_id, student_id) 
-          DO UPDATE SET vote_type = $3, created_at = NOW()
-        `, [postId, studentId, voteType]);
-      }
-
-      // Update post upvotes/downvotes counts
-      const voteCountQuery = `
+      const query = `
         SELECT 
-          COUNT(*) FILTER (WHERE vote_type = 1) as upvotes,
-          COUNT(*) FILTER (WHERE vote_type = -1) as downvotes
-        FROM public.post_votes 
-        WHERE post_id = $1
+          p.post_id,
+          p.title,
+          p.content,
+          p.preview_text,
+          p.file_url,
+          p.file_size,
+          p.upvotes,
+          p.downvotes,
+          p.view_count,
+          p.download_count,
+          p.is_featured,
+          p.created_at,
+          p.updated_at,
+          u.username as author_username,
+          d.department_name,
+          d.icon as department_icon,
+          c.course_title,
+          s.semester_name,
+          q.is_verified,
+          q.question_title,
+          q.question_text,
+          q.question_no,
+          q.year as question_year,
+          ${studentId ? `COALESCE(pv.vote_type, 0) as user_vote,` : '0 as user_vote,'}
+          ${studentId ? `CASE WHEN sp.post_id IS NOT NULL THEN true ELSE false END as is_saved,` : 'false as is_saved,'}
+          ARRAY_AGG(DISTINCT t.tag_name) FILTER (WHERE t.tag_name IS NOT NULL) as tags
+        FROM public.posts p
+        LEFT JOIN public.users u ON p.student_id = u.student_id
+        LEFT JOIN public.departments d ON p.department_id = d.department_id
+        LEFT JOIN public.questions q ON p.question_id = q.question_id
+        LEFT JOIN public.courses c ON q.course_id = c.course_id
+        LEFT JOIN public.semesters s ON q.semester_id = s.semester_id
+        LEFT JOIN public.post_tags pt ON p.post_id = pt.post_id
+        LEFT JOIN public.tags t ON pt.tag_id = t.tag_id
+        ${studentId ? `LEFT JOIN public.post_votes pv ON p.post_id = pv.post_id AND pv.student_id = $2` : ''}
+        ${studentId ? `LEFT JOIN public.saved_posts sp ON p.post_id = sp.post_id AND sp.student_id = $2` : ''}
+        WHERE p.post_id = $1
+        GROUP BY p.post_id, u.username, d.department_name, d.icon, c.course_title, s.semester_name, q.is_verified, q.question_title, q.question_text, q.question_no, q.year
+        ${studentId ? ', pv.vote_type, sp.post_id' : ''}
       `;
-      const voteCountResult = await client.query(voteCountQuery, [postId]);
-      const { upvotes, downvotes } = voteCountResult.rows[0];
 
-      await client.query(
-        'UPDATE public.posts SET upvotes = $1, downvotes = $2 WHERE post_id = $3',
-        [upvotes, downvotes, postId]
-      );
-
-      await client.query('COMMIT');
-
-      return {
-        upvotes: parseInt(upvotes),
-        downvotes: parseInt(downvotes),
-        userVote: voteType
-      };
-
-    } catch (error) {
-      await client.query('ROLLBACK');
-      console.error('Error voting on post:', error);
-      throw new Error('Failed to vote on post');
-    } finally {
-      client.release();
-    }
-  }
-
-  static async toggleSavePost(postId, studentId) {
-    const client = await pool.connect();
-    try {
-      // Check if post is already saved
-      const existingSave = await client.query(
-        'SELECT save_id FROM public.saved_posts WHERE post_id = $1 AND student_id = $2',
-        [postId, studentId]
-      );
-
-      let isSaved = false;
+      const queryParams = studentId ? [postId, studentId] : [postId];
+      const result = await client.query(query, queryParams);
       
-      if (existingSave.rows.length > 0) {
-        // Remove save
-        await client.query(
-          'DELETE FROM public.saved_posts WHERE post_id = $1 AND student_id = $2',
-          [postId, studentId]
-        );
-        isSaved = false;
-      } else {
-        // Add save
-        await client.query(
-          'INSERT INTO public.saved_posts (post_id, student_id) VALUES ($1, $2)',
-          [postId, studentId]
-        );
-        isSaved = true;
-      }
-
-      return { isSaved };
-
+      return result.rows.length > 0 ? result.rows[0] : null;
     } catch (error) {
-      console.error('Error toggling save post:', error);
-      throw new Error('Failed to save/unsave post');
+      console.error('Error fetching post by ID:', error);
+      throw new Error('Database query failed');
     } finally {
       client.release();
     }
@@ -246,59 +218,76 @@ class Post {
     }
   }
 
-  static async getDepartmentStats() {
+  static async createPost(postData) {
     const client = await pool.connect();
     try {
-      const query = `
-        SELECT 
-          d.department_id,
-          d.department_name,
-          d.icon,
-          COUNT(p.post_id) as post_count,
-          COUNT(DISTINCT q.question_id) as question_count,
-          COUNT(DISTINCT s.solution_id) as solution_count,
-          COALESCE(
-            ROUND(
-              ((COUNT(p.post_id) - LAG(COUNT(p.post_id)) OVER (ORDER BY d.department_id)) / 
-               NULLIF(LAG(COUNT(p.post_id)) OVER (ORDER BY d.department_id), 0) * 100), 0
-            ), 0
-          ) as trend_percentage
-        FROM public.departments d
-        LEFT JOIN public.posts p ON d.department_id = p.department_id
-        LEFT JOIN public.questions q ON p.question_id = q.question_id
-        LEFT JOIN public.solutions s ON q.question_id = s.question_id
-        GROUP BY d.department_id, d.department_name, d.icon
-        ORDER BY post_count DESC
+      await client.query('BEGIN');
+
+      const { title, content, preview_text, file_url, file_size, student_id, department_id, question_id } = postData;
+
+      const insertQuery = `
+        INSERT INTO public.posts (title, content, preview_text, file_url, file_size, student_id, department_id, question_id, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+        RETURNING post_id, title, content, preview_text, file_url, file_size, created_at, updated_at
       `;
-      
-      const result = await client.query(query);
-      return result.rows.map(row => ({
-        ...row,
-        trend: row.trend_percentage > 0 ? `+${row.trend_percentage}%` : `${row.trend_percentage}%`
-      }));
+
+      const result = await client.query(insertQuery, [
+        title, content, preview_text, file_url, file_size, student_id, department_id, question_id
+      ]);
+
+      await client.query('COMMIT');
+      return result.rows[0];
     } catch (error) {
-      console.error('Error fetching department stats:', error);
-      throw new Error('Failed to fetch department statistics');
+      await client.query('ROLLBACK');
+      console.error('Error creating post:', error);
+      throw new Error('Failed to create post');
     } finally {
       client.release();
     }
   }
 
-  static async getGlobalStats() {
+  static async updatePost(postId, postData) {
     const client = await pool.connect();
     try {
-      const query = `
-        SELECT 
-          (SELECT COUNT(*) FROM public.posts) as total_posts,
-          (SELECT COUNT(DISTINCT student_id) FROM public.posts WHERE created_at >= NOW() - INTERVAL '1 month') as active_users,
-          (SELECT COUNT(*) FROM public.solutions) as total_solutions
+      const { title, content, preview_text } = postData;
+
+      const updateQuery = `
+        UPDATE public.posts 
+        SET title = $1, content = $2, preview_text = $3, updated_at = NOW()
+        WHERE post_id = $4
+        RETURNING post_id, title, content, preview_text, updated_at
       `;
+
+      const result = await client.query(updateQuery, [title, content, preview_text, postId]);
       
-      const result = await client.query(query);
-      return result.rows[0];
+      return result.rows.length > 0 ? result.rows[0] : null;
     } catch (error) {
-      console.error('Error fetching global stats:', error);
-      throw new Error('Failed to fetch global statistics');
+      console.error('Error updating post:', error);
+      throw new Error('Failed to update post');
+    } finally {
+      client.release();
+    }
+  }
+
+  static async deletePost(postId) {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      // Delete related data first
+      await client.query('DELETE FROM public.post_votes WHERE post_id = $1', [postId]);
+      await client.query('DELETE FROM public.saved_posts WHERE post_id = $1', [postId]);
+      await client.query('DELETE FROM public.post_tags WHERE post_id = $1', [postId]);
+      
+      // Delete the post
+      const result = await client.query('DELETE FROM public.posts WHERE post_id = $1 RETURNING post_id', [postId]);
+      
+      await client.query('COMMIT');
+      return result.rows.length > 0;
+    } catch (error) {
+      await client.query('ROLLBACK');
+      console.error('Error deleting post:', error);
+      throw new Error('Failed to delete post');
     } finally {
       client.release();
     }

@@ -1,11 +1,14 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   ChevronUpIcon, 
   ChevronDownIcon, 
   ChatBubbleLeftIcon,
   BookmarkIcon,
   ArrowDownTrayIcon,
-  EyeIcon 
+  EyeIcon,
+  AcademicCapIcon,
+  CalendarDaysIcon
 } from '@heroicons/react/24/outline';
 import { 
   ChevronUpIcon as ChevronUpSolidIcon,
@@ -14,13 +17,16 @@ import {
 } from '@heroicons/react/24/solid';
 import { useVotePost, useSavePost } from '../hooks/usePosts';
 import { useAuth } from '../contexts/AuthContext';
+import { toast } from 'react-hot-toast';
 
 const PostCard = ({ post }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const votePostMutation = useVotePost();
   const savePostMutation = useSavePost();
 
-  const handleVote = (voteType) => {
+  const handleVote = (voteType, e) => {
+    e.stopPropagation(); // Prevent card click when voting
     if (!user) {
       toast.error('Please login to vote');
       return;
@@ -31,12 +37,22 @@ const PostCard = ({ post }) => {
     votePostMutation.mutate({ postId: post.post_id, voteType: newVoteType });
   };
 
-  const handleSave = () => {
+  const handleSave = (e) => {
+    e.stopPropagation(); // Prevent card click when saving
     if (!user) {
       toast.error('Please login to save posts');
       return;
     }
     savePostMutation.mutate(post.post_id);
+  };
+
+  const handleCardClick = () => {
+    navigate(`/post/${post.post_id}`);
+  };
+
+  const handleCommentsClick = (e) => {
+    e.stopPropagation(); // Prevent card click when clicking comments
+    navigate(`/post/${post.post_id}`);
   };
 
   const formatNumber = (num) => {
@@ -59,12 +75,15 @@ const PostCard = ({ post }) => {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-4 hover:shadow-md dark:hover:shadow-gray-900/20 transition-shadow">
+    <div 
+      className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-4 hover:shadow-md dark:hover:shadow-gray-900/20 transition-shadow cursor-pointer"
+      onClick={handleCardClick}
+    >
       <div className="flex gap-3">
         {/* Vote Section */}
         <div className="flex flex-col items-center space-y-1 pt-1">
           <button
-            onClick={() => handleVote(1)}
+            onClick={(e) => handleVote(1, e)}
             className={`p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
               post.user_vote === 1 ? 'text-orange-500' : 'text-gray-400 dark:text-gray-500'
             }`}
@@ -85,7 +104,7 @@ const PostCard = ({ post }) => {
           </span>
           
           <button
-            onClick={() => handleVote(-1)}
+            onClick={(e) => handleVote(-1, e)}
             className={`p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
               post.user_vote === -1 ? 'text-blue-500' : 'text-gray-400 dark:text-gray-500'
             }`}
@@ -111,7 +130,53 @@ const PostCard = ({ post }) => {
             <span>Posted by u/{post.author_username || 'Unknown'}</span>
             <span className="mx-2">•</span>
             <span>{formatTimeAgo(post.created_at)}</span>
+            {post.is_verified && (
+              <>
+                <span className="mx-2">•</span>
+                <span className="text-green-600 dark:text-green-400 font-medium">✓ Verified</span>
+              </>
+            )}
           </div>
+
+          {/* Question Information */}
+          {(post.course_title || post.semester_name || post.question_title || post.question_no) && (
+            <div className="mb-3">
+              <div className="flex items-center gap-2 mb-2 text-xs">
+                {post.course_title && (
+                  <div className="flex items-center gap-1 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 px-2 py-1 rounded">
+                    <AcademicCapIcon className="h-3 w-3" />
+                    <span className="font-medium">{post.course_title}</span>
+                  </div>
+                )}
+                {post.semester_name && (
+                  <div className="flex items-center gap-1 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 px-2 py-1 rounded">
+                    <CalendarDaysIcon className="h-3 w-3" />
+                    <span className="font-medium">{post.semester_name}</span>
+                  </div>
+                )}
+                {post.question_year && (
+                  <div className="flex items-center gap-1 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 px-2 py-1 rounded">
+                    <span className="font-medium">{post.question_year}</span>
+                  </div>
+                )}
+                {post.question_no && (
+                  <div className="flex items-center gap-1 bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 px-2 py-1 rounded">
+                    <span className="font-medium">Q{post.question_no}</span>
+                  </div>
+                )}
+              </div>
+              {post.question_title && (
+                <div className="text-sm text-gray-600 dark:text-gray-400 font-medium mb-1">
+                  Question: {post.question_title}
+                </div>
+              )}
+              {post.question_text && (
+                <div className="text-sm text-gray-500 dark:text-gray-500 line-clamp-2 bg-gray-50 dark:bg-gray-700/50 p-2 rounded">
+                  {post.question_text}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Title */}
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2">
@@ -146,9 +211,12 @@ const PostCard = ({ post }) => {
 
           {/* Actions */}
           <div className="flex items-center space-x-4 text-gray-500 dark:text-gray-400">
-            <button className="flex items-center space-x-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded transition-colors">
+            <button 
+              onClick={handleCommentsClick}
+              className="flex items-center space-x-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded transition-colors"
+            >
               <ChatBubbleLeftIcon className="h-4 w-4" />
-              <span>{formatNumber(post.comment_count || 0)} Comments</span>
+              <span>{formatNumber(post.solution_count || 0)} Solutions</span>
             </button>
 
             <button

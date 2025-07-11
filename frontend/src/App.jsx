@@ -14,6 +14,7 @@ import Register from './pages/Register';
 import UserDashboard from './pages/UserDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import Profile from './pages/Profile';
+import PostDetail from './pages/PostDetail';
 import './App.css';
 
 const queryClient = new QueryClient({
@@ -71,6 +72,11 @@ function App() {
               <Route path="/feed" element={
                 <Layout>
                   <Newsfeed />
+                </Layout>
+              } />
+              <Route path="/post/:postId" element={
+                <Layout>
+                  <PostDetail />
                 </Layout>
               } />
               

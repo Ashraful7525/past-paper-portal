@@ -6,6 +6,8 @@ import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
 import authRoutes from './routes/auth.js';
 import postsRoutes from './routes/posts.js';
+import solutionsRoutes from './routes/solutions.js';
+import commentsRoutes from './routes/comments.js';
 import { testConnection } from './config/db.js'; // FIXED: Added config/ path
 
 dotenv.config();
@@ -77,6 +79,8 @@ app.get('/', (req, res) => {
     endpoints: {
       auth: '/api/auth',
       posts: '/api/posts',
+      solutions: '/api/solutions',
+      comments: '/api/comments',
       health: '/health'
     }
   });
@@ -85,6 +89,8 @@ app.get('/', (req, res) => {
 // Mount routers under /api prefix
 app.use('/api/auth', authRoutes);
 app.use('/api/posts', postsRoutes);
+app.use('/api/solutions', solutionsRoutes);
+app.use('/api/comments', commentsRoutes);
 
 // --- ERROR HANDLING ---
 // Global error handler
@@ -130,4 +136,6 @@ app.listen(PORT, () => {
   console.log(`🔗 API URL: http://localhost:${PORT}`);
   console.log(`🔐 Auth endpoints: http://localhost:${PORT}/api/auth`);
   console.log(`📝 Posts endpoints: http://localhost:${PORT}/api/posts`);
+  console.log(`💡 Solutions endpoints: http://localhost:${PORT}/api/solutions`);
+  console.log(`💬 Comments endpoints: http://localhost:${PORT}/api/comments`);
 });

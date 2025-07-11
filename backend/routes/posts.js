@@ -12,12 +12,17 @@ router.get('/feed', authOptionalMiddleware, postsController.getFeed);
 router.get('/departments', postsController.getDepartments);
 router.get('/stats', postsController.getStats);
 
+// Individual post routes
+router.get('/:post_id', authOptionalMiddleware, postsController.getPost);
+router.get('/:post_id/solutions', postsController.getSolutions);
+
 // Semi-protected routes (track views for anyone)
 router.post('/:post_id/view', postsController.trackView);
 
 // Protected routes (require authentication)
 router.post('/:post_id/vote', authMiddleware, postsController.votePost);
 router.post('/:post_id/save', authMiddleware, postsController.toggleSave);
+router.post('/:post_id/solutions', authMiddleware, postsController.addSolution);
 
 // Error handling middleware for this router
 router.use((error, req, res, next) => {
