@@ -7,8 +7,8 @@ CREATE TABLE public.bookmarks (
   bookmark_id integer NOT NULL DEFAULT nextval('bookmarks_bookmark_id_seq'::regclass),
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT bookmarks_pkey PRIMARY KEY (bookmark_id),
-  CONSTRAINT bookmarks_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.users(student_id),
-  CONSTRAINT bookmarks_solution_id_fkey FOREIGN KEY (solution_id) REFERENCES public.solutions(solution_id)
+  CONSTRAINT bookmarks_solution_id_fkey FOREIGN KEY (solution_id) REFERENCES public.solutions(solution_id),
+  CONSTRAINT bookmarks_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.users(student_id)
 );
 CREATE TABLE public.comment_votes (
   student_id integer NOT NULL,
@@ -67,8 +67,8 @@ CREATE TABLE public.post_tags (
   post_id integer NOT NULL,
   tag_id integer NOT NULL,
   CONSTRAINT post_tags_pkey PRIMARY KEY (post_id, tag_id),
-  CONSTRAINT post_tags_post_id_fkey FOREIGN KEY (post_id) REFERENCES public.posts(post_id),
-  CONSTRAINT post_tags_tag_id_fkey FOREIGN KEY (tag_id) REFERENCES public.tags(tag_id)
+  CONSTRAINT post_tags_tag_id_fkey FOREIGN KEY (tag_id) REFERENCES public.tags(tag_id),
+  CONSTRAINT post_tags_post_id_fkey FOREIGN KEY (post_id) REFERENCES public.posts(post_id)
 );
 CREATE TABLE public.post_votes (
   post_id integer NOT NULL,
@@ -98,9 +98,9 @@ CREATE TABLE public.posts (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT posts_pkey PRIMARY KEY (post_id),
+  CONSTRAINT posts_department_id_fkey FOREIGN KEY (department_id) REFERENCES public.departments(department_id),
   CONSTRAINT posts_question_id_fkey FOREIGN KEY (question_id) REFERENCES public.questions(question_id),
-  CONSTRAINT posts_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.users(student_id),
-  CONSTRAINT posts_department_id_fkey FOREIGN KEY (department_id) REFERENCES public.departments(department_id)
+  CONSTRAINT posts_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.users(student_id)
 );
 CREATE TABLE public.question_bookmarks (
   student_id integer NOT NULL,
@@ -108,8 +108,8 @@ CREATE TABLE public.question_bookmarks (
   bookmark_id integer NOT NULL DEFAULT nextval('question_bookmarks_bookmark_id_seq'::regclass),
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT question_bookmarks_pkey PRIMARY KEY (bookmark_id),
-  CONSTRAINT question_bookmarks_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.users(student_id),
-  CONSTRAINT question_bookmarks_question_id_fkey FOREIGN KEY (question_id) REFERENCES public.questions(question_id)
+  CONSTRAINT question_bookmarks_question_id_fkey FOREIGN KEY (question_id) REFERENCES public.questions(question_id),
+  CONSTRAINT question_bookmarks_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.users(student_id)
 );
 CREATE TABLE public.question_tags (
   question_id integer NOT NULL,
@@ -177,8 +177,8 @@ CREATE TABLE public.solution_votes (
   vote_id integer NOT NULL DEFAULT nextval('solution_votes_vote_id_seq'::regclass),
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT solution_votes_pkey PRIMARY KEY (vote_id),
-  CONSTRAINT solution_votes_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.users(student_id),
-  CONSTRAINT solution_votes_solution_id_fkey FOREIGN KEY (solution_id) REFERENCES public.solutions(solution_id)
+  CONSTRAINT solution_votes_solution_id_fkey FOREIGN KEY (solution_id) REFERENCES public.solutions(solution_id),
+  CONSTRAINT solution_votes_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.users(student_id)
 );
 CREATE TABLE public.solutions (
   solution_title character varying,
