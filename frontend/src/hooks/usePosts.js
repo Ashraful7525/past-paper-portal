@@ -11,7 +11,12 @@ const postsAPI = {
     });
     
     const response = await api.get(`/posts/feed?${params}`);
-    return response.data;
+    return {
+      data: {
+        posts: response.data.posts || []
+      },
+      pagination: response.data.pagination || { hasMore: false, page: pageParam }
+    };
   },
 
   votePost: async (postId, voteType) => {
@@ -42,12 +47,72 @@ export const useVotePost = () => {
   
   return useMutation({
     mutationFn: ({ postId, voteType }) => postsAPI.votePost(postId, voteType),
+    onMutate: async ({ postId, voteType }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['posts'] });
+      
+      // Snapshot the previous value
+      const previousData = queryClient.getQueriesData({ queryKey: ['posts'] });
+      
+      // Optimistically update the cache
+      queryClient.setQueriesData({ queryKey: ['posts'] }, (oldData) => {
+        if (!oldData) return oldData;
+        
+        return {
+          ...oldData,
+          pages: oldData.pages.map(page => ({
+            ...page,
+            data: {
+              ...page.data,
+              posts: page.data.posts.map(post => {
+                if (post.post_id === postId) {
+                  const currentVote = post.user_vote || 0;
+                  const currentUpvotes = post.upvotes || 0;
+                  const currentDownvotes = post.downvotes || 0;
+                  
+                  // Calculate new vote counts
+                  let newUpvotes = currentUpvotes;
+                  let newDownvotes = currentDownvotes;
+                  
+                  // Remove previous vote effect
+                  if (currentVote === 1) newUpvotes -= 1;
+                  if (currentVote === -1) newDownvotes -= 1;
+                  
+                  // Add new vote effect
+                  if (voteType === 1) newUpvotes += 1;
+                  if (voteType === -1) newDownvotes += 1;
+                  
+                  return {
+                    ...post,
+                    user_vote: voteType,
+                    upvotes: newUpvotes,
+                    downvotes: newDownvotes
+                  };
+                }
+                return post;
+              })
+            }
+          }))
+        };
+      });
+      
+      return { previousData };
+    },
+    onError: (err, { postId, voteType }, context) => {
+      // Rollback on error
+      if (context?.previousData) {
+        context.previousData.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+      toast.error(err.response?.data?.message || 'Failed to vote');
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['posts'] });
       toast.success('Vote recorded!');
     },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || 'Failed to vote');
+    onSettled: () => {
+      // Refetch to ensure data is consistent
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
     }
   });
 };
@@ -57,12 +122,54 @@ export const useSavePost = () => {
   
   return useMutation({
     mutationFn: (postId) => postsAPI.toggleSave(postId),
+    onMutate: async (postId) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['posts'] });
+      
+      // Snapshot the previous value
+      const previousData = queryClient.getQueriesData({ queryKey: ['posts'] });
+      
+      // Optimistically update the cache
+      queryClient.setQueriesData({ queryKey: ['posts'] }, (oldData) => {
+        if (!oldData) return oldData;
+        
+        return {
+          ...oldData,
+          pages: oldData.pages.map(page => ({
+            ...page,
+            data: {
+              ...page.data,
+              posts: page.data.posts.map(post => {
+                if (post.post_id === postId) {
+                  return {
+                    ...post,
+                    is_saved: !post.is_saved
+                  };
+                }
+                return post;
+              })
+            }
+          }))
+        };
+      });
+      
+      return { previousData };
+    },
+    onError: (err, postId, context) => {
+      // Rollback on error
+      if (context?.previousData) {
+        context.previousData.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+      toast.error(err.response?.data?.message || 'Failed to save');
+    },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['posts'] });
       toast.success(data.data?.isSaved ? 'Post saved!' : 'Post unsaved!');
     },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || 'Failed to save');
+    onSettled: () => {
+      // Refetch to ensure data is consistent
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
     }
   });
 };

@@ -100,10 +100,12 @@ const PostCard = ({ post }) => {
               post.user_vote === 1 
                 ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 shadow-sm' 
                 : 'text-gray-400 dark:text-gray-500 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20'
-            }`}
+            } ${votePostMutation.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
             disabled={votePostMutation.isPending}
           >
-            {post.user_vote === 1 ? (
+            {votePostMutation.isPending ? (
+              <div className="h-6 w-6 animate-spin border-2 border-current border-t-transparent rounded-full"></div>
+            ) : post.user_vote === 1 ? (
               <ChevronUpSolidIcon className="h-6 w-6" />
             ) : (
               <ChevronUpIcon className="h-6 w-6" />
@@ -124,10 +126,12 @@ const PostCard = ({ post }) => {
               post.user_vote === -1 
                 ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 shadow-sm' 
                 : 'text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
-            }`}
+            } ${votePostMutation.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
             disabled={votePostMutation.isPending}
           >
-            {post.user_vote === -1 ? (
+            {votePostMutation.isPending ? (
+              <div className="h-6 w-6 animate-spin border-2 border-current border-t-transparent rounded-full"></div>
+            ) : post.user_vote === -1 ? (
               <ChevronDownSolidIcon className="h-6 w-6" />
             ) : (
               <ChevronDownIcon className="h-6 w-6" />

@@ -39,8 +39,8 @@ const Layout = ({ children }) => {
       {/* Header */}
       <Header />
       
-      {/* Main content */}
-      <div className="content-wrapper">
+      {/* Main content with top padding to account for fixed header */}
+      <div className="content-wrapper pt-16">
         {children}
       </div>
     </div>
@@ -64,16 +64,8 @@ function App() {
                   <Home />
                 </Layout>
               } />
-              <Route path="/home" element={
-                <Layout>
-                  <Newsfeed />
-                </Layout>
-              } />
-              <Route path="/feed" element={
-                <Layout>
-                  <Newsfeed />
-                </Layout>
-              } />
+              <Route path="/home" element={<Newsfeed />} />
+              <Route path="/feed" element={<Newsfeed />} />
               <Route path="/post/:postId" element={
                 <Layout>
                   <PostDetail />

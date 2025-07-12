@@ -1,15 +1,34 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
+import { Search } from 'lucide-react';
 import { useAuth } from "../../contexts/AuthContext";
 
-const Header = () => {
+const Header = ({ searchQuery, onSearchChange }) => {
   const { isAuthenticated, user, logout, isLoggingOut } = useAuth();
+  const location = useLocation();
+  const isNewsfeed = location.pathname === '/home' || location.pathname === '/feed';
 
   return (
-    <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-slate-200 dark:border-gray-700 p-4 flex items-center justify-between">
+    <header className="fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-sm border-b border-slate-200 dark:border-gray-700 p-4 flex items-center justify-between z-30">
       <Link to="/home" className="text-xl font-bold text-slate-800 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
         Past Paper Portal
       </Link>
+      
+      {/* Search bar for newsfeed */}
+      {isNewsfeed && (
+        <div className="flex-1 max-w-md mx-8">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
+            <input
+              type="text"
+              placeholder="Search posts..."
+              value={searchQuery || ''}
+              onChange={(e) => onSearchChange && onSearchChange(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+        </div>
+      )}
       
       <div className="flex items-center space-x-6">
         <nav className="flex items-center space-x-4">

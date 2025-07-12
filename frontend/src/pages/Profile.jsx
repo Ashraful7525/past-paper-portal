@@ -64,12 +64,12 @@ const Profile = () => {
           {/* Main Content */}
           <div className="lg:col-span-2">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-              <div className="flex items-center space-x-4 mb-6">
-                <div className="w-24 h-24 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-400 text-4xl font-bold">
+              <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4 mb-6">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-400 text-3xl sm:text-4xl font-bold mx-auto sm:mx-0">
                   {profile.username.charAt(0).toUpperCase()}
                 </div>
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{profile.username}</h1>
+                <div className="text-center sm:text-left">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{profile.username}</h1>
                   <p className="text-gray-600 dark:text-gray-300">{profile.email}</p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Student ID: {profile.student_id}</p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Role: {isAdmin ? 'Admin' : 'User'}</p>
@@ -107,20 +107,22 @@ const Profile = () => {
                     <p className="text-gray-700 dark:text-gray-300 mb-4">
                       {profile.profile || 'No description provided. Click edit to add one.'}
                     </p>
-                    <button
-                      className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
-                      onClick={() => setIsEditing(true)}
-                    >
-                      Edit Description
-                    </button>
-                    {isAdmin && (
-                      <Link
-                        to="/admin/dashboard"
-                        className="ml-2 px-4 py-2 rounded-lg text-sm font-medium bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 hover:bg-purple-200 dark:hover:bg-purple-800 transition-colors"
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <button
+                        className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition-colors"
+                        onClick={() => setIsEditing(true)}
                       >
-                        Go to Admin Dashboard
-                      </Link>
-                    )}
+                        Edit Description
+                      </button>
+                      {isAdmin && (
+                        <Link
+                          to="/admin/dashboard"
+                          className="inline-block px-4 py-2 rounded-lg text-sm font-medium bg-purple-600 text-white hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600 transition-colors text-center"
+                        >
+                          Go to Admin Dashboard
+                        </Link>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
