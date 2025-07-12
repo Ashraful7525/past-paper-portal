@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
-import logo from '../assets/logo.jpg';
+import { EyeIcon, EyeSlashIcon, BookOpenIcon } from '@heroicons/react/24/outline';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -55,10 +54,8 @@ const Login = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <div className="mx-auto h-24 w-24 flex items-center justify-center rounded-full">
-            <svg className="h-24 w-24" viewBox="0 0 48 48">
-              <image href={logo} x="0" y="0" width="48" height="48" />
-            </svg>
+          <div className="mx-auto h-24 w-24 flex items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/20">
+            <BookOpenIcon className="h-12 w-12 text-blue-600 dark:text-blue-400" />
           </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
             Sign in to your account

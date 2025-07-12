@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Search } from 'lucide-react';
+import { Search, BookOpenIcon } from 'lucide-react';
 import { useAuth } from "../../contexts/AuthContext";
 
 const Header = ({ searchQuery, onSearchChange }) => {
@@ -10,8 +10,11 @@ const Header = ({ searchQuery, onSearchChange }) => {
 
   return (
     <header className="fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-sm border-b border-slate-200 dark:border-gray-700 p-4 flex items-center justify-between z-30">
-      <Link to="/home" className="text-xl font-bold text-slate-800 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-        Past Paper Portal
+      <Link to="/home" className="flex items-center space-x-3 text-slate-800 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+        <div className="h-8 w-8 bg-blue-600 dark:bg-blue-500 rounded-lg flex items-center justify-center">
+          <BookOpenIcon className="h-5 w-5 text-white" />
+        </div>
+        <span className="text-xl font-bold">Past Paper Portal</span>
       </Link>
       
       {/* Search bar for newsfeed */}
