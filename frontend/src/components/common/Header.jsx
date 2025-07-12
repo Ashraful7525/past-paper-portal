@@ -7,11 +7,12 @@ const Header = () => {
 
   return (
     <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-slate-200 dark:border-gray-700 p-4 flex items-center justify-between">
-      <h1 className="text-xl font-bold text-slate-800 dark:text-white">Past Paper Portal</h1>
+      <Link to="/home" className="text-xl font-bold text-slate-800 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+        Past Paper Portal
+      </Link>
       
       <div className="flex items-center space-x-6">
         <nav className="flex items-center space-x-4">
-          <Link to="/home" className="text-slate-600 dark:text-gray-300 hover:text-slate-800 dark:hover:text-slate-100 transition-colors font-medium">Home</Link>
           {isAuthenticated && (
             <>
               {user?.role === 'admin' ? (

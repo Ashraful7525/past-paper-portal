@@ -14,7 +14,7 @@ import {
 
 
 const UserDashboard = () => {
-  const { user, logout, isLoggingOut } = useAuth();
+  const { user } = useAuth();
 
   const stats = [
     { name: 'Questions Solved', value: '24', icon: BookOpenIcon, color: 'bg-blue-500', change: '+5 this week' },
@@ -51,13 +51,6 @@ const UserDashboard = () => {
                 <span className="text-sm text-gray-600 dark:text-gray-300">Welcome back,</span>
                 <p className="text-sm font-medium text-gray-900 dark:text-white">{user?.username}</p>
               </div>
-              <button
-                onClick={logout}
-                disabled={isLoggingOut}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm disabled:opacity-50 transition-colors"
-              >
-                {isLoggingOut ? 'Logging out...' : 'Logout'}
-              </button>
             </div>
           </div>
         </div>
