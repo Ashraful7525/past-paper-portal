@@ -30,31 +30,45 @@ class Stats {
     const client = await pool.connect();
     try {
       const query = `
+        WITH department_stats AS (
+          SELECT 
+            d.department_id,
+            d.department_name,
+            d.icon,
+            COUNT(p.post_id) as post_count,
+            (SELECT COUNT(DISTINCT q.question_id) 
+             FROM public.posts p2 
+             LEFT JOIN public.questions q ON p2.question_id = q.question_id 
+             WHERE p2.department_id = d.department_id) as question_count,
+            (SELECT COUNT(DISTINCT s.solution_id) 
+             FROM public.posts p3 
+             LEFT JOIN public.questions q2 ON p3.question_id = q2.question_id
+             LEFT JOIN public.solutions s ON q2.question_id = s.question_id
+             WHERE p3.department_id = d.department_id) as solution_count
+          FROM public.departments d
+          LEFT JOIN public.posts p ON d.department_id = p.department_id
+          GROUP BY d.department_id, d.department_name, d.icon
+        ),
+        total_posts AS (
+          SELECT COUNT(*) as total_post_count FROM public.posts
+        )
         SELECT 
-          d.department_id,
-          d.department_name,
-          d.icon,
-          COUNT(p.post_id) as post_count,
-          COUNT(DISTINCT q.question_id) as question_count,
-          COUNT(DISTINCT s.solution_id) as solution_count,
-          COALESCE(
-            ROUND(
-              ((COUNT(p.post_id) - LAG(COUNT(p.post_id)) OVER (ORDER BY d.department_id)) / 
-               NULLIF(LAG(COUNT(p.post_id)) OVER (ORDER BY d.department_id), 0) * 100), 0
-            ), 0
-          ) as trend_percentage
-        FROM public.departments d
-        LEFT JOIN public.posts p ON d.department_id = p.department_id
-        LEFT JOIN public.questions q ON p.question_id = q.question_id
-        LEFT JOIN public.solutions s ON q.question_id = s.question_id
-        GROUP BY d.department_id, d.department_name, d.icon
-        ORDER BY post_count DESC
+          ds.*,
+          tp.total_post_count,
+          CASE 
+            WHEN tp.total_post_count = 0 THEN 0
+            ELSE ROUND((ds.post_count * 100.0 / tp.total_post_count), 1)
+          END as percentage_of_total
+        FROM department_stats ds
+        CROSS JOIN total_posts tp
+        ORDER BY ds.post_count DESC
       `;
       
       const result = await client.query(query);
       return result.rows.map(row => ({
         ...row,
-        trend: row.trend_percentage > 0 ? `+${row.trend_percentage}%` : `${row.trend_percentage}%`
+        trend_percentage: row.percentage_of_total,
+        trend: `${row.percentage_of_total}%`
       }));
     } catch (error) {
       console.error('Error fetching department stats:', error);

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TrendingUp, Award, Users, BookOpen, MessageCircle, Star, Activity, ChevronDown, ChevronUp } from 'lucide-react';
+import { TrendingUp, Award, Users, BookOpen, MessageCircle, Star, Activity, ChevronDown, ChevronUp, BarChart3 } from 'lucide-react';
 
 const DepartmentSidebar = ({ departments, selectedDepartment, onDepartmentSelect, globalStats }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -51,45 +51,46 @@ const DepartmentSidebar = ({ departments, selectedDepartment, onDepartmentSelect
             </div>
           </button>
           
-          {displayedDepartments.map((dept) => (
-            <button
-              key={dept.department_id}
-              onClick={() => onDepartmentSelect(dept.department_id)}
-              className={`w-full text-left p-3 rounded-lg transition-all duration-200 border ${
-                selectedDepartment === dept.department_id 
-                  ? 'bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-700 shadow-sm' 
-                  : 'hover:bg-gray-50 dark:hover:bg-gray-700 border-transparent hover:border-gray-200 dark:hover:border-gray-600'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-lg flex items-center justify-center shadow-sm">
-                    <span className="text-lg">{dept.icon || '📚'}</span>
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-semibold text-sm text-gray-900 dark:text-white">{dept.department_name}</div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      {dept.post_count?.toLocaleString() || 0} posts • {dept.solution_count?.toLocaleString() || 0} solutions
+          {displayedDepartments.map((dept) => {
+            const percentage = dept.trend_percentage || 0;
+            
+            return (
+              <button
+                key={dept.department_id}
+                onClick={() => onDepartmentSelect(dept.department_id)}
+                className={`w-full text-left p-3 rounded-lg transition-all duration-200 border ${
+                  selectedDepartment === dept.department_id 
+                    ? 'bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-700 shadow-sm' 
+                    : 'hover:bg-gray-50 dark:hover:bg-gray-700 border-transparent hover:border-gray-200 dark:hover:border-gray-600'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-lg flex items-center justify-center shadow-sm">
+                      <span className="text-lg">{dept.icon || '📚'}</span>
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-semibold text-sm text-gray-900 dark:text-white">{dept.department_name}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {dept.post_count?.toLocaleString() || 0} posts • {dept.solution_count?.toLocaleString() || 0} solutions
+                      </div>
                     </div>
                   </div>
+                  <div className="flex items-center space-x-2">
+                    {percentage > 0 && (
+                      <div className="flex items-center space-x-1 text-xs font-medium px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400">
+                        <BarChart3 className="h-3 w-3" />
+                        <span>{percentage}%</span>
+                      </div>
+                    )}
+                    {selectedDepartment === dept.department_id && (
+                      <Star className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  {dept.trend_percentage && (
-                    <div className={`text-xs font-medium px-2 py-1 rounded-full ${
-                      dept.trend_percentage > 0 
-                        ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400' 
-                        : 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400'
-                    }`}>
-                      {dept.trend_percentage > 0 ? '+' : ''}{dept.trend_percentage}%
-                    </div>
-                  )}
-                  {selectedDepartment === dept.department_id && (
-                    <Star className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                  )}
-                </div>
-              </div>
-            </button>
-          ))}
+              </button>
+            );
+          })}
           
           {hasMoreDepartments && (
             <button
