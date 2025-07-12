@@ -20,6 +20,7 @@ router.get('/:post_id/solutions', postsController.getSolutions);
 router.post('/:post_id/view', postsController.trackView);
 
 // Protected routes (require authentication)
+router.post('/', authMiddleware, postsController.createPost);
 router.post('/:post_id/vote', authMiddleware, postsController.votePost);
 router.post('/:post_id/save', authMiddleware, postsController.toggleSave);
 router.post('/:post_id/solutions', authMiddleware, postsController.addSolution);

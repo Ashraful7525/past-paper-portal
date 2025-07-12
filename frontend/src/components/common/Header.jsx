@@ -9,7 +9,7 @@ const Header = ({ searchQuery, onSearchChange }) => {
   const isNewsfeed = location.pathname === '/home' || location.pathname === '/feed';
 
   return (
-    <header className="fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-sm border-b border-slate-200 dark:border-gray-700 p-4 flex items-center justify-between z-30">
+    <header className="fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-sm border-b border-slate-200 dark:border-gray-700 p-4 flex items-center justify-between z-40">
       <Link to="/home" className="flex items-center space-x-3 text-slate-800 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
         <div className="h-8 w-8 bg-blue-600 dark:bg-blue-500 rounded-lg flex items-center justify-center">
           <BookOpenIcon className="h-5 w-5 text-white" />

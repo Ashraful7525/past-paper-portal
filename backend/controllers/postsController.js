@@ -5,6 +5,64 @@ import Bookmark from '../models/Bookmark.js';
 import Stats from '../models/Stats.js';
 
 const postsController = {
+  // Create a new post
+  async createPost(req, res) {
+    try {
+      const { 
+        title, 
+        content, 
+        preview_text, 
+        department_id, 
+        question_id, 
+        file_url, 
+        file_size 
+      } = req.body;
+      const { student_id } = req.user;
+
+      console.log('Creating post:', { 
+        title, content, preview_text, department_id, question_id, file_url, file_size, student_id 
+      });
+
+      // Validate required fields
+      if (!title || title.trim() === '') {
+        return res.status(400).json({ 
+          message: 'Title is required' 
+        });
+      }
+
+      if (!content || content.trim() === '') {
+        return res.status(400).json({ 
+          message: 'Content is required' 
+        });
+      }
+
+      const postData = {
+        title: title.trim(),
+        content: content.trim(),
+        preview_text: preview_text ? preview_text.trim() : content.trim().substring(0, 200) + '...',
+        file_url,
+        file_size,
+        student_id,
+        department_id: department_id ? parseInt(department_id) : null,
+        question_id: question_id ? parseInt(question_id) : null
+      };
+
+      const post = await Post.createPost(postData);
+      
+      res.status(201).json({ 
+        success: true,
+        message: 'Post created successfully',
+        data: post 
+      });
+    } catch (error) {
+      console.error('Error creating post:', error);
+      res.status(500).json({ 
+        message: 'Internal server error',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  },
+
   // Get feed posts
   async getFeed(req, res) {
     try {
