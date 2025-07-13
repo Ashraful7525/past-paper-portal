@@ -102,9 +102,9 @@ const UploadPaperModal = ({ isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-6 rounded-t-2xl">
+        <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-6 rounded-t-2xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
@@ -125,8 +125,10 @@ const UploadPaperModal = ({ isOpen, onClose }) => {
           </div>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        {/* Form Container with Scroll */}
+        <div className="flex-1 overflow-y-auto">
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Title */}
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -150,17 +152,18 @@ const UploadPaperModal = ({ isOpen, onClose }) => {
               Department
             </label>
             <div className="relative">
-              <AcademicCapIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+              <AcademicCapIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none z-10" />
               <select
                 id="department_id"
                 name="department_id"
                 value={formData.department_id}
                 onChange={handleInputChange}
-                className="w-full pl-12 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-12 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer"
+                style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.75rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
               >
-                <option value="">Select Department</option>
+                <option value="" className="text-gray-500 dark:text-gray-400">Select Department</option>
                 {departments.map(dept => (
-                  <option key={dept.department_id} value={dept.department_id}>
+                  <option key={dept.department_id} value={dept.department_id} className="text-gray-900 dark:text-white bg-white dark:bg-gray-700">
                     {dept.department_name}
                   </option>
                 ))}
@@ -257,7 +260,7 @@ const UploadPaperModal = ({ isOpen, onClose }) => {
               Tags (Optional)
             </label>
             <div className="relative">
-              <TagIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+              <TagIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none z-10" />
               <input
                 type="text"
                 id="tags"
@@ -298,7 +301,8 @@ const UploadPaperModal = ({ isOpen, onClose }) => {
               )}
             </button>
           </div>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   );

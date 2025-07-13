@@ -8,6 +8,7 @@ import authRoutes from './routes/auth.js';
 import postsRoutes from './routes/posts.js';
 import solutionsRoutes from './routes/solutions.js';
 import commentsRoutes from './routes/comments.js';
+import coursesRoutes from './routes/courses.js';
 import { testConnection } from './config/db.js'; // FIXED: Added config/ path
 
 dotenv.config();
@@ -81,6 +82,7 @@ app.get('/', (req, res) => {
       posts: '/api/posts',
       solutions: '/api/solutions',
       comments: '/api/comments',
+      courses: '/api/courses',
       health: '/health'
     }
   });
@@ -91,6 +93,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/posts', postsRoutes);
 app.use('/api/solutions', solutionsRoutes);
 app.use('/api/comments', commentsRoutes);
+app.use('/api/courses', coursesRoutes);
 
 // --- ERROR HANDLING ---
 // Global error handler
