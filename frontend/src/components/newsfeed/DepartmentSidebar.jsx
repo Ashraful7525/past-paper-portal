@@ -65,18 +65,20 @@ const DepartmentSidebar = ({ departments, selectedDepartment, onDepartmentSelect
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-lg flex items-center justify-center shadow-sm">
+                  <div className="flex items-center space-x-3 flex-1 min-w-0">
+                    <div className="w-8 h-8 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-lg flex items-center justify-center shadow-sm flex-shrink-0">
                       <span className="text-lg">{dept.icon || '📚'}</span>
                     </div>
-                    <div className="flex-1">
-                      <div className="font-semibold text-sm text-gray-900 dark:text-white">{dept.department_name}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-sm text-gray-900 dark:text-white truncate" title={dept.department_name}>
+                        {dept.department_name}
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
                         {dept.post_count?.toLocaleString() || 0} posts • {dept.solution_count?.toLocaleString() || 0} solutions
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 flex-shrink-0">
                     {percentage > 0 && (
                       <div className="flex items-center space-x-1 text-xs font-medium px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400">
                         <BarChart3 className="h-3 w-3" />
