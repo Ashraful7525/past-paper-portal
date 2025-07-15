@@ -12,6 +12,11 @@ class Post {
         department_id = null,
         search = null,
         student_id = null,
+        course_id = null,
+        level = null,
+        term = null,
+        year = null,
+        question_no = null,
       } = options;
 
       // Build ORDER BY clause based on sortBy
@@ -45,22 +50,57 @@ class Post {
         }
       }
 
-      // Build search filter
+      // Build filters
       let searchFilter = '';
+      let departmentFilter = '';
+      let courseFilter = '';
+      let levelFilter = '';
+      let termFilter = '';
+      let yearFilter = '';
+      let questionNoFilter = '';
+      
       const queryParams = [limit, offset];
       let paramIndex = 3;
 
       if (search) {
-        searchFilter = `AND (p.title ILIKE $${paramIndex} OR p.preview_text ILIKE $${paramIndex})`;
+        searchFilter = `AND (p.title ILIKE $${paramIndex} OR p.preview_text ILIKE $${paramIndex} OR q.question_text ILIKE $${paramIndex})`;
         queryParams.push(`%${search}%`);
         paramIndex++;
       }
 
-      // Build department filter
-      let departmentFilter = '';
       if (department_id) {
         departmentFilter = `AND p.department_id = $${paramIndex}`;
         queryParams.push(department_id);
+        paramIndex++;
+      }
+
+      if (course_id) {
+        courseFilter = `AND c.course_id = $${paramIndex}`;
+        queryParams.push(course_id);
+        paramIndex++;
+      }
+
+      if (level) {
+        levelFilter = `AND s.level = $${paramIndex}`;
+        queryParams.push(parseInt(level));
+        paramIndex++;
+      }
+
+      if (term) {
+        termFilter = `AND s.term = $${paramIndex}`;
+        queryParams.push(parseInt(term));
+        paramIndex++;
+      }
+
+      if (year) {
+        yearFilter = `AND q.year = $${paramIndex}`;
+        queryParams.push(parseInt(year));
+        paramIndex++;
+      }
+
+      if (question_no) {
+        questionNoFilter = `AND q.question_no = $${paramIndex}`;
+        queryParams.push(parseInt(question_no));
         paramIndex++;
       }
 
@@ -100,7 +140,10 @@ class Post {
           d.department_name,
           d.icon as department_icon,
           c.course_title,
+          c.course_code,
           s.semester_name,
+          s.level,
+          s.term,
           q.is_verified,
           q.question_title,
           q.question_text,
@@ -121,11 +164,16 @@ class Post {
         LEFT JOIN public.solutions sol ON p.question_id = sol.question_id
         ${userVoteJoin}
         ${userSaveJoin}
-        WHERE 1=1 
+        WHERE p.question_id IS NOT NULL
         ${timeFilter}
         ${searchFilter}
         ${departmentFilter}
-        GROUP BY p.post_id, u.username, d.department_name, d.icon, c.course_title, s.semester_name, q.is_verified, q.question_title, q.question_text, q.question_no, q.year${groupByUserColumns}
+        ${courseFilter}
+        ${levelFilter}
+        ${termFilter}
+        ${yearFilter}
+        ${questionNoFilter}
+        GROUP BY p.post_id, u.username, d.department_name, d.icon, c.course_title, c.course_code, s.semester_name, s.level, s.term, q.is_verified, q.question_title, q.question_text, q.question_no, q.year${groupByUserColumns}
         ${orderClause}
         LIMIT $1 OFFSET $2
       `;
@@ -184,7 +232,7 @@ class Post {
         LEFT JOIN public.tags t ON pt.tag_id = t.tag_id
         ${studentId ? `LEFT JOIN public.post_votes pv ON p.post_id = pv.post_id AND pv.student_id = $2` : ''}
         ${studentId ? `LEFT JOIN public.saved_posts sp ON p.post_id = sp.post_id AND sp.student_id = $2` : ''}
-        WHERE p.post_id = $1
+        WHERE p.post_id = $1 AND p.question_id IS NOT NULL
         GROUP BY p.post_id, u.username, d.department_name, d.icon, c.course_title, s.semester_name, q.is_verified, q.question_title, q.question_text, q.question_no, q.year
         ${studentId ? ', pv.vote_type, sp.post_id' : ''}
       `;

@@ -11,6 +11,7 @@ const router = express.Router();
 router.get('/feed', authOptionalMiddleware, postsController.getFeed);
 router.get('/departments', postsController.getDepartments);
 router.get('/stats', postsController.getStats);
+router.get('/available-years', postsController.getAvailableYears);
 
 // Individual post routes
 router.get('/:post_id', authOptionalMiddleware, postsController.getPost);
@@ -21,6 +22,7 @@ router.post('/:post_id/view', postsController.trackView);
 
 // Protected routes (require authentication)
 router.post('/', authMiddleware, postsController.createPost);
+router.post('/upload-paper', authMiddleware, postsController.uploadPaper);
 router.post('/:post_id/vote', authMiddleware, postsController.votePost);
 router.post('/:post_id/save', authMiddleware, postsController.toggleSave);
 router.post('/:post_id/solutions', authMiddleware, postsController.addSolution);

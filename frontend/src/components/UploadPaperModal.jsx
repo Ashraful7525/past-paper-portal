@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { XMarkIcon, DocumentArrowUpIcon, TagIcon, AcademicCapIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, DocumentArrowUpIcon, TagIcon, AcademicCapIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../utils/api';
 import toast from 'react-hot-toast';
@@ -7,34 +7,50 @@ import toast from 'react-hot-toast';
 const UploadPaperModal = ({ isOpen, onClose }) => {
   const { user } = useAuth();
   const [formData, setFormData] = useState({
-    title: '',
-    content: '',
-    preview_text: '',
-    department_id: '',
-    question_year: '',
+    course_id: '',
+    level: '',
+    term: '',
+    year: '',
     question_no: '',
-    question_title: '',
-    question_text: '',
-    file_url: '',
-    file_size: '',
+    text: '',
+    url: '',
     tags: ''
   });
-  const [departments, setDepartments] = useState([]);
+  const [courses, setCourses] = useState([]);
+  const [filteredCourses, setFilteredCourses] = useState([]);
+  const [courseSearch, setCourseSearch] = useState('');
+  const [showCourseDropdown, setShowCourseDropdown] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch departments when modal opens
+  // Fetch courses when modal opens
   useEffect(() => {
     if (isOpen) {
-      fetchDepartments();
+      fetchCourses();
     }
   }, [isOpen]);
 
-  const fetchDepartments = async () => {
+  // Filter courses based on search
+  useEffect(() => {
+    if (courseSearch) {
+      const filtered = courses.filter(course => 
+        course.course_code?.toLowerCase().includes(courseSearch.toLowerCase()) ||
+        course.course_title?.toLowerCase().includes(courseSearch.toLowerCase())
+      );
+      setFilteredCourses(filtered);
+    } else {
+      setFilteredCourses(courses);
+    }
+  }, [courseSearch, courses]);
+
+  const fetchCourses = async () => {
     try {
-      const response = await api.get('/posts/departments');
-      setDepartments(response.data || []);
+      const response = await api.get('/courses');
+      setCourses(response.data || []);
+      setFilteredCourses(response.data || []);
     } catch (error) {
-      console.error('Error fetching departments:', error);
+      console.error('Error fetching courses:', error);
+      toast.error('Failed to load courses');
     }
   };
 
@@ -46,6 +62,24 @@ const UploadPaperModal = ({ isOpen, onClose }) => {
     }));
   };
 
+  const handleCourseSearch = (e) => {
+    const value = e.target.value;
+    setCourseSearch(value);
+    setShowCourseDropdown(true);
+    
+    if (!value) {
+      setSelectedCourse(null);
+      setFormData(prev => ({ ...prev, course_id: '' }));
+    }
+  };
+
+  const handleCourseSelect = (course) => {
+    setSelectedCourse(course);
+    setCourseSearch(`${course.course_code} - ${course.course_title}`);
+    setFormData(prev => ({ ...prev, course_id: course.course_id }));
+    setShowCourseDropdown(false);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!user) {
@@ -53,36 +87,58 @@ const UploadPaperModal = ({ isOpen, onClose }) => {
       return;
     }
 
+    // Validate required fields
+    if (!formData.course_id || !formData.level || !formData.term || !formData.year || !formData.question_no) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      const postData = {
-        title: formData.title,
-        content: formData.content,
-        preview_text: formData.preview_text || formData.content.substring(0, 200) + '...',
-        department_id: formData.department_id || null,
-        file_url: formData.file_url || null,
-        file_size: formData.file_size || null
+      // Calculate semester_id using the formula: (level - 1) * 2 + term
+      const semester_id = (parseInt(formData.level) - 1) * 2 + parseInt(formData.term);
+      
+      // Create the question and post
+      const questionData = {
+        question_no: parseInt(formData.question_no),
+        question_text: '', // Empty by default as specified
+        course_id: parseInt(formData.course_id),
+        semester_id: semester_id,
+        year: parseInt(formData.year),
+        uploaded_by: user.student_id
       };
 
-      const response = await api.post('/posts', postData);
+      // Generate title using the selected course and question number
+      const title = `${selectedCourse.course_code} - ${selectedCourse.course_title} - Question ${formData.question_no}`;
+      
+      const postData = {
+        title: title,
+        content: formData.text || '',
+        preview_text: formData.text ? formData.text.substring(0, 200) + '...' : '',
+        department_id: null, // Set to NULL as specified
+        file_url: formData.url || null,
+        tags: formData.tags || '',
+        questionData: questionData
+      };
+
+      const response = await api.post('/posts/upload-paper', postData);
       
       if (response.data.success) {
         toast.success('Paper uploaded successfully!');
         onClose();
         // Reset form
         setFormData({
-          title: '',
-          content: '',
-          preview_text: '',
-          department_id: '',
-          question_year: '',
+          course_id: '',
+          level: '',
+          term: '',
+          year: '',
           question_no: '',
-          question_title: '',
-          question_text: '',
-          file_url: '',
-          file_size: '',
+          text: '',
+          url: '',
           tags: ''
         });
+        setSelectedCourse(null);
+        setCourseSearch('');
       }
     } catch (error) {
       console.error('Error uploading paper:', error);
@@ -127,180 +183,200 @@ const UploadPaperModal = ({ isOpen, onClose }) => {
 
         {/* Form Container with Scroll */}
         <div className="flex-1 overflow-y-auto">
-          {/* Form */}
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Title */}
-          <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Title *
-            </label>
-            <input
-              type="text"
-              id="title"
-              name="title"
-              value={formData.title}
-              onChange={handleInputChange}
-              required
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Enter paper title (e.g., 'Data Structures Final Exam 2023')"
-            />
-          </div>
-
-          {/* Department */}
-          <div>
-            <label htmlFor="department_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Department
-            </label>
+            {/* Course Search Dropdown */}
             <div className="relative">
-              <AcademicCapIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none z-10" />
-              <select
-                id="department_id"
-                name="department_id"
-                value={formData.department_id}
+              <label htmlFor="course" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Course *
+              </label>
+              <div className="relative">
+                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none z-10" />
+                <input
+                  type="text"
+                  value={courseSearch}
+                  onChange={handleCourseSearch}
+                  onFocus={() => setShowCourseDropdown(true)}
+                  className="w-full pl-12 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Search for a course..."
+                />
+                {showCourseDropdown && (
+                  <div className="absolute z-20 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                    {filteredCourses.length > 0 ? (
+                      filteredCourses.map(course => (
+                        <button
+                          key={course.course_id}
+                          type="button"
+                          onClick={() => handleCourseSelect(course)}
+                          className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-600 last:border-b-0"
+                        >
+                          <div className="font-medium">{course.course_code} - {course.course_title}</div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">{course.department_name}</div>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-4 py-2 text-gray-500 dark:text-gray-400">No courses found</div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Level and Term */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="level" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Level *
+                </label>
+                <select
+                  id="level"
+                  name="level"
+                  value={formData.level}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">Select Level</option>
+                  <option value="1">Level 1</option>
+                  <option value="2">Level 2</option>
+                  <option value="3">Level 3</option>
+                  <option value="4">Level 4</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="term" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Term *
+                </label>
+                <select
+                  id="term"
+                  name="term"
+                  value={formData.term}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">Select Term</option>
+                  <option value="1">Term 1</option>
+                  <option value="2">Term 2</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Year and Question No */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="year" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Year *
+                </label>
+                <input
+                  type="number"
+                  id="year"
+                  name="year"
+                  value={formData.year}
+                  onChange={handleInputChange}
+                  required
+                  min="2000"
+                  max="2030"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="2024"
+                />
+              </div>
+              <div>
+                <label htmlFor="question_no" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Question No *
+                </label>
+                <input
+                  type="number"
+                  id="question_no"
+                  name="question_no"
+                  value={formData.question_no}
+                  onChange={handleInputChange}
+                  required
+                  min="1"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="1"
+                />
+              </div>
+            </div>
+
+            {/* Text */}
+            <div>
+              <label htmlFor="text" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Text (Optional)
+              </label>
+              <textarea
+                id="text"
+                name="text"
+                value={formData.text}
                 onChange={handleInputChange}
-                className="w-full pl-12 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer"
-                style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.75rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
+                rows={4}
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                placeholder="Additional information or instructions about the question..."
+              />
+            </div>
+
+            {/* URL */}
+            <div>
+              <label htmlFor="url" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                URL (Optional)
+              </label>
+              <input
+                type="url"
+                id="url"
+                name="url"
+                value={formData.url}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="https://example.com/question-file.pdf"
+              />
+            </div>
+
+            {/* Tags */}
+            <div>
+              <label htmlFor="tags" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Tags (Optional)
+              </label>
+              <div className="relative">
+                <TagIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none z-10" />
+                <input
+                  type="text"
+                  id="tags"
+                  name="tags"
+                  value={formData.tags}
+                  onChange={handleInputChange}
+                  className="w-full pl-12 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="midterm, quiz, final-exam (comma separated)"
+                />
+              </div>
+            </div>
+
+            {/* Submit Buttons */}
+            <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <button
+                type="button"
+                onClick={handleClose}
+                disabled={isSubmitting}
+                className="px-6 py-3 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg font-medium transition-colors disabled:opacity-50"
               >
-                <option value="" className="text-gray-500 dark:text-gray-400">Select Department</option>
-                {departments.map(dept => (
-                  <option key={dept.department_id} value={dept.department_id} className="text-gray-900 dark:text-white bg-white dark:bg-gray-700">
-                    {dept.department_name}
-                  </option>
-                ))}
-              </select>
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting || !formData.course_id || !formData.level || !formData.term || !formData.year || !formData.question_no}
+                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Uploading...</span>
+                  </>
+                ) : (
+                  <>
+                    <DocumentArrowUpIcon className="h-5 w-5" />
+                    <span>Upload Paper</span>
+                  </>
+                )}
+              </button>
             </div>
-          </div>
-
-          {/* Content */}
-          <div>
-            <label htmlFor="content" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Description *
-            </label>
-            <textarea
-              id="content"
-              name="content"
-              value={formData.content}
-              onChange={handleInputChange}
-              required
-              rows={4}
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-              placeholder="Describe the paper, its content, difficulty level, and any helpful notes for students..."
-            />
-          </div>
-
-          {/* Question Details */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="question_year" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Year
-              </label>
-              <input
-                type="number"
-                id="question_year"
-                name="question_year"
-                value={formData.question_year}
-                onChange={handleInputChange}
-                min="2000"
-                max="2030"
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="2023"
-              />
-            </div>
-            <div>
-              <label htmlFor="question_no" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Question Number
-              </label>
-              <input
-                type="text"
-                id="question_no"
-                name="question_no"
-                value={formData.question_no}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="1a, 2b, etc."
-              />
-            </div>
-          </div>
-
-          {/* Question Title */}
-          <div>
-            <label htmlFor="question_title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Question Title
-            </label>
-            <input
-              type="text"
-              id="question_title"
-              name="question_title"
-              value={formData.question_title}
-              onChange={handleInputChange}
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Brief title of the question"
-            />
-          </div>
-
-          {/* File Upload */}
-          <div>
-            <label htmlFor="file_url" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              File URL (Optional)
-            </label>
-            <input
-              type="url"
-              id="file_url"
-              name="file_url"
-              value={formData.file_url}
-              onChange={handleInputChange}
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="https://example.com/paper.pdf"
-            />
-          </div>
-
-          {/* Tags */}
-          <div>
-            <label htmlFor="tags" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Tags (Optional)
-            </label>
-            <div className="relative">
-              <TagIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none z-10" />
-              <input
-                type="text"
-                id="tags"
-                name="tags"
-                value={formData.tags}
-                onChange={handleInputChange}
-                className="w-full pl-12 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="algorithms, data-structures, final-exam (comma separated)"
-              />
-            </div>
-          </div>
-
-          {/* Submit Buttons */}
-          <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
-            <button
-              type="button"
-              onClick={handleClose}
-              disabled={isSubmitting}
-              className="px-6 py-3 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg font-medium transition-colors disabled:opacity-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting || !formData.title.trim() || !formData.content.trim()}
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-            >
-              {isSubmitting ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>Uploading...</span>
-                </>
-              ) : (
-                <>
-                  <DocumentArrowUpIcon className="h-5 w-5" />
-                  <span>Upload Paper</span>
-                </>
-              )}
-            </button>
-          </div>
           </form>
         </div>
       </div>

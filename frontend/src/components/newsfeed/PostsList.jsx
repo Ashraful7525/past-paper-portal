@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, Filter } from 'lucide-react';
 import PostCard from '../PostCard';
 
 const PostsList = ({ 
@@ -10,8 +10,25 @@ const PostsList = ({
   hasNextPage, 
   isFetchingNextPage, 
   onLoadMore, 
-  searchQuery 
+  searchFilters = {}
 }) => {
+  // Helper function to get active filters for display
+  const getActiveFiltersText = () => {
+    const activeFilters = [];
+    
+    if (searchFilters.search) activeFilters.push(`"${searchFilters.search}"`);
+    if (searchFilters.course_id) activeFilters.push('specific course');
+    if (searchFilters.level) activeFilters.push(`Level ${searchFilters.level}`);
+    if (searchFilters.term) activeFilters.push(`Term ${searchFilters.term}`);
+    if (searchFilters.year) activeFilters.push(`Year ${searchFilters.year}`);
+    if (searchFilters.question_no) activeFilters.push(`Question ${searchFilters.question_no}`);
+    
+    return activeFilters.length > 0 ? activeFilters.join(', ') : null;
+  };
+
+  const hasActiveFilters = Object.values(searchFilters).some(value => value && value !== '');
+  const activeFiltersText = getActiveFiltersText();
+
   if (isError && error) {
     return (
       <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 shadow-sm">
@@ -31,6 +48,22 @@ const PostsList = ({
   if (isLoading) {
     return (
       <div className="space-y-6">
+        {hasActiveFilters && (
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
+            <div className="flex items-center space-x-3">
+              <Filter className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <div>
+                <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                  Searching with filters...
+                </p>
+                <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
+                  {activeFiltersText}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        
         {[...Array(3)].map((_, index) => (
           <div key={index} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 animate-pulse">
             <div className="flex gap-4">
@@ -59,16 +92,32 @@ const PostsList = ({
     return (
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
         <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-6">
-          <BookOpen className="h-8 w-8 text-gray-400 dark:text-gray-500" />
+          {hasActiveFilters ? (
+            <Filter className="h-8 w-8 text-gray-400 dark:text-gray-500" />
+          ) : (
+            <BookOpen className="h-8 w-8 text-gray-400 dark:text-gray-500" />
+          )}
         </div>
-        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">No posts found</h3>
+        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
+          {hasActiveFilters ? 'No posts match your filters' : 'No posts found'}
+        </h3>
         <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
-          {searchQuery 
-            ? `No posts match your search for "${searchQuery}". Try adjusting your search terms or filters.`
+          {hasActiveFilters 
+            ? `No posts match your search criteria: ${activeFiltersText}. Try adjusting your filters or search terms.`
             : 'Be the first to share a paper or ask a question in this community!'
           }
         </p>
-        {!searchQuery && (
+        {hasActiveFilters ? (
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 max-w-md mx-auto mb-6">
+            <h4 className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">Try these suggestions:</h4>
+            <ul className="text-sm text-blue-600 dark:text-blue-300 space-y-1">
+              <li>• Remove some filters to see more results</li>
+              <li>• Try different search terms</li>
+              <li>• Check if the course or year exists</li>
+              <li>• Browse all posts without filters</li>
+            </ul>
+          </div>
+        ) : (
           <div className="flex justify-center space-x-4">
             <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
               Upload Paper
@@ -84,6 +133,28 @@ const PostsList = ({
 
   return (
     <div className="space-y-8">
+      {/* Active Filters Display */}
+      {hasActiveFilters && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <Filter className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <div>
+                <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                  Showing filtered results
+                </p>
+                <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
+                  {activeFiltersText}
+                </p>
+              </div>
+            </div>
+            <div className="text-sm text-blue-600 dark:text-blue-300">
+              {posts.length} {posts.length === 1 ? 'result' : 'results'} found
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Posts Grid */}
       <div className="space-y-6">
         {posts.map((post, index) => (

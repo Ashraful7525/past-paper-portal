@@ -11,7 +11,6 @@ import PostsList from '../components/newsfeed/PostsList';
 
 const Newsfeed = () => {
   const { user } = useAuth();
-  const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('hot');
   const [timeRange, setTimeRange] = useState('all');
   const [selectedDepartment, setSelectedDepartment] = useState(null);
@@ -20,13 +19,23 @@ const Newsfeed = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
 
+  // Enhanced search filters
+  const [searchFilters, setSearchFilters] = useState({
+    course_id: '',
+    level: '',
+    term: '',
+    year: '',
+    question_no: '',
+    search: ''
+  });
+
   // Use React Query for posts data with memoized filters
   const filters = useMemo(() => ({
     sortBy,
     timeRange,
     department_id: selectedDepartment,
-    search: searchQuery
-  }), [sortBy, timeRange, selectedDepartment, searchQuery]);
+    ...searchFilters
+  }), [sortBy, timeRange, selectedDepartment, searchFilters]);
 
   const {
     data: postsData,
@@ -60,8 +69,8 @@ const Newsfeed = () => {
     fetchInitialData();
   }, []);
 
-  const handleSearch = (query) => {
-    setSearchQuery(query);
+  const handleSearchChange = (newFilters) => {
+    setSearchFilters(newFilters);
   };
 
   const handleSortChange = (newSort) => {
@@ -97,8 +106,11 @@ const Newsfeed = () => {
         <DarkModeToggle />
       </div>
       
-      {/* Custom Header with Search */}
-      <Header searchQuery={searchQuery} onSearchChange={handleSearch} />
+      {/* Enhanced Header with Search */}
+      <Header 
+        searchFilters={searchFilters}
+        onSearchChange={handleSearchChange}
+      />
       
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         {/* Left Sidebar */}
@@ -126,7 +138,7 @@ const Newsfeed = () => {
                   hasNextPage={hasNextPage}
                   isFetchingNextPage={isFetchingNextPage}
                   onLoadMore={handleLoadMore}
-                  searchQuery={searchQuery}
+                  searchFilters={searchFilters}
                 />
               </div>
 

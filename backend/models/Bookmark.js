@@ -122,7 +122,7 @@ class Bookmark {
         LEFT JOIN public.departments d ON p.department_id = d.department_id
         LEFT JOIN public.post_tags pt ON p.post_id = pt.post_id
         LEFT JOIN public.tags t ON pt.tag_id = t.tag_id
-        WHERE sp.student_id = $1
+        WHERE sp.student_id = $1 AND p.question_id IS NOT NULL
         GROUP BY p.post_id, u.username, d.department_name, d.icon, sp.created_at
         ${orderClause}
         LIMIT $2 OFFSET $3

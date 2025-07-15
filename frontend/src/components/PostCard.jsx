@@ -167,15 +167,15 @@ const PostCard = ({ post }) => {
             <div className="mb-4">
               <div className="flex items-center gap-2 mb-3 text-xs flex-wrap">
                 {post.course_title && (
-                  <div className="flex items-center gap-1 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 px-3 py-1.5 rounded-full border border-blue-200 dark:border-blue-700">
-                    <AcademicCapIcon className="h-3 w-3" />
-                    <span className="font-semibold">{post.course_title}</span>
+                  <div className="flex items-center gap-1 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 px-3 py-1.5 rounded-full border border-blue-200 dark:border-blue-700 max-w-xs">
+                    <AcademicCapIcon className="h-3 w-3 flex-shrink-0" />
+                    <span className="font-semibold truncate" title={post.course_title}>{post.course_title}</span>
                   </div>
                 )}
                 {post.semester_name && (
-                  <div className="flex items-center gap-1 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 px-3 py-1.5 rounded-full border border-indigo-200 dark:border-indigo-700">
-                    <CalendarDaysIcon className="h-3 w-3" />
-                    <span className="font-semibold">{post.semester_name}</span>
+                  <div className="flex items-center gap-1 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 px-3 py-1.5 rounded-full border border-indigo-200 dark:border-indigo-700 max-w-xs">
+                    <CalendarDaysIcon className="h-3 w-3 flex-shrink-0" />
+                    <span className="font-semibold truncate" title={post.semester_name}>{post.semester_name}</span>
                   </div>
                 )}
                 {post.question_year && (

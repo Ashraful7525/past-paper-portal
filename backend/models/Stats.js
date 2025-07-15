@@ -7,8 +7,8 @@ class Stats {
     try {
       const query = `
         SELECT 
-          (SELECT COUNT(*) FROM public.posts) as total_posts,
-          (SELECT COUNT(DISTINCT student_id) FROM public.posts WHERE created_at >= NOW() - INTERVAL '1 month') as active_users,
+          (SELECT COUNT(*) FROM public.posts WHERE question_id IS NOT NULL) as total_posts,
+          (SELECT COUNT(DISTINCT student_id) FROM public.posts WHERE created_at >= NOW() - INTERVAL '1 month' AND question_id IS NOT NULL) as active_users,
           (SELECT COUNT(*) FROM public.solutions) as total_solutions,
           (SELECT COUNT(*) FROM public.comments) as total_comments,
           (SELECT COUNT(*) FROM public.users) as total_users,
@@ -39,18 +39,18 @@ class Stats {
             (SELECT COUNT(DISTINCT q.question_id) 
              FROM public.posts p2 
              LEFT JOIN public.questions q ON p2.question_id = q.question_id 
-             WHERE p2.department_id = d.department_id) as question_count,
+             WHERE p2.department_id = d.department_id AND p2.question_id IS NOT NULL) as question_count,
             (SELECT COUNT(DISTINCT s.solution_id) 
              FROM public.posts p3 
              LEFT JOIN public.questions q2 ON p3.question_id = q2.question_id
              LEFT JOIN public.solutions s ON q2.question_id = s.question_id
-             WHERE p3.department_id = d.department_id) as solution_count
+             WHERE p3.department_id = d.department_id AND p3.question_id IS NOT NULL) as solution_count
           FROM public.departments d
-          LEFT JOIN public.posts p ON d.department_id = p.department_id
+          LEFT JOIN public.posts p ON d.department_id = p.department_id AND p.question_id IS NOT NULL
           GROUP BY d.department_id, d.department_name, d.icon
         ),
         total_posts AS (
-          SELECT COUNT(*) as total_post_count FROM public.posts
+          SELECT COUNT(*) as total_post_count FROM public.posts WHERE question_id IS NOT NULL
         )
         SELECT 
           ds.*,
@@ -84,12 +84,12 @@ class Stats {
     try {
       const query = `
         SELECT 
-          (SELECT COUNT(*) FROM public.posts WHERE student_id = $1) as posts_count,
+          (SELECT COUNT(*) FROM public.posts WHERE student_id = $1 AND question_id IS NOT NULL) as posts_count,
           (SELECT COUNT(*) FROM public.solutions WHERE student_id = $1) as solutions_count,
           (SELECT COUNT(*) FROM public.comments WHERE student_id = $1) as comments_count,
           (SELECT COUNT(*) FROM public.saved_posts WHERE student_id = $1) as saved_posts_count,
           (SELECT COUNT(*) FROM public.bookmarks WHERE student_id = $1) as bookmarked_solutions_count,
-          (SELECT COALESCE(SUM(upvotes), 0) FROM public.posts WHERE student_id = $1) as total_post_upvotes,
+          (SELECT COALESCE(SUM(upvotes), 0) FROM public.posts WHERE student_id = $1 AND question_id IS NOT NULL) as total_post_upvotes,
           (SELECT COALESCE(SUM(upvotes), 0) FROM public.solutions WHERE student_id = $1) as total_solution_upvotes,
           (SELECT COALESCE(SUM(upvotes), 0) FROM public.comments WHERE student_id = $1) as total_comment_upvotes,
           (SELECT contribution FROM public.users WHERE student_id = $1) as contribution_score
@@ -145,7 +145,7 @@ class Stats {
         FROM public.posts p
         LEFT JOIN public.users u ON p.student_id = u.student_id
         LEFT JOIN public.departments d ON p.department_id = d.department_id
-        WHERE p.created_at >= NOW() - INTERVAL '${timeframe}'
+        WHERE p.created_at >= NOW() - INTERVAL '${timeframe}' AND p.question_id IS NOT NULL
         ORDER BY hot_score DESC, p.created_at DESC
         LIMIT $1
       `;
@@ -182,7 +182,7 @@ class Stats {
           COALESCE(SUM(DISTINCT c.upvotes), 0) as total_upvotes
         FROM public.users u
         LEFT JOIN public.posts p ON u.student_id = p.student_id 
-          AND p.created_at >= NOW() - INTERVAL '${timeframe}'
+          AND p.created_at >= NOW() - INTERVAL '${timeframe}' AND p.question_id IS NOT NULL
         LEFT JOIN public.solutions s ON u.student_id = s.student_id 
           AND s.created_at >= NOW() - INTERVAL '${timeframe}'
         LEFT JOIN public.comments c ON u.student_id = c.student_id 
@@ -220,7 +220,7 @@ class Stats {
           d.department_name
         FROM public.posts p
         LEFT JOIN public.departments d ON p.department_id = d.department_id
-        WHERE p.student_id = $1 AND p.created_at >= NOW() - INTERVAL '${days} days'
+        WHERE p.student_id = $1 AND p.created_at >= NOW() - INTERVAL '${days} days' AND p.question_id IS NOT NULL
         
         UNION ALL
         
@@ -280,7 +280,7 @@ class Stats {
           COUNT(*) FILTER (WHERE table_name = 'comments') as new_comments
         FROM (
           SELECT created_at, 'posts' as table_name FROM public.posts 
-          WHERE created_at >= NOW() - INTERVAL '${days} days'
+          WHERE created_at >= NOW() - INTERVAL '${days} days' AND question_id IS NOT NULL
           UNION ALL
           SELECT created_at, 'solutions' as table_name FROM public.solutions 
           WHERE created_at >= NOW() - INTERVAL '${days} days'
@@ -320,7 +320,7 @@ class Stats {
         FROM public.tags t
         LEFT JOIN public.post_tags pt ON t.tag_id = pt.tag_id
         LEFT JOIN public.posts p ON pt.post_id = p.post_id 
-          AND p.created_at >= NOW() - INTERVAL '${timeframe}'
+          AND p.created_at >= NOW() - INTERVAL '${timeframe}' AND p.question_id IS NOT NULL
         LEFT JOIN public.solution_tags st ON t.tag_id = st.tag_id
         LEFT JOIN public.solutions s ON st.solution_id = s.solution_id 
           AND s.created_at >= NOW() - INTERVAL '${timeframe}'
