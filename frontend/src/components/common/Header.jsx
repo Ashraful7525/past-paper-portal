@@ -10,12 +10,12 @@ const Header = ({ searchFilters, onSearchChange }) => {
   const isNewsfeed = location.pathname === '/home' || location.pathname === '/feed';
 
   return (
-    <header className="fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-sm border-b border-slate-200 dark:border-gray-700 z-40">
+    <header className="fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 z-40">
       <div className="w-full px-2 sm:px-3 lg:px-4 py-3">
         <div className="flex items-center justify-between">
           {/* Logo - Tightly aligned to the left */}
           <div className="flex items-center flex-shrink-0 pl-0">
-            <Link to="/home" className="flex items-center space-x-2 sm:space-x-3 text-slate-800 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+            <Link to="/home" className="flex items-center space-x-2 sm:space-x-3 text-gray-800 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
               <div className="h-8 w-8 bg-blue-600 dark:bg-blue-500 rounded-lg flex items-center justify-center">
                 <BookOpenIcon className="h-5 w-5 text-white" />
               </div>
@@ -42,7 +42,7 @@ const Header = ({ searchFilters, onSearchChange }) => {
                   {user?.role === 'admin' ? (
                     <Link 
                       to="/admin/dashboard" 
-                      className="text-slate-600 dark:text-gray-300 hover:text-slate-800 dark:hover:text-slate-100 transition-colors font-medium text-sm sm:text-base px-1.5 sm:px-2 py-1 rounded-md hover:bg-slate-100 dark:hover:bg-gray-700"
+                      className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-colors font-medium text-sm sm:text-base px-1.5 sm:px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
                     >
                       <span className="hidden sm:inline">Dashboard</span>
                       <span className="sm:hidden">Admin</span>
@@ -50,7 +50,7 @@ const Header = ({ searchFilters, onSearchChange }) => {
                   ) : (
                     <Link 
                       to="/user/dashboard" 
-                      className="text-slate-600 dark:text-gray-300 hover:text-slate-800 dark:hover:text-slate-100 transition-colors font-medium text-sm sm:text-base px-1.5 sm:px-2 py-1 rounded-md hover:bg-slate-100 dark:hover:bg-gray-700"
+                      className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-colors font-medium text-sm sm:text-base px-1.5 sm:px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
                     >
                       <span className="hidden sm:inline">Dashboard</span>
                       <span className="sm:hidden">Dash</span>
@@ -58,7 +58,7 @@ const Header = ({ searchFilters, onSearchChange }) => {
                   )}
                   <Link 
                     to="/profile" 
-                    className="text-slate-600 dark:text-gray-300 hover:text-slate-800 dark:hover:text-slate-100 transition-colors font-medium text-sm sm:text-base px-1.5 sm:px-2 py-1 rounded-md hover:bg-slate-100 dark:hover:bg-gray-700"
+                    className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-colors font-medium text-sm sm:text-base px-1.5 sm:px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                     <span className="hidden sm:inline">Profile</span>
                     <span className="sm:hidden">Prof</span>
@@ -66,7 +66,7 @@ const Header = ({ searchFilters, onSearchChange }) => {
                   <button
                     onClick={logout}
                     disabled={isLoggingOut}
-                    className="text-slate-600 dark:text-gray-300 hover:text-slate-800 dark:hover:text-slate-100 transition-colors disabled:opacity-50 font-medium text-sm sm:text-base px-1.5 sm:px-2 py-1 rounded-md hover:bg-slate-100 dark:hover:bg-gray-700 disabled:hover:bg-transparent"
+                    className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-colors disabled:opacity-50 font-medium text-sm sm:text-base px-1.5 sm:px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 disabled:hover:bg-transparent"
                   >
                     {isLoggingOut ? (
                       <span className="hidden sm:inline">Logging out...</span>
@@ -83,13 +83,13 @@ const Header = ({ searchFilters, onSearchChange }) => {
                 <>
                   <Link 
                     to="/login" 
-                    className="text-slate-600 dark:text-gray-300 hover:text-slate-800 dark:hover:text-slate-100 transition-colors font-medium text-sm sm:text-base px-1.5 sm:px-2 py-1 rounded-md hover:bg-slate-100 dark:hover:bg-gray-700"
+                    className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-colors font-medium text-sm sm:text-base px-1.5 sm:px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                     Login
                   </Link>
                   <Link 
                     to="/register" 
-                    className="bg-slate-700 hover:bg-slate-800 text-white px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg transition-colors font-medium text-sm sm:text-base ml-1.5"
+                    className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg transition-colors font-medium text-sm sm:text-base ml-1.5"
                   >
                     Register
                   </Link>

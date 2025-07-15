@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './contexts/AuthContext';
-import { ThemeProvider } from './contexts/ThemeContext';
+import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import Header from './components/common/Header';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import DarkModeToggle from './components/common/DarkModeToggle';
@@ -26,6 +26,55 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+// Component to handle toast theming
+const ToastContainer = () => {
+  const { isDarkMode } = useTheme();
+  
+  return (
+    <Toaster 
+      position="top-right"
+      toastOptions={{
+        duration: 4000,
+        style: {
+          background: isDarkMode ? '#374151' : '#ffffff',
+          color: isDarkMode ? '#f9fafb' : '#111827',
+          border: isDarkMode ? '1px solid #4b5563' : '1px solid #e5e7eb',
+          borderRadius: '12px',
+          fontSize: '14px',
+          fontWeight: '500',
+          boxShadow: isDarkMode 
+            ? '0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2)'
+            : '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+        },
+        success: {
+          duration: 3000,
+          style: {
+            background: isDarkMode ? '#065f46' : '#ecfdf5',
+            color: isDarkMode ? '#a7f3d0' : '#065f46',
+            border: isDarkMode ? '1px solid #047857' : '1px solid #a7f3d0',
+          },
+          iconTheme: {
+            primary: '#10b981',
+            secondary: '#fff',
+          },
+        },
+        error: {
+          duration: 4000,
+          style: {
+            background: isDarkMode ? '#7f1d1d' : '#fef2f2',
+            color: isDarkMode ? '#fca5a5' : '#7f1d1d',
+            border: isDarkMode ? '1px solid #dc2626' : '1px solid #fca5a5',
+          },
+          iconTheme: {
+            primary: '#ef4444',
+            secondary: '#fff',
+          },
+        },
+      }}
+    />
+  );
+};
 
 // Layout component to include Header and dark mode toggle
 const Layout = ({ children }) => {
@@ -114,31 +163,8 @@ function App() {
               } />
             </Routes>
             
-            {/* Toast notifications with dark mode support */}
-            <Toaster 
-              position="top-right"
-              toastOptions={{
-                duration: 4000,
-                style: {
-                  background: 'var(--toast-bg)',
-                  color: 'var(--toast-color)',
-                },
-                success: {
-                  duration: 3000,
-                  iconTheme: {
-                    primary: '#10b981',
-                    secondary: '#fff',
-                  },
-                },
-                error: {
-                  duration: 4000,
-                  iconTheme: {
-                    primary: '#ef4444',
-                    secondary: '#fff',
-                  },
-                },
-              }}
-            />
+            {/* Toast notifications with dynamic dark mode support */}
+            <ToastContainer />
           </AuthProvider>
         </Router>
       </ThemeProvider>

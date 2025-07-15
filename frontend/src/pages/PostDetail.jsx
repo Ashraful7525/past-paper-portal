@@ -303,10 +303,10 @@ const PostDetail = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-4 border-slate-300 border-t-slate-700 mx-auto mb-4"></div>
-          <p className="text-slate-600 dark:text-gray-400 font-medium">Loading post details...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-300 border-t-gray-700 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400 font-medium">Loading post details...</p>
         </div>
       </div>
     );
@@ -314,18 +314,18 @@ const PostDetail = () => {
 
   if (postError || !post) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-8">
-          <div className="w-24 h-24 bg-slate-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
-            <LightBulbIcon className="h-12 w-12 text-slate-400 dark:text-gray-500" />
+          <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
+            <LightBulbIcon className="h-12 w-12 text-gray-400 dark:text-gray-500" />
           </div>
-          <h1 className="text-3xl font-bold text-slate-800 dark:text-white mb-4">Post Not Found</h1>
-          <p className="text-slate-600 dark:text-gray-300 mb-8 leading-relaxed">
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-4">Post Not Found</h1>
+          <p className="text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
             The academic resource you're looking for doesn't exist or has been removed from our knowledge base.
           </p>
           <button
             onClick={() => navigate('/feed')}
-            className="bg-slate-700 hover:bg-slate-800 text-white px-6 py-3 rounded-lg font-medium transition-colors shadow-lg hover:shadow-xl"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors shadow-lg hover:shadow-xl"
           >
             Back to Feed
           </button>
@@ -335,13 +335,13 @@ const PostDetail = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header with gradient */}
-      <div className="bg-gradient-to-r from-slate-700 to-slate-800 dark:from-slate-800 dark:to-slate-900 text-white">
+      <div className="bg-gradient-to-r from-gray-700 to-gray-800 dark:from-gray-800 dark:to-gray-900 text-white">
         <div className="max-w-6xl mx-auto px-4 py-6">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center space-x-2 text-slate-200 hover:text-white mb-4 transition-colors group"
+            className="flex items-center space-x-2 text-gray-200 hover:text-white mb-4 transition-colors group"
           >
             <ArrowLeftIcon className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
             <span className="font-medium">Back to Feed</span>
@@ -352,7 +352,7 @@ const PostDetail = () => {
               <span className="text-2xl">{post.department_icon || '📚'}</span>
             </div>
             <div>
-              <div className="flex items-center space-x-2 text-slate-200 mb-2">
+              <div className="flex items-center space-x-2 text-gray-200 mb-2">
                 <span className="font-semibold">r/{post.department_name || 'General'}</span>
                 <span>•</span>
                 <span>by u/{post.author_username || 'Unknown'}</span>
@@ -378,15 +378,15 @@ const PostDetail = () => {
 
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Main Content */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-slate-200 dark:border-gray-700 overflow-hidden mb-8">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden mb-8">
           <div className="p-8">
             <div className="flex gap-6">
               {/* Vote Section */}
               <div className="flex flex-col items-center space-y-3 pt-2">
                 <button
                   onClick={() => handleVote(1)}
-                  className={`p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-gray-700 transition-all duration-200 ${
-                    post.user_vote === 1 ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 shadow-lg' : 'text-slate-400 dark:text-gray-500'
+                  className={`p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 ${
+                    post.user_vote === 1 ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 shadow-lg' : 'text-gray-400 dark:text-gray-500'
                   }`}
                   disabled={votePostMutation.isPending}
                 >
@@ -399,15 +399,15 @@ const PostDetail = () => {
                 
                 <span className={`text-xl font-bold ${
                   post.user_vote === 1 ? 'text-emerald-600' : 
-                  post.user_vote === -1 ? 'text-amber-600' : 'text-slate-700 dark:text-gray-300'
+                  post.user_vote === -1 ? 'text-amber-600' : 'text-gray-700 dark:text-gray-300'
                 }`}>
                   {formatNumber((post.upvotes || 0) - (post.downvotes || 0))}
                 </span>
                 
                 <button
                   onClick={() => handleVote(-1)}
-                  className={`p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-gray-700 transition-all duration-200 ${
-                    post.user_vote === -1 ? 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 shadow-lg' : 'text-slate-400 dark:text-gray-500'
+                  className={`p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 ${
+                    post.user_vote === -1 ? 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 shadow-lg' : 'text-gray-400 dark:text-gray-500'
                   }`}
                   disabled={votePostMutation.isPending}
                 >
@@ -426,7 +426,7 @@ const PostDetail = () => {
                   <div className="mb-6">
                     <div className="flex items-center gap-3 mb-4">
                       {post.course_title && (
-                        <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-4 py-2 rounded-full border border-slate-200 dark:border-slate-600">
+                        <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-full border border-gray-200 dark:border-gray-600">
                           <AcademicCapIcon className="h-4 w-4" />
                           <span className="font-semibold">{post.course_title}</span>
                         </div>
@@ -450,12 +450,12 @@ const PostDetail = () => {
                     </div>
                     
                     {post.question_title && (
-                      <div className="bg-slate-50 dark:bg-gray-700/50 rounded-xl p-4 border border-slate-200 dark:border-gray-600">
-                        <h2 className="text-lg font-semibold text-slate-800 dark:text-white mb-2">
+                      <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
+                        <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">
                           📋 Question: {post.question_title}
                         </h2>
                         {post.question_text && (
-                          <p className="text-slate-600 dark:text-gray-300 leading-relaxed">
+                          <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
                             {post.question_text}
                           </p>
                         )}
@@ -466,8 +466,8 @@ const PostDetail = () => {
 
                 {/* Content */}
                 {post.content && (
-                  <div className="prose prose-slate dark:prose-invert max-w-none mb-6">
-                    <p className="text-slate-700 dark:text-gray-300 leading-relaxed text-lg">
+                  <div className="prose prose-gray dark:prose-invert max-w-none mb-6">
+                    <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-lg">
                       {post.content}
                     </p>
                   </div>
@@ -479,7 +479,7 @@ const PostDetail = () => {
                     {post.tags.map((tag, index) => (
                       <span
                         key={index}
-                        className="inline-block bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm px-4 py-2 rounded-full font-medium border border-slate-200 dark:border-slate-600"
+                        className="inline-block bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm px-4 py-2 rounded-full font-medium border border-gray-200 dark:border-gray-600"
                       >
                         #{tag}
                       </span>
@@ -488,19 +488,19 @@ const PostDetail = () => {
                 )}
 
                 {/* Enhanced Actions */}
-                <div className="flex items-center justify-between bg-slate-50 dark:bg-gray-700/50 rounded-xl p-4 border border-slate-200 dark:border-gray-600">
+                <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
                   <div className="flex items-center space-x-6">
-                    <div className="flex items-center space-x-2 text-slate-600 dark:text-gray-400">
+                    <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
                       <ChatBubbleLeftIcon className="h-5 w-5" />
                       <span className="font-medium">{formatNumber(solutions?.length || 0)} Solutions</span>
                     </div>
 
-                    <div className="flex items-center space-x-2 text-slate-600 dark:text-gray-400">
+                    <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
                       <ArrowDownTrayIcon className="h-5 w-5" />
                       <span className="font-medium">{formatNumber(post.download_count || 0)} Downloads</span>
                     </div>
 
-                    <div className="flex items-center space-x-2 text-slate-600 dark:text-gray-400">
+                    <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
                       <EyeIcon className="h-5 w-5" />
                       <span className="font-medium">{formatNumber(post.view_count || 0)} Views</span>
                     </div>
@@ -511,7 +511,7 @@ const PostDetail = () => {
                     className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
                       post.is_saved 
                         ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300 shadow-lg' 
-                        : 'bg-slate-200 text-slate-600 hover:bg-slate-300 dark:bg-gray-600 dark:text-gray-300 dark:hover:bg-gray-500'
+                        : 'bg-gray-200 text-gray-600 hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-300 dark:hover:bg-gray-500'
                     }`}
                     disabled={savePostMutation.isPending}
                   >
@@ -529,18 +529,18 @@ const PostDetail = () => {
         </div>
 
         {/* Solutions Section */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-slate-200 dark:border-gray-700 overflow-hidden">
-          <div className="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800/50 dark:to-slate-700/50 p-6 border-b border-slate-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800/50 dark:to-gray-700/50 p-6 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center">
-                  <LightBulbIcon className="h-6 w-6 text-slate-600 dark:text-slate-400" />
+                <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                  <LightBulbIcon className="h-6 w-6 text-gray-600 dark:text-gray-400" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-slate-800 dark:text-white">
+                  <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
                     💡 Solutions & Insights
                   </h2>
-                  <p className="text-slate-600 dark:text-gray-400">
+                  <p className="text-gray-600 dark:text-gray-400">
                     {solutions?.length || 0} community solutions available
                   </p>
                 </div>
@@ -549,7 +549,7 @@ const PostDetail = () => {
               {user && (
                 <button
                   onClick={() => setShowSolutionForm(!showSolutionForm)}
-                  className="flex items-center space-x-2 bg-slate-700 hover:bg-slate-800 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
+                  className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
                 >
                   <PlusIcon className="h-5 w-5" />
                   <span>Share Solution</span>
@@ -561,28 +561,28 @@ const PostDetail = () => {
           <div className="p-6">
             {/* Add Solution Form */}
             {showSolutionForm && (
-              <div className="mb-8 p-6 border-2 border-slate-200 dark:border-slate-600 rounded-xl bg-slate-50/50 dark:bg-slate-800/50">
-                <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">
+              <div className="mb-8 p-6 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50/50 dark:bg-gray-800/50">
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
                   ✨ Share Your Solution
                 </h3>
                 <textarea
                   value={newSolution}
                   onChange={(e) => setNewSolution(e.target.value)}
                   placeholder="Share your solution, explanation, or insights that could help fellow students..."
-                  className="w-full p-4 border border-slate-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent resize-none"
+                  className="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                   rows="6"
                 />
                 <div className="flex justify-end space-x-3 mt-4">
                   <button
                     onClick={() => setShowSolutionForm(false)}
-                    className="px-6 py-2 text-slate-600 dark:text-gray-400 hover:text-slate-800 dark:hover:text-gray-200 transition-colors"
+                    className="px-6 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleAddSolution}
                     disabled={addSolutionMutation.isPending || !newSolution.trim()}
-                    className="px-6 py-2 bg-slate-700 hover:bg-slate-800 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg hover:shadow-xl"
+                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg hover:shadow-xl"
                   >
                     {addSolutionMutation.isPending ? 'Publishing...' : 'Publish Solution'}
                   </button>
@@ -593,8 +593,8 @@ const PostDetail = () => {
             {/* Solutions List */}
             {solutionsLoading ? (
               <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-300 border-t-slate-700 mx-auto mb-4"></div>
-                <p className="text-slate-600 dark:text-gray-400 font-medium">Loading solutions...</p>
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-300 border-t-gray-700 mx-auto mb-4"></div>
+                <p className="text-gray-600 dark:text-gray-400 font-medium">Loading solutions...</p>
               </div>
             ) : solutions && solutions.length > 0 ? (
               <div className="space-y-6">
@@ -604,7 +604,7 @@ const PostDetail = () => {
                     className={`border-2 rounded-xl transition-all duration-300 hover:shadow-lg ${
                       solution.is_verified 
                         ? 'border-emerald-200 dark:border-emerald-700 bg-emerald-50/30 dark:bg-emerald-900/10' 
-                        : 'border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-slate-300 dark:hover:border-slate-600'
+                        : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
                     }`}
                   >
                     <div className="p-6">
@@ -613,8 +613,8 @@ const PostDetail = () => {
                         <div className="flex flex-col items-center space-y-2">
                           <button
                             onClick={() => handleVoteSolution(solution.id, 1)}
-                            className={`p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-gray-700 transition-colors ${
-                              solution.user_vote === 1 ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20' : 'text-slate-400 dark:text-gray-500'
+                            className={`p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
+                              solution.user_vote === 1 ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20' : 'text-gray-400 dark:text-gray-500'
                             }`}
                             disabled={!user}
                           >
@@ -627,15 +627,15 @@ const PostDetail = () => {
                           
                           <span className={`text-sm font-bold ${
                             solution.user_vote === 1 ? 'text-emerald-600' : 
-                            solution.user_vote === -1 ? 'text-amber-600' : 'text-slate-700 dark:text-gray-300'
+                            solution.user_vote === -1 ? 'text-amber-600' : 'text-gray-700 dark:text-gray-300'
                           }`}>
                             {formatNumber(solution.net_votes || 0)}
                           </span>
                           
                           <button
                             onClick={() => handleVoteSolution(solution.id, -1)}
-                            className={`p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-gray-700 transition-colors ${
-                              solution.user_vote === -1 ? 'text-amber-600 bg-amber-50 dark:bg-amber-900/20' : 'text-slate-400 dark:text-gray-500'
+                            className={`p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
+                              solution.user_vote === -1 ? 'text-amber-600 bg-amber-50 dark:bg-amber-900/20' : 'text-gray-400 dark:text-gray-500'
                             }`}
                             disabled={!user}
                           >
@@ -652,12 +652,12 @@ const PostDetail = () => {
                           {/* Enhanced Header */}
                           <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center space-x-3">
-                              <div className="w-10 h-10 bg-gradient-to-r from-slate-600 to-slate-700 rounded-full flex items-center justify-center">
+                              <div className="w-10 h-10 bg-gradient-to-r from-gray-600 to-gray-700 rounded-full flex items-center justify-center">
                                 <UserIcon className="h-5 w-5 text-white" />
                               </div>
                               <div>
                                 <div className="flex items-center space-x-2">
-                                  <span className="font-bold text-slate-800 dark:text-white">
+                                  <span className="font-bold text-gray-800 dark:text-white">
                                     {solution.author_username || 'Anonymous Scholar'}
                                   </span>
                                   {solution.author_contribution > 100 && (
@@ -667,7 +667,7 @@ const PostDetail = () => {
                                     </div>
                                   )}
                                 </div>
-                                <span className="text-sm text-slate-500 dark:text-gray-400">
+                                <span className="text-sm text-gray-500 dark:text-gray-400">
                                   {formatTimeAgo(solution.created_at)}
                                 </span>
                               </div>
@@ -691,7 +691,7 @@ const PostDetail = () => {
                                 className={`p-2 rounded-lg transition-all duration-200 ${
                                   solution.is_bookmarked 
                                     ? 'text-amber-600 bg-amber-100 dark:bg-amber-900/20 dark:text-amber-300' 
-                                    : 'text-slate-400 dark:text-gray-500 hover:bg-slate-100 dark:hover:bg-gray-700'
+                                    : 'text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700'
                                 }`}
                                 disabled={!user}
                               >
@@ -706,14 +706,14 @@ const PostDetail = () => {
 
                           {/* Solution Title */}
                           {solution.solution_title && (
-                            <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-3">
+                            <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-3">
                               {solution.solution_title}
                             </h3>
                           )}
 
                           {/* Solution Content */}
-                          <div className="prose prose-slate dark:prose-invert max-w-none mb-4">
-                            <p className="text-slate-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
+                          <div className="prose prose-gray dark:prose-invert max-w-none mb-4">
+                            <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
                               {solution.content}
                             </p>
                           </div>
@@ -724,7 +724,7 @@ const PostDetail = () => {
                               {solution.tags.map((tag, tagIndex) => (
                                 <span
                                   key={tagIndex}
-                                  className="inline-block bg-slate-100 dark:bg-gray-600/50 text-slate-700 dark:text-gray-300 text-xs px-3 py-1 rounded-full font-medium"
+                                  className="inline-block bg-gray-100 dark:bg-gray-600/50 text-gray-700 dark:text-gray-300 text-xs px-3 py-1 rounded-full font-medium"
                                 >
                                   #{tag}
                                 </span>
@@ -733,8 +733,8 @@ const PostDetail = () => {
                           )}
 
                           {/* Solution Actions */}
-                          <div className="flex items-center justify-between bg-slate-50 dark:bg-gray-700/50 rounded-lg p-3">
-                            <div className="flex items-center space-x-4 text-sm text-slate-600 dark:text-gray-400">
+                          <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+                            <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
                               <div className="flex items-center space-x-1">
                                 <ChatBubbleLeftIcon className="h-4 w-4" />
                                 <span className="font-medium">{solution.comment_count || 0}</span>
@@ -752,7 +752,7 @@ const PostDetail = () => {
                             {user && (
                               <button
                                 onClick={() => toggleCommentForm(solution.id)}
-                                className="flex items-center space-x-1 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 transition-colors font-medium"
+                                className="flex items-center space-x-1 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors font-medium"
                               >
                                 <PlusIcon className="h-4 w-4" />
                                 <span>Comment</span>
@@ -762,25 +762,25 @@ const PostDetail = () => {
 
                           {/* Add Comment Form */}
                           {showCommentForm[solution.id] && (
-                            <div className="mt-4 p-4 border-2 border-slate-200 dark:border-slate-600 rounded-lg bg-slate-50/50 dark:bg-slate-800/50">
+                            <div className="mt-4 p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50/50 dark:bg-gray-800/50">
                               <textarea
                                 value={newComment}
                                 onChange={(e) => setNewComment(e.target.value)}
                                 placeholder="Add a thoughtful comment..."
-                                className="w-full p-3 border border-slate-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent resize-none"
+                                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                                 rows="3"
                               />
                               <div className="flex justify-end space-x-2 mt-3">
                                 <button
                                   onClick={() => toggleCommentForm(solution.id)}
-                                  className="px-4 py-2 text-sm text-slate-600 dark:text-gray-400 hover:text-slate-800 dark:hover:text-gray-200 transition-colors"
+                                  className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
                                 >
                                   Cancel
                                 </button>
                                 <button
                                   onClick={() => handleAddComment(solution.id)}
                                   disabled={addCommentMutation.isPending || !newComment.trim()}
-                                  className="px-4 py-2 text-sm bg-slate-700 hover:bg-slate-800 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                  className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                 >
                                   {addCommentMutation.isPending ? 'Adding...' : 'Add Comment'}
                                 </button>
@@ -790,26 +790,26 @@ const PostDetail = () => {
 
                           {/* Comments Section */}
                           {solution.comments && solution.comments.length > 0 && (
-                            <div className="mt-6 pt-4 border-t border-slate-200 dark:border-gray-600">
-                              <h4 className="font-semibold text-slate-900 dark:text-white mb-4">
+                            <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-600">
+                              <h4 className="font-semibold text-gray-900 dark:text-white mb-4">
                                 Comments ({solution.comments.length})
                               </h4>
                               <div className="space-y-4">
                                 {solution.comments.map((comment) => (
-                                  <div key={comment.id} className="bg-slate-50 dark:bg-gray-700/50 p-4 rounded-lg">
+                                  <div key={comment.id} className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
                                     <div className="flex items-center justify-between mb-2">
                                       <div className="flex items-center space-x-2">
-                                        <div className="w-6 h-6 bg-slate-300 dark:bg-slate-600 rounded-full flex items-center justify-center">
-                                          <UserIcon className="h-3 w-3 text-slate-600 dark:text-slate-400" />
+                                        <div className="w-6 h-6 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                                          <UserIcon className="h-3 w-3 text-gray-600 dark:text-gray-400" />
                                         </div>
-                                        <span className="font-medium text-sm text-slate-900 dark:text-white">
+                                        <span className="font-medium text-sm text-gray-900 dark:text-white">
                                           {comment.author_username}
                                         </span>
-                                        <span className="text-xs text-slate-500 dark:text-gray-400">
+                                        <span className="text-xs text-gray-500 dark:text-gray-400">
                                           {formatTimeAgo(comment.created_at)}
                                         </span>
                                         {comment.net_votes > 0 && (
-                                          <span className="text-xs text-slate-500 dark:text-gray-400">
+                                          <span className="text-xs text-gray-500 dark:text-gray-400">
                                             {comment.net_votes} votes
                                           </span>
                                         )}
@@ -817,37 +817,37 @@ const PostDetail = () => {
                                       {user && (
                                         <button
                                           onClick={() => handleReplyClick(comment.id)}
-                                          className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
+                                          className="text-xs text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
                                         >
                                           Reply
                                         </button>
                                       )}
                                     </div>
-                                    <p className="text-sm text-slate-700 dark:text-gray-300 leading-relaxed">
+                                    <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                                       {comment.content}
                                     </p>
                                     
                                     {/* Reply Form */}
                                     {replyTo === comment.id && (
-                                      <div className="mt-3 p-3 border border-slate-200 dark:border-gray-600 rounded bg-white dark:bg-gray-800">
+                                      <div className="mt-3 p-3 border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-800">
                                         <textarea
                                           value={replyText}
                                           onChange={(e) => setReplyText(e.target.value)}
                                           placeholder="Write a reply..."
-                                          className="w-full p-2 border border-slate-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-800 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent resize-none"
+                                          className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                                           rows="2"
                                         />
                                         <div className="flex justify-end space-x-2 mt-2">
                                           <button
                                             onClick={() => setReplyTo(null)}
-                                            className="px-3 py-1 text-xs text-slate-600 dark:text-gray-400 hover:text-slate-800 dark:hover:text-gray-200 transition-colors"
+                                            className="px-3 py-1 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
                                           >
                                             Cancel
                                           </button>
                                           <button
                                             onClick={() => handleAddReply(solution.id, comment.id)}
                                             disabled={addCommentMutation.isPending || !replyText.trim()}
-                                            className="px-3 py-1 text-xs bg-slate-700 hover:bg-slate-800 text-white rounded font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                            className="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                           >
                                             {addCommentMutation.isPending ? 'Replying...' : 'Reply'}
                                           </button>
@@ -859,19 +859,19 @@ const PostDetail = () => {
                                     {comment.replies && comment.replies.length > 0 && (
                                       <div className="mt-3 ml-4 space-y-2">
                                         {comment.replies.map((reply) => (
-                                          <div key={reply.id} className="bg-slate-100 dark:bg-gray-600/50 p-3 rounded">
+                                          <div key={reply.id} className="bg-gray-100 dark:bg-gray-600/50 p-3 rounded">
                                             <div className="flex items-center space-x-2 mb-1">
-                                              <div className="w-4 h-4 bg-slate-300 dark:bg-slate-600 rounded-full flex items-center justify-center">
-                                                <UserIcon className="h-2 w-2 text-slate-600 dark:text-slate-400" />
+                                              <div className="w-4 h-4 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                                                <UserIcon className="h-2 w-2 text-gray-600 dark:text-gray-400" />
                                               </div>
-                                              <span className="font-medium text-xs text-slate-900 dark:text-white">
+                                              <span className="font-medium text-xs text-gray-900 dark:text-white">
                                                 {reply.author_username}
                                               </span>
-                                              <span className="text-xs text-slate-500 dark:text-gray-400">
+                                              <span className="text-xs text-gray-500 dark:text-gray-400">
                                                 {formatTimeAgo(reply.created_at)}
                                               </span>
                                             </div>
-                                            <p className="text-xs text-slate-700 dark:text-gray-300 leading-relaxed">
+                                            <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed">
                                               {reply.content}
                                             </p>
                                           </div>
@@ -891,17 +891,17 @@ const PostDetail = () => {
               </div>
             ) : (
               <div className="text-center py-16">
-                <div className="w-20 h-20 bg-slate-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <LightBulbIcon className="h-10 w-10 text-slate-400 dark:text-gray-500" />
+                <div className="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <LightBulbIcon className="h-10 w-10 text-gray-400 dark:text-gray-500" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">No Solutions Yet</h3>
-                <p className="text-slate-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+                <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">No Solutions Yet</h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
                   This academic question is waiting for brilliant minds like yours to share insights and solutions.
                 </p>
                 {user && (
                   <button
                     onClick={() => setShowSolutionForm(true)}
-                    className="bg-slate-700 hover:bg-slate-800 text-white px-6 py-3 rounded-lg font-medium transition-colors shadow-lg hover:shadow-xl"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors shadow-lg hover:shadow-xl"
                   >
                     Be the First to Help
                   </button>
