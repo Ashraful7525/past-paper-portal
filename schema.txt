@@ -7,18 +7,18 @@ CREATE TABLE public.bookmarks (
   bookmark_id integer NOT NULL DEFAULT nextval('bookmarks_bookmark_id_seq'::regclass),
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT bookmarks_pkey PRIMARY KEY (bookmark_id),
-  CONSTRAINT bookmarks_solution_id_fkey FOREIGN KEY (solution_id) REFERENCES public.solutions(solution_id),
-  CONSTRAINT bookmarks_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.users(student_id)
+  CONSTRAINT bookmarks_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.users(student_id),
+  CONSTRAINT bookmarks_solution_id_fkey FOREIGN KEY (solution_id) REFERENCES public.solutions(solution_id)
 );
 CREATE TABLE public.comment_votes (
   student_id integer NOT NULL,
   comment_id integer NOT NULL,
-  vote_type USER-DEFINED NOT NULL,
   vote_id integer NOT NULL DEFAULT nextval('comment_votes_vote_id_seq'::regclass),
   created_at timestamp with time zone NOT NULL DEFAULT now(),
+  vote_type integer NOT NULL CHECK (vote_type = ANY (ARRAY['-1'::integer, 0, 1])),
   CONSTRAINT comment_votes_pkey PRIMARY KEY (vote_id),
-  CONSTRAINT comment_votes_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.users(student_id),
-  CONSTRAINT comment_votes_comment_id_fkey FOREIGN KEY (comment_id) REFERENCES public.comments(comment_id)
+  CONSTRAINT comment_votes_comment_id_fkey FOREIGN KEY (comment_id) REFERENCES public.comments(comment_id),
+  CONSTRAINT comment_votes_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.users(student_id)
 );
 CREATE TABLE public.comments (
   parent_comment_id integer,
@@ -31,9 +31,9 @@ CREATE TABLE public.comments (
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   updated_at timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT comments_pkey PRIMARY KEY (comment_id),
-  CONSTRAINT comments_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.users(student_id),
   CONSTRAINT comments_solution_id_fkey FOREIGN KEY (solution_id) REFERENCES public.solutions(solution_id),
-  CONSTRAINT fk_comments_parent FOREIGN KEY (parent_comment_id) REFERENCES public.comments(comment_id)
+  CONSTRAINT fk_comments_parent FOREIGN KEY (parent_comment_id) REFERENCES public.comments(comment_id),
+  CONSTRAINT comments_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.users(student_id)
 );
 CREATE TABLE public.courses (
   course_code character varying,
@@ -177,18 +177,18 @@ CREATE TABLE public.solution_tags (
   solution_id integer NOT NULL,
   tag_id integer NOT NULL,
   CONSTRAINT solution_tags_pkey PRIMARY KEY (solution_id, tag_id),
-  CONSTRAINT solution_tags_solution_id_fkey FOREIGN KEY (solution_id) REFERENCES public.solutions(solution_id),
-  CONSTRAINT solution_tags_tag_id_fkey FOREIGN KEY (tag_id) REFERENCES public.tags(tag_id)
+  CONSTRAINT solution_tags_tag_id_fkey FOREIGN KEY (tag_id) REFERENCES public.tags(tag_id),
+  CONSTRAINT solution_tags_solution_id_fkey FOREIGN KEY (solution_id) REFERENCES public.solutions(solution_id)
 );
 CREATE TABLE public.solution_votes (
   student_id integer NOT NULL,
   solution_id integer NOT NULL,
-  vote_type USER-DEFINED NOT NULL,
   vote_id integer NOT NULL DEFAULT nextval('solution_votes_vote_id_seq'::regclass),
   created_at timestamp with time zone NOT NULL DEFAULT now(),
+  vote_type integer NOT NULL CHECK (vote_type = ANY (ARRAY['-1'::integer, 0, 1])),
   CONSTRAINT solution_votes_pkey PRIMARY KEY (vote_id),
-  CONSTRAINT solution_votes_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.users(student_id),
-  CONSTRAINT solution_votes_solution_id_fkey FOREIGN KEY (solution_id) REFERENCES public.solutions(solution_id)
+  CONSTRAINT solution_votes_solution_id_fkey FOREIGN KEY (solution_id) REFERENCES public.solutions(solution_id),
+  CONSTRAINT solution_votes_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.users(student_id)
 );
 CREATE TABLE public.solutions (
   solution_title character varying,
@@ -203,8 +203,8 @@ CREATE TABLE public.solutions (
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   updated_at timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT solutions_pkey PRIMARY KEY (solution_id),
-  CONSTRAINT solutions_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.users(student_id),
-  CONSTRAINT solutions_question_id_fkey FOREIGN KEY (question_id) REFERENCES public.questions(question_id)
+  CONSTRAINT solutions_question_id_fkey FOREIGN KEY (question_id) REFERENCES public.questions(question_id),
+  CONSTRAINT solutions_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.users(student_id)
 );
 CREATE TABLE public.tags (
   tag_name character varying NOT NULL UNIQUE,

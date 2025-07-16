@@ -14,11 +14,7 @@ class Comment {
       
       if (studentId) {
         userVoteJoin = `LEFT JOIN public.comment_votes cv ON c.comment_id = cv.comment_id AND cv.student_id = $${paramIndex}`;
-        userVoteSelect = `CASE 
-          WHEN cv.vote_type = 'upvote' THEN 1 
-          WHEN cv.vote_type = 'downvote' THEN -1 
-          ELSE 0 
-        END as user_vote,`;
+        userVoteSelect = `COALESCE(cv.vote_type, 0) as user_vote,`;
         groupByUserColumns = ', cv.vote_type';
         queryParams.push(studentId);
         paramIndex++;
@@ -27,8 +23,8 @@ class Comment {
       // Get all comments for this solution (both parent and child comments)
       const query = `
         SELECT 
-          c.comment_id as id,
-          c.comment_text as content,
+          c.comment_id,
+          c.comment_text,
           c.parent_comment_id,
           c.upvotes,
           c.downvotes,
@@ -44,24 +40,37 @@ class Comment {
         LEFT JOIN public.comments replies ON c.comment_id = replies.parent_comment_id
         ${userVoteJoin}
         WHERE c.solution_id = $1
-        GROUP BY c.comment_id, u.username, u.student_id, u.contribution${groupByUserColumns}
+        GROUP BY c.comment_id, c.comment_text, c.parent_comment_id, c.upvotes, c.downvotes, c.created_at, c.updated_at, u.username, u.student_id, u.contribution${groupByUserColumns}
         ORDER BY c.parent_comment_id NULLS FIRST, c.created_at ASC
       `;
 
       const result = await client.query(query, queryParams);
       
-      // Organize comments into parent-child structure
+      // Organize comments into parent-child structure with consistent field names
       const commentsMap = new Map();
       const parentComments = [];
       
       result.rows.forEach(comment => {
         const formattedComment = {
-          ...comment,
+          comment_id: comment.comment_id,
+          id: comment.comment_id, // For compatibility
+          comment_text: comment.comment_text,
+          content: comment.comment_text, // For compatibility
+          parent_comment_id: comment.parent_comment_id,
+          upvotes: comment.upvotes,
+          downvotes: comment.downvotes,
           net_votes: comment.upvotes - comment.downvotes,
+          created_at: comment.created_at,
+          updated_at: comment.updated_at,
+          author_username: comment.author_username,
+          author_id: comment.author_id,
+          author_contribution: comment.author_contribution,
+          user_vote: comment.user_vote,
+          reply_count: comment.reply_count,
           replies: []
         };
         
-        commentsMap.set(comment.id, formattedComment);
+        commentsMap.set(comment.comment_id, formattedComment);
         
         if (comment.parent_comment_id === null) {
           parentComments.push(formattedComment);
@@ -73,7 +82,7 @@ class Comment {
         if (comment.parent_comment_id !== null) {
           const parentComment = commentsMap.get(comment.parent_comment_id);
           if (parentComment) {
-            parentComment.replies.push(commentsMap.get(comment.id));
+            parentComment.replies.push(commentsMap.get(comment.comment_id));
           }
         }
       });
@@ -158,11 +167,7 @@ class Comment {
       
       if (studentId) {
         userVoteJoin = `LEFT JOIN public.comment_votes cv ON c.comment_id = cv.comment_id AND cv.student_id = $${paramIndex}`;
-        userVoteSelect = `CASE 
-          WHEN cv.vote_type = 'upvote' THEN 1 
-          WHEN cv.vote_type = 'downvote' THEN -1 
-          ELSE 0 
-        END as user_vote,`;
+        userVoteSelect = `COALESCE(cv.vote_type, 0) as user_vote,`;
         groupByUserColumns = ', cv.vote_type';
         queryParams.push(studentId);
         paramIndex++;

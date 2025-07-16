@@ -179,7 +179,17 @@ class Post {
       `;
 
       const result = await client.query(query, queryParams);
-      return result.rows;
+      
+      // Ensure proper data type conversion for all posts
+      return result.rows.map(post => ({
+        ...post,
+        user_vote: parseInt(post.user_vote) || 0,
+        upvotes: parseInt(post.upvotes) || 0,
+        downvotes: parseInt(post.downvotes) || 0,
+        view_count: parseInt(post.view_count) || 0,
+        download_count: parseInt(post.download_count) || 0,
+        solution_count: parseInt(post.solution_count) || 0
+      }));
 
     } catch (error) {
       console.error('Error fetching feed posts:', error);
@@ -194,6 +204,26 @@ class Post {
   static async getPostById(postId, studentId = null) {
     const client = await pool.connect();
     try {
+      // Build user-specific joins and selects
+      let userVoteJoin = '';
+      let userSaveJoin = '';
+      let userVoteSelect = '0 as user_vote,';
+      let userSaveSelect = 'false as is_saved,';
+      let groupByUserColumns = '';
+      
+      const queryParams = [postId];
+      let paramIndex = 2;
+      
+      if (studentId) {
+        userVoteJoin = `LEFT JOIN public.post_votes pv ON p.post_id = pv.post_id AND pv.student_id = $${paramIndex}`;
+        userSaveJoin = `LEFT JOIN public.saved_posts sp ON p.post_id = sp.post_id AND sp.student_id = $${paramIndex}`;
+        userVoteSelect = `COALESCE(pv.vote_type, 0) as user_vote,`;
+        userSaveSelect = `CASE WHEN sp.post_id IS NOT NULL THEN true ELSE false END as is_saved,`;
+        groupByUserColumns = ', pv.vote_type, sp.post_id';
+        queryParams.push(studentId);
+        paramIndex++;
+      }
+
       const query = `
         SELECT 
           p.post_id,
@@ -219,8 +249,8 @@ class Post {
           q.question_text,
           q.question_no,
           q.year as question_year,
-          ${studentId ? `COALESCE(pv.vote_type, 0) as user_vote,` : '0 as user_vote,'}
-          ${studentId ? `CASE WHEN sp.post_id IS NOT NULL THEN true ELSE false END as is_saved,` : 'false as is_saved,'}
+          ${userVoteSelect}
+          ${userSaveSelect}
           ARRAY_AGG(DISTINCT t.tag_name) FILTER (WHERE t.tag_name IS NOT NULL) as tags
         FROM public.posts p
         LEFT JOIN public.users u ON p.student_id = u.student_id
@@ -230,17 +260,27 @@ class Post {
         LEFT JOIN public.semesters s ON q.semester_id = s.semester_id
         LEFT JOIN public.post_tags pt ON p.post_id = pt.post_id
         LEFT JOIN public.tags t ON pt.tag_id = t.tag_id
-        ${studentId ? `LEFT JOIN public.post_votes pv ON p.post_id = pv.post_id AND pv.student_id = $2` : ''}
-        ${studentId ? `LEFT JOIN public.saved_posts sp ON p.post_id = sp.post_id AND sp.student_id = $2` : ''}
+        ${userVoteJoin}
+        ${userSaveJoin}
         WHERE p.post_id = $1 AND p.question_id IS NOT NULL
-        GROUP BY p.post_id, u.username, d.department_name, d.icon, c.course_title, s.semester_name, q.is_verified, q.question_title, q.question_text, q.question_no, q.year
-        ${studentId ? ', pv.vote_type, sp.post_id' : ''}
+        GROUP BY p.post_id, p.title, p.content, p.preview_text, p.file_url, p.file_size, p.upvotes, p.downvotes, p.view_count, p.download_count, p.is_featured, p.created_at, p.updated_at, u.username, d.department_name, d.icon, c.course_title, s.semester_name, q.is_verified, q.question_title, q.question_text, q.question_no, q.year${groupByUserColumns}
       `;
 
-      const queryParams = studentId ? [postId, studentId] : [postId];
       const result = await client.query(query, queryParams);
       
-      return result.rows.length > 0 ? result.rows[0] : null;
+      if (result.rows.length === 0) return null;
+      
+      const post = result.rows[0];
+      
+      // Ensure user_vote is properly converted to integer
+      return {
+        ...post,
+        user_vote: parseInt(post.user_vote) || 0,
+        upvotes: parseInt(post.upvotes) || 0,
+        downvotes: parseInt(post.downvotes) || 0,
+        view_count: parseInt(post.view_count) || 0,
+        download_count: parseInt(post.download_count) || 0
+      };
     } catch (error) {
       console.error('Error fetching post by ID:', error);
       throw new Error('Database query failed');

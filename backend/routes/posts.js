@@ -15,7 +15,7 @@ router.get('/available-years', postsController.getAvailableYears);
 
 // Individual post routes
 router.get('/:post_id', authOptionalMiddleware, postsController.getPost);
-router.get('/:post_id/solutions', postsController.getSolutions);
+router.get('/:post_id/solutions', authOptionalMiddleware, postsController.getSolutions);
 
 // Semi-protected routes (track views for anyone)
 router.post('/:post_id/view', postsController.trackView);

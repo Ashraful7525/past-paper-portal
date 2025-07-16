@@ -3,20 +3,46 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
 export const authMiddleware = (req, res, next) => {
+  const requestInfo = {
+    method: req.method,
+    path: req.path,
+    timestamp: new Date().toISOString()
+  };
+
+  console.log('🔐 [AUTH] Starting authentication check:', requestInfo);
+
   try {
     const authHeader = req.header('Authorization');
+    console.log('🔐 [AUTH] Authorization header:', authHeader ? 'Present' : 'Missing');
+
     const token = authHeader?.replace('Bearer ', '');
 
     if (!token) {
+      console.error('❌ [AUTH] No token provided');
       return res.status(401).json({ 
         message: 'Access denied. No token provided.' 
       });
     }
 
+    console.log('🔐 [AUTH] Token extracted, verifying...');
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'QV7OgvWxIrNSvfjdIZQEEAFQ5hb9mFGskyJTr8/FsUJ8wkwC2s2UJydzt2/aAWx/HxgbtEUdnYIpOcKgVwy81A==');
+    
+    console.log('✅ [AUTH] Token verified successfully:', {
+      student_id: decoded.student_id,
+      username: decoded.username,
+      is_admin: decoded.is_admin,
+      exp: new Date(decoded.exp * 1000).toISOString()
+    });
+
     req.user = decoded;
     next();
   } catch (error) {
+    console.error('❌ [AUTH] Authentication failed:', {
+      error: error.message,
+      name: error.name,
+      ...requestInfo
+    });
+
     if (error.name === 'JsonWebTokenError') {
       return res.status(401).json({ 
         message: 'Invalid token' 

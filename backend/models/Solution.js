@@ -4,7 +4,7 @@ class Solution {
   static async getSolutionsByPostId(postId, studentId = null) {
     const client = await pool.connect();
     try {
-      console.log('Fetching solutions for post ID:', postId);
+      console.log('Fetching solutions for post ID:', postId, 'for student:', studentId);
       
       // First, get the question_id from the post
       const postQuery = 'SELECT question_id FROM public.posts WHERE post_id = $1';
@@ -31,26 +31,20 @@ class Solution {
       let userVoteSelect = '0 as user_vote,';
       let userBookmarkJoin = '';
       let userBookmarkSelect = 'false as is_bookmarked,';
-      let groupByUserColumns = '';
       
       const queryParams = [questionId];
       let paramIndex = 2;
       
       if (studentId) {
         userVoteJoin = `LEFT JOIN public.solution_votes sv ON s.solution_id = sv.solution_id AND sv.student_id = $${paramIndex}`;
-        userVoteSelect = `CASE 
-          WHEN sv.vote_type = 'upvote' THEN 1 
-          WHEN sv.vote_type = 'downvote' THEN -1 
-          ELSE 0 
-        END as user_vote,`;
+        userVoteSelect = `COALESCE(sv.vote_type, 0) as user_vote,`;
         userBookmarkJoin = `LEFT JOIN public.bookmarks b ON s.solution_id = b.solution_id AND b.student_id = $${paramIndex}`;
         userBookmarkSelect = `CASE WHEN b.bookmark_id IS NOT NULL THEN true ELSE false END as is_bookmarked,`;
-        groupByUserColumns = ', sv.vote_type, b.bookmark_id';
         queryParams.push(studentId);
         paramIndex++;
       }
 
-      // Get solutions with detailed information
+      // Get solutions with detailed information - Fixed GROUP BY
       const query = `
         SELECT 
           s.solution_id as id,
@@ -77,23 +71,34 @@ class Solution {
         ${userVoteJoin}
         ${userBookmarkJoin}
         WHERE s.question_id = $1
-        GROUP BY s.solution_id, u.username, u.student_id, u.contribution${groupByUserColumns}
+        GROUP BY s.solution_id, s.solution_text, s.solution_title, s.is_verified, s.upvotes, s.downvotes, s.rating, s.created_at, s.updated_at, u.username, u.student_id, u.contribution${studentId ? ', sv.vote_type, b.bookmark_id' : ''}
         ORDER BY s.is_verified DESC, s.upvotes DESC, s.created_at DESC
       `;
 
-      console.log('Executing solutions query with question_id:', questionId);
+      console.log('Executing solutions query with question_id:', questionId, 'and student_id:', studentId);
+      console.log('Query:', query);
+      console.log('Query params:', queryParams);
+      
       const result = await client.query(query, queryParams);
-      console.log('Solutions query result:', result.rows);
+      console.log('Solutions query result with user votes:', result.rows);
       
       // Get comments for each solution
       const Comment = (await import('./Comment.js')).default;
       const solutions = await Promise.all(result.rows.map(async (solution) => {
         const comments = await Comment.getCommentsBySolutionId(solution.id, studentId);
-        return {
+        const formattedSolution = {
           ...solution,
           comments,
-          net_votes: solution.upvotes - solution.downvotes
+          net_votes: solution.upvotes - solution.downvotes,
+          user_vote: parseInt(solution.user_vote) || 0,
+          upvotes: parseInt(solution.upvotes) || 0,
+          downvotes: parseInt(solution.downvotes) || 0,
+          rating: parseInt(solution.rating) || 0,
+          comment_count: parseInt(solution.comment_count) || 0
         };
+        
+        console.log(`Solution ${solution.id} formatted with user_vote:`, formattedSolution.user_vote);
+        return formattedSolution;
       }));
       
       return solutions;
@@ -174,11 +179,7 @@ class Solution {
       
       if (studentId) {
         userVoteJoin = `LEFT JOIN public.solution_votes sv ON s.solution_id = sv.solution_id AND sv.student_id = $${paramIndex}`;
-        userVoteSelect = `CASE 
-          WHEN sv.vote_type = 'upvote' THEN 1 
-          WHEN sv.vote_type = 'downvote' THEN -1 
-          ELSE 0 
-        END as user_vote,`;
+        userVoteSelect = `COALESCE(sv.vote_type, 0) as user_vote,`;
         userBookmarkJoin = `LEFT JOIN public.bookmarks b ON s.solution_id = b.solution_id AND b.student_id = $${paramIndex}`;
         userBookmarkSelect = `CASE WHEN b.bookmark_id IS NOT NULL THEN true ELSE false END as is_bookmarked,`;
         groupByUserColumns = ', sv.vote_type, b.bookmark_id';
