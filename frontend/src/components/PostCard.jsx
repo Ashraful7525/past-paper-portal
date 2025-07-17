@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   ChevronUpIcon, 
@@ -24,6 +24,8 @@ const PostCard = ({ post }) => {
   const navigate = useNavigate();
   const votePostMutation = useVotePost();
   const savePostMutation = useSavePost();
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [showFullImage, setShowFullImage] = useState(false);
 
   const handleVote = (voteType, e) => {
     e.stopPropagation(); // Prevent card click when voting
@@ -44,6 +46,47 @@ const PostCard = ({ post }) => {
       return;
     }
     savePostMutation.mutate(post.post_id);
+  };
+
+  const handleDownload = async (e) => {
+    e.stopPropagation(); // Prevent card click when downloading
+    if (!post.file_url || isDownloading) return;
+
+    setIsDownloading(true);
+    
+    try {
+      // Get the filename from the URL or create a default one
+      const urlParts = post.file_url.split('/');
+      const fileName = urlParts[urlParts.length - 1] || `${post.title || 'file'}.${post.file_url.split('.').pop()}`;
+      
+      // Fetch the file
+      const response = await fetch(post.file_url);
+      const blob = await response.blob();
+      
+      // Create a download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      // Optional: Update download count via API
+      // You can add an API call here to increment download count
+      
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      // Fallback to opening in new tab
+      window.open(post.file_url, '_blank');
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   const handleCardClick = () => {
@@ -84,6 +127,12 @@ const PostCard = ({ post }) => {
     if (diffHours > 0) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
     if (diffMinutes > 0) return `${diffMinutes} minute${diffMinutes > 1 ? 's' : ''} ago`;
     return 'Just now';
+  };
+
+  const isImageFile = (url) => {
+    if (!url) return false;
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg'];
+    return imageExtensions.some(ext => url.toLowerCase().includes(ext));
   };
 
   return (
@@ -214,6 +263,21 @@ const PostCard = ({ post }) => {
             </p>
           )}
 
+          {/* Image Display */}
+          {post.file_url && isImageFile(post.file_url) && (
+            <div className="mb-4">
+              <img 
+                src={post.file_url} 
+                alt={post.title || 'Uploaded image'}
+                className="w-full max-w-md h-auto rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow duration-200"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                }}
+                loading="lazy"
+              />
+            </div>
+          )}
+
           {/* Tags */}
           {post.tags && post.tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-4">
@@ -260,10 +324,31 @@ const PostCard = ({ post }) => {
               <span className="font-medium">{post.is_saved ? 'Saved' : 'Save'}</span>
             </button>
 
-            <div className="flex items-center space-x-2 text-sm px-3 py-2">
-              <ArrowDownTrayIcon className="h-4 w-4" />
-              <span className="font-medium">{formatNumber(post.download_count || 0)}</span>
-            </div>
+            <button
+              onClick={handleDownload}
+              className={`flex items-center space-x-2 text-sm px-3 py-2 rounded-lg transition-all duration-200 ${
+                post.file_url && !isDownloading
+                  ? 'hover:bg-green-50 dark:hover:bg-green-900/20 hover:text-green-600 dark:hover:text-green-400 cursor-pointer' 
+                  : 'opacity-50 cursor-not-allowed'
+              }`}
+              disabled={!post.file_url || isDownloading}
+              title={
+                isDownloading 
+                  ? 'Downloading...' 
+                  : post.file_url 
+                    ? 'Download file' 
+                    : 'No file available'
+              }
+            >
+              {isDownloading ? (
+                <div className="h-4 w-4 animate-spin border-2 border-current border-t-transparent rounded-full"></div>
+              ) : (
+                <ArrowDownTrayIcon className="h-4 w-4" />
+              )}
+              <span className="font-medium">
+                {isDownloading ? 'Downloading...' : 'Download'}
+              </span>
+            </button>
 
             <div className="flex items-center space-x-2 text-sm px-3 py-2">
               <EyeIcon className="h-4 w-4" />

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { XMarkIcon, DocumentArrowUpIcon, TagIcon, AcademicCapIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, DocumentArrowUpIcon, TagIcon, AcademicCapIcon, MagnifyingGlassIcon, CloudArrowUpIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../utils/api';
+import { supabase } from '../utils/supabase';
 import toast from 'react-hot-toast';
 
 const UploadPaperModal = ({ isOpen, onClose }) => {
@@ -13,7 +14,7 @@ const UploadPaperModal = ({ isOpen, onClose }) => {
     year: '',
     question_no: '',
     text: '',
-    url: '',
+    file: null,
     tags: ''
   });
   const [courses, setCourses] = useState([]);
@@ -22,6 +23,8 @@ const UploadPaperModal = ({ isOpen, onClose }) => {
   const [showCourseDropdown, setShowCourseDropdown] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Fetch courses when modal opens
   useEffect(() => {
@@ -62,6 +65,71 @@ const UploadPaperModal = ({ isOpen, onClose }) => {
     }));
   };
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Check file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error('File size must be less than 10MB');
+        return;
+      }
+      
+      // Check file type (allow PDF, DOC, DOCX, images)
+      const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/jpeg', 'image/png', 'image/jpg'];
+      if (!allowedTypes.includes(file.type)) {
+        toast.error('Please upload a PDF, DOC, DOCX, or image file');
+        return;
+      }
+      
+      setFormData(prev => ({
+        ...prev,
+        file: file
+      }));
+    }
+  };
+
+    const uploadFileToSupabase = async (file) => {
+    try {
+      if (!file) throw new Error('No file selected');
+      
+      setUploadProgress(10);
+      
+      // Create unique filename
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `papers/${fileName}`;
+      
+      setUploadProgress(30);
+      
+      // Upload file to Supabase storage
+      const { data, error } = await supabase.storage
+        .from('papers') // Make sure this bucket exists in your Supabase project
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+      
+      if (error) {
+        console.error('Supabase upload error:', error);
+        throw new Error(`Upload failed: ${error.message}`);
+      }
+      
+      setUploadProgress(80);
+      
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('papers')
+        .getPublicUrl(filePath);
+      
+      setUploadProgress(100);
+      return publicUrl;
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      setUploadProgress(0);
+      throw error;
+    }
+  };
+
   const handleCourseSearch = (e) => {
     const value = e.target.value;
     setCourseSearch(value);
@@ -95,6 +163,13 @@ const UploadPaperModal = ({ isOpen, onClose }) => {
 
     setIsSubmitting(true);
     try {
+      let fileUrl = null;
+      
+      // Upload file to Supabase if a file is selected
+      if (formData.file) {
+        fileUrl = await uploadFileToSupabase(formData.file);
+      }
+      
       // Calculate semester_id using the formula: (level - 1) * 2 + term
       const semester_id = (parseInt(formData.level) - 1) * 2 + parseInt(formData.term);
       
@@ -116,7 +191,7 @@ const UploadPaperModal = ({ isOpen, onClose }) => {
         content: formData.text || '',
         preview_text: formData.text ? formData.text.substring(0, 200) + '...' : '',
         department_id: null, // Set to NULL as specified
-        file_url: formData.url || null,
+        file_url: fileUrl,
         tags: formData.tags || '',
         questionData: questionData
       };
@@ -134,11 +209,12 @@ const UploadPaperModal = ({ isOpen, onClose }) => {
           year: '',
           question_no: '',
           text: '',
-          url: '',
+          file: null,
           tags: ''
         });
         setSelectedCourse(null);
         setCourseSearch('');
+        setUploadProgress(0);
       }
     } catch (error) {
       console.error('Error uploading paper:', error);
@@ -314,20 +390,55 @@ const UploadPaperModal = ({ isOpen, onClose }) => {
               />
             </div>
 
-            {/* URL */}
+            {/* File Upload */}
             <div>
-              <label htmlFor="url" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                URL (Optional)
+              <label htmlFor="file" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Upload File (Optional)
               </label>
-              <input
-                type="url"
-                id="url"
-                name="url"
-                value={formData.url}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="https://example.com/question-file.pdf"
-              />
+              <div className="relative">
+                <input
+                  type="file"
+                  id="file"
+                  onChange={handleFileChange}
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  className="hidden"
+                />
+                <label
+                  htmlFor="file"
+                  className="w-full px-4 py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:border-blue-500 dark:hover:border-blue-400 transition-colors cursor-pointer flex items-center justify-center space-x-2"
+                >
+                  <CloudArrowUpIcon className="h-5 w-5" />
+                  <span>
+                    {formData.file ? formData.file.name : 'Click to upload file (PDF, DOC, DOCX, or Image)'}
+                  </span>
+                </label>
+                {formData.file && (
+                  <div className="mt-2 flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
+                    <span>{(formData.file.size / 1024 / 1024).toFixed(2)} MB</span>
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, file: null }))}
+                      className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
+                {isUploading && (
+                  <div className="mt-2">
+                    <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-1">
+                      <span>Uploading...</span>
+                      <span>{uploadProgress}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                      <div
+                        className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${uploadProgress}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Tags */}
@@ -361,13 +472,13 @@ const UploadPaperModal = ({ isOpen, onClose }) => {
               </button>
               <button
                 type="submit"
-                disabled={isSubmitting || !formData.course_id || !formData.level || !formData.term || !formData.year || !formData.question_no}
+                disabled={isSubmitting || isUploading || !formData.course_id || !formData.level || !formData.term || !formData.year || !formData.question_no}
                 className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
               >
                 {isSubmitting ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Uploading...</span>
+                    <span>{isUploading ? 'Uploading File...' : 'Uploading...'}</span>
                   </>
                 ) : (
                   <>

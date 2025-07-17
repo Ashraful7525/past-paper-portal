@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   ChatBubbleLeftIcon,
   BookmarkIcon,
@@ -8,7 +8,45 @@ import {
 } from '@heroicons/react/24/outline';
 import { BookmarkIcon as BookmarkSolidIcon } from '@heroicons/react/24/solid';
 
-const PostBody = ({ post, onSave, isSaving, formatNumber }) => {
+const PostBody = ({ post, onSave, isSaving, formatNumber, solutionsCount }) => {
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownload = async (fileUrl) => {
+    if (!fileUrl || isDownloading) return;
+
+    setIsDownloading(true);
+    
+    try {
+      // Get the filename from the URL or create a default one
+      const urlParts = fileUrl.split('/');
+      const fileName = urlParts[urlParts.length - 1] || `${post.title || 'file'}.${fileUrl.split('.').pop()}`;
+      
+      // Fetch the file
+      const response = await fetch(fileUrl);
+      const blob = await response.blob();
+      
+      // Create a download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      // Fallback to opening in new tab
+      window.open(fileUrl, '_blank');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
   // Function to format content with proper line breaks and paragraphs
   const formatContent = (content) => {
     if (!content) return null;
@@ -92,14 +130,18 @@ const PostBody = ({ post, onSave, isSaving, formatNumber }) => {
               </p>
             )}
           </div>
-          <a
-            href={fileUrl}
-            download
-            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+          <button
+            onClick={() => handleDownload(fileUrl)}
+            disabled={isDownloading}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+              isDownloading 
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                : 'bg-blue-600 hover:bg-blue-700 text-white'
+            }`}
           >
             <ArrowDownTrayIcon className="h-4 w-4" />
-            <span>Download</span>
-          </a>
+            <span>{isDownloading ? 'Downloading...' : 'Download'}</span>
+          </button>
         </div>
       </div>
     );
@@ -150,12 +192,7 @@ const PostBody = ({ post, onSave, isSaving, formatNumber }) => {
         <div className="flex items-center space-x-6">
           <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
             <ChatBubbleLeftIcon className="h-5 w-5" />
-            <span className="font-medium">{formatNumber(post.solution_count || 0)} Solutions</span>
-          </div>
-
-          <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
-            <ArrowDownTrayIcon className="h-5 w-5" />
-            <span className="font-medium">{formatNumber(post.download_count || 0)} Downloads</span>
+            <span className="font-medium">{formatNumber(solutionsCount || 0)} Solutions</span>
           </div>
 
           <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
@@ -164,22 +201,43 @@ const PostBody = ({ post, onSave, isSaving, formatNumber }) => {
           </div>
         </div>
 
-        <button
-          onClick={onSave}
-          className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
-            post.is_saved 
-              ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300 shadow-lg' 
-              : 'bg-gray-200 text-gray-600 hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-300 dark:hover:bg-gray-500'
-          }`}
-          disabled={isSaving}
-        >
-          {post.is_saved ? (
-            <BookmarkSolidIcon className="h-5 w-5" />
-          ) : (
-            <BookmarkIcon className="h-5 w-5" />
+        <div className="flex items-center space-x-3">
+          {post.file_url && (
+            <button
+              onClick={() => handleDownload(post.file_url)}
+              disabled={isDownloading}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                isDownloading 
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                  : 'bg-blue-600 text-white hover:bg-blue-700'
+              }`}
+            >
+              {isDownloading ? (
+                <div className="h-4 w-4 animate-spin border-2 border-current border-t-transparent rounded-full"></div>
+              ) : (
+                <ArrowDownTrayIcon className="h-4 w-4" />
+              )}
+              <span>{isDownloading ? 'Downloading...' : 'Download'}</span>
+            </button>
           )}
-          <span>{post.is_saved ? 'Saved' : 'Save Post'}</span>
-        </button>
+
+          <button
+            onClick={onSave}
+            className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
+              post.is_saved 
+                ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300 shadow-lg' 
+                : 'bg-gray-200 text-gray-600 hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-300 dark:hover:bg-gray-500'
+            }`}
+            disabled={isSaving}
+          >
+            {post.is_saved ? (
+              <BookmarkSolidIcon className="h-5 w-5" />
+            ) : (
+              <BookmarkIcon className="h-5 w-5" />
+            )}
+            <span>{post.is_saved ? 'Saved' : 'Save Post'}</span>
+          </button>
+        </div>
       </div>
     </div>
   );

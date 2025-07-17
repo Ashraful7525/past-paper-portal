@@ -1,9 +1,20 @@
+// Utility function to check if a file is an image by MIME type
+function isImageFile(file) {
+  // file.type preferred, fallback to extension if needed
+  if (file.type) {
+    return file.type.startsWith('image/');
+  }
+  if (file.name) {
+    return /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i.test(file.name);
+  }
+  return false;
+}
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PlusIcon, LightBulbIcon } from '@heroicons/react/24/outline';
 import { usePostDetail } from '../hooks/usePostDetail';
 import { formatNumber, formatTimeAgo } from '../utils/formatters';
-import PostHeader from '../components/post/PostHeader';
 import PostBody from '../components/post/PostBody';
 import CommentForm from '../components/post/CommentForm';
 import SolutionCard from '../components/post/SolutionCard';
@@ -106,28 +117,168 @@ const PostDetail = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <PostHeader 
-        post={post}
-        onVote={handleVotePost}
-        isVoting={isVotingPost}
-        formatNumber={formatNumber}
-        formatTimeAgo={formatTimeAgo}
-      />
-
       <div className="max-w-6xl mx-auto px-4 py-8">
-        {/* Post Content */}
+        {/* Combined Post Header and Content */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden mb-8">
+          {/* Header Section */}
+          <div className="bg-gradient-to-r from-gray-700 to-gray-800 dark:from-gray-800 dark:to-gray-900 text-white p-8">
+            <div className="flex items-center space-x-4">
+              <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center">
+                <span className="text-2xl">{post.department_icon || '📚'}</span>
+              </div>
+              <div className="flex-1">
+                <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight mb-2">
+                  {post.title}
+                </h1>
+                <div className="flex items-center space-x-2 text-sm text-gray-300 mt-1">
+                  <span className="font-medium">r/{post.department_name || 'General'}</span>
+                  <span>•</span>
+                  <span>by u/{post.author_username || 'Unknown'}</span>
+                  <span>•</span>
+                  <span>{formatTimeAgo(post.created_at)}</span>
+                  {post.is_verified && (
+                    <>
+                      <span>•</span>
+                      <span className="text-emerald-300 font-semibold flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full"></span>
+                        Verified
+                      </span>
+                    </>
+                  )}
+                </div>
+                {/* Question Information (restored from PostHeader) */}
+                {(post.course_title || post.semester_name || post.question_title || post.question_no) && (
+                  <div className="mt-6">
+                    <div className="flex items-center gap-3 mb-4 flex-wrap">
+                      {post.course_title && (
+                        <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-full border border-gray-200 dark:border-gray-600">
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 14l9-5-9-5-9 5 9 5z" /><path d="M12 14l6.16-3.422A12.083 12.083 0 0112 21.5a12.083 12.083 0 01-6.16-10.922L12 14z" /></svg>
+                          <span className="font-semibold">{post.course_title}</span>
+                        </div>
+                      )}
+                      {post.semester_name && (
+                        <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 px-4 py-2 rounded-full border border-blue-200 dark:border-blue-700">
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                          <span className="font-semibold">{post.semester_name}</span>
+                        </div>
+                      )}
+                      {post.question_year && (
+                        <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 px-4 py-2 rounded-full border border-emerald-200 dark:border-emerald-700">
+                          <span className="font-semibold">{post.question_year}</span>
+                        </div>
+                      )}
+                      {post.question_no && (
+                        <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 px-4 py-2 rounded-full border border-amber-200 dark:border-amber-700">
+                          <span className="font-semibold">Q{post.question_no}</span>
+                        </div>
+                      )}
+                    </div>
+                    {post.question_title && (
+                      <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
+                        <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">
+                          📋 Question: {post.question_title}
+                        </h2>
+                        {post.question_text && (
+                          <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                            {post.question_text}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Content Section with Voting */}
           <div className="p-8">
             <div className="flex gap-6">
+              {/* Vote Section */}
               <div className="flex flex-col items-center space-y-3 pt-2">
-                {/* Empty space for vote alignment with header */}
+                <button
+                  onClick={() => handleVotePost(post.user_vote === 1 ? 0 : 1)}
+                  className={`p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 ${
+                    post.user_vote === 1 ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 shadow-lg' : 'text-gray-400 dark:text-gray-500'
+                  }`}
+                  disabled={isVotingPost}
+                >
+                  <svg className="h-8 w-8" fill={post.user_vote === 1 ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                  </svg>
+                </button>
+                
+                <span className={`text-xl font-bold ${
+                  post.user_vote === 1 ? 'text-emerald-600' : 
+                  post.user_vote === -1 ? 'text-red-600' : 'text-gray-700 dark:text-gray-300'
+                }`}>
+                  {formatNumber((post.upvotes || 0) - (post.downvotes || 0))}
+                </span>
+                
+                <button
+                  onClick={() => handleVotePost(post.user_vote === -1 ? 0 : -1)}
+                  className={`p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 ${
+                    post.user_vote === -1 ? 'text-red-600 bg-red-50 dark:bg-red-900/20 shadow-lg' : 'text-gray-400 dark:text-gray-500'
+                  }`}
+                  disabled={isVotingPost}
+                >
+                  <svg className="h-8 w-8" fill={post.user_vote === -1 ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
               </div>
-              <PostBody 
-                post={post}
-                onSave={handleSavePost}
-                isSaving={isSavingPost}
-                formatNumber={formatNumber}
-              />
+
+              {/* Post Body */}
+              <div className="flex-1">
+                <PostBody 
+                  post={post}
+                  onSave={handleSavePost}
+                  isSaving={isSavingPost}
+                  formatNumber={formatNumber}
+                  solutionsCount={solutions?.length || 0}
+                />
+
+                {/* File Previews */}
+                {Array.isArray(post.files) && post.files.length > 0 && (
+                  <div className="mt-6 space-y-4">
+                    {post.files.map((file, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center gap-4 border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-800"
+                      >
+                        <div className="flex-shrink-0">
+                          {isImageFile(file) ? (
+                            <img
+                              src={file.url}
+                              alt={file.name || `Attachment ${idx + 1}`}
+                              className="w-20 h-20 object-cover rounded-md border border-gray-300 dark:border-gray-600"
+                            />
+                          ) : (
+                            <svg className="w-16 h-16 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M7 7V3a2 2 0 012-2h6a2 2 0 012 2v4" />
+                              <rect width="14" height="14" x="5" y="7" rx="2" />
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M9 13h6m-3-3v6" />
+                            </svg>
+                          )}
+                        </div>
+                        <div className="flex flex-col flex-1 min-w-0">
+                          <span className="font-medium text-gray-800 dark:text-gray-100 truncate">{file.name || `Attachment ${idx + 1}`}</span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">{file.type || 'Unknown type'}</span>
+                        </div>
+                        <a
+                          href={file.url}
+                          download={file.name}
+                          className="ml-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium shadow transition-colors"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Download
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -142,7 +293,7 @@ const PostDetail = () => {
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
-                    💡 Solutions & Insights
+                    Solutions & Insights
                   </h2>
                   <p className="text-gray-600 dark:text-gray-400">
                     {solutions?.length || 0} community solutions available
