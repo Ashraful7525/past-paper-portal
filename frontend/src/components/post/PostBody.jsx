@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Modal from '../common/Modal';
 import { 
   ChatBubbleLeftIcon,
   BookmarkIcon,
@@ -10,6 +11,7 @@ import { BookmarkIcon as BookmarkSolidIcon } from '@heroicons/react/24/solid';
 
 const PostBody = ({ post, onSave, isSaving, formatNumber, solutionsCount }) => {
   const [isDownloading, setIsDownloading] = useState(false);
+  const [showPdfPreview, setShowPdfPreview] = useState(false);
 
   const handleDownload = async (fileUrl) => {
     if (!fileUrl || isDownloading) return;
@@ -81,6 +83,11 @@ const PostBody = ({ post, onSave, isSaving, formatNumber, solutionsCount }) => {
     return /\.(mp4|webm|ogg|mov)$/i.test(url);
   };
 
+  // Function to check if URL is a PDF
+  const isPdfUrl = (url) => {
+    return /\.pdf$/i.test(url);
+  };
+
   // Function to render media content
   const renderMedia = (fileUrl, fileSize) => {
     if (!fileUrl) return null;
@@ -109,6 +116,35 @@ const PostBody = ({ post, onSave, isSaving, formatNumber, solutionsCount }) => {
           >
             Your browser does not support the video tag.
           </video>
+        </div>
+      );
+    }
+
+    if (isPdfUrl(fileUrl)) {
+      return (
+        <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-200 dark:border-gray-600">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
+              <DocumentIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div className="flex-1">
+              <p className="font-medium text-gray-900 dark:text-white">
+                PDF Attachment
+              </p>
+              {fileSize && (
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Size: {fileSize}
+                </p>
+              )}
+            </div>
+            <button
+              onClick={() => setShowPdfPreview(true)}
+              className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors"
+            >
+              <EyeIcon className="h-4 w-4" />
+              <span>Preview</span>
+            </button>
+          </div>
         </div>
       );
     }
@@ -202,7 +238,15 @@ const PostBody = ({ post, onSave, isSaving, formatNumber, solutionsCount }) => {
         </div>
 
         <div className="flex items-center space-x-3">
-          {post.file_url && (
+          {post.file_url && isPdfUrl(post.file_url) ? (
+            <button
+              onClick={() => setShowPdfPreview(true)}
+              className="flex items-center space-x-2 px-4 py-2 rounded-lg font-medium bg-blue-600 text-white hover:bg-blue-700 transition-all duration-200"
+            >
+              <EyeIcon className="h-4 w-4" />
+              <span>Preview</span>
+            </button>
+          ) : post.file_url ? (
             <button
               onClick={() => handleDownload(post.file_url)}
               disabled={isDownloading}
@@ -219,7 +263,7 @@ const PostBody = ({ post, onSave, isSaving, formatNumber, solutionsCount }) => {
               )}
               <span>{isDownloading ? 'Downloading...' : 'Download'}</span>
             </button>
-          )}
+          ) : null}
 
           <button
             onClick={onSave}
@@ -238,6 +282,28 @@ const PostBody = ({ post, onSave, isSaving, formatNumber, solutionsCount }) => {
             <span>{post.is_saved ? 'Saved' : 'Save Post'}</span>
           </button>
         </div>
+
+      {/* PDF Preview Modal */}
+      {post.file_url && isPdfUrl(post.file_url) && (
+        <Modal isOpen={showPdfPreview} onClose={() => setShowPdfPreview(false)}>
+          <div className="w-full h-[85vh] flex flex-col">
+            <iframe
+              src={post.file_url}
+              title="PDF Preview"
+              className="flex-1 w-full rounded-lg border border-gray-200 dark:border-gray-700"
+              style={{ minHeight: '75vh' }}
+            />
+            <a
+              href={post.file_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-block text-blue-600 hover:underline text-center"
+            >
+              Open in new tab
+            </a>
+          </div>
+        </Modal>
+      )}
       </div>
     </div>
   );

@@ -42,9 +42,9 @@ const Header = ({ searchFilters, onSearchChange }) => {
                   {user?.role === 'admin' ? (
                     <Link 
                       to="/admin/dashboard" 
-                      className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-colors font-medium text-sm sm:text-base px-1.5 sm:px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+                      className="bg-amber-500 hover:bg-amber-600 text-white font-semibold transition-colors text-sm sm:text-base px-2.5 py-1.5 rounded-lg shadow-sm border border-amber-600 mr-2"
                     >
-                      <span className="hidden sm:inline">Dashboard</span>
+                      <span className="hidden sm:inline">Admin Dashboard</span>
                       <span className="sm:hidden">Admin</span>
                     </Link>
                   ) : (
