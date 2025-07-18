@@ -101,6 +101,7 @@ const PostBody = ({ post, onSave, isSaving, formatNumber, solutionsCount }) => {
             className="w-full h-auto max-h-96 object-contain bg-gray-50 dark:bg-gray-800"
             loading="lazy"
           />
+          {/* Removed download button for images as per request */}
         </div>
       );
     }
@@ -116,6 +117,20 @@ const PostBody = ({ post, onSave, isSaving, formatNumber, solutionsCount }) => {
           >
             Your browser does not support the video tag.
           </video>
+          <div className="mt-2 flex justify-end">
+            <button
+              onClick={() => handleDownload(fileUrl)}
+              disabled={isDownloading}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                isDownloading 
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+              }`}
+            >
+              <ArrowDownTrayIcon className="h-4 w-4" />
+              <span>{isDownloading ? 'Downloading...' : 'Download'}</span>
+            </button>
+          </div>
         </div>
       );
     }
@@ -198,16 +213,7 @@ const PostBody = ({ post, onSave, isSaving, formatNumber, solutionsCount }) => {
       )}
 
       {/* Preview Text (if different from content) */}
-      {post.preview_text && post.preview_text !== post.content && (
-        <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-700">
-          <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
-            Preview
-          </h3>
-          <p className="text-blue-800 dark:text-blue-200 leading-relaxed">
-            {post.preview_text}
-          </p>
-        </div>
-      )}
+      {/* Removed preview text section as per request */}
 
       {/* Tags */}
       {post.tags && post.tags.length > 0 && (
@@ -238,15 +244,27 @@ const PostBody = ({ post, onSave, isSaving, formatNumber, solutionsCount }) => {
         </div>
 
         <div className="flex items-center space-x-3">
-          {post.file_url && isPdfUrl(post.file_url) ? (
-            <button
-              onClick={() => setShowPdfPreview(true)}
-              className="flex items-center space-x-2 px-4 py-2 rounded-lg font-medium bg-blue-600 text-white hover:bg-blue-700 transition-all duration-200"
-            >
-              <EyeIcon className="h-4 w-4" />
-              <span>Preview</span>
-            </button>
-          ) : post.file_url ? (
+          {post.file_url && isPdfUrl(post.file_url) && (
+            <>
+              <button
+                onClick={() => handleDownload(post.file_url)}
+                disabled={isDownloading}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                  isDownloading 
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
+              >
+                {isDownloading ? (
+                  <div className="h-4 w-4 animate-spin border-2 border-current border-t-transparent rounded-full"></div>
+                ) : (
+                  <ArrowDownTrayIcon className="h-4 w-4" />
+                )}
+                <span>{isDownloading ? 'Downloading...' : 'Download'}</span>
+              </button>
+            </>
+          )}
+          {post.file_url && !isPdfUrl(post.file_url) && (
             <button
               onClick={() => handleDownload(post.file_url)}
               disabled={isDownloading}
@@ -263,7 +281,7 @@ const PostBody = ({ post, onSave, isSaving, formatNumber, solutionsCount }) => {
               )}
               <span>{isDownloading ? 'Downloading...' : 'Download'}</span>
             </button>
-          ) : null}
+          )}
 
           <button
             onClick={onSave}
