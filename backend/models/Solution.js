@@ -49,6 +49,7 @@ class Solution {
         SELECT 
           s.solution_id as id,
           s.solution_text as content,
+          s.file_url,
           s.solution_title,
           s.is_verified,
           s.upvotes,
@@ -71,7 +72,7 @@ class Solution {
         ${userVoteJoin}
         ${userBookmarkJoin}
         WHERE s.question_id = $1
-        GROUP BY s.solution_id, s.solution_text, s.solution_title, s.is_verified, s.upvotes, s.downvotes, s.rating, s.created_at, s.updated_at, u.username, u.student_id, u.contribution${studentId ? ', sv.vote_type, b.bookmark_id' : ''}
+        GROUP BY s.solution_id, s.solution_text, s.file_url, s.solution_title, s.is_verified, s.upvotes, s.downvotes, s.rating, s.created_at, s.updated_at, u.username, u.student_id, u.contribution${studentId ? ', sv.vote_type, b.bookmark_id' : ''}
         ORDER BY s.is_verified DESC, s.upvotes DESC, s.created_at DESC
       `;
 
@@ -88,6 +89,7 @@ class Solution {
         const comments = await Comment.getCommentsBySolutionId(solution.id, studentId);
         const formattedSolution = {
           ...solution,
+          file_url: solution.file_url,
           comments,
           net_votes: solution.upvotes - solution.downvotes,
           user_vote: parseInt(solution.user_vote) || 0,
@@ -111,7 +113,7 @@ class Solution {
     }
   }
 
-  static async addSolution(postId, studentId, content) {
+  static async addSolution(postId, studentId, content, file_url = null) {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
@@ -136,12 +138,12 @@ class Solution {
 
       // Insert the solution using correct column names from schema
       const insertQuery = `
-        INSERT INTO public.solutions (question_id, student_id, solution_text, is_verified, created_at, updated_at)
-        VALUES ($1, $2, $3, false, NOW(), NOW())
-        RETURNING solution_id, solution_text, is_verified, created_at, updated_at
+        INSERT INTO public.solutions (question_id, student_id, solution_text, file_url, is_verified, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, false, NOW(), NOW())
+        RETURNING solution_id, solution_text, file_url, is_verified, created_at, updated_at
       `;
       
-      const insertResult = await client.query(insertQuery, [questionId, studentId, content]);
+      const insertResult = await client.query(insertQuery, [questionId, studentId, content, file_url]);
       
       // Get the author username
       const userQuery = 'SELECT username FROM public.users WHERE student_id = $1';
@@ -151,6 +153,7 @@ class Solution {
         ...insertResult.rows[0],
         id: insertResult.rows[0].solution_id,
         content: insertResult.rows[0].solution_text, // Map solution_text to content for frontend
+        file_url: insertResult.rows[0].file_url,
         author_username: userResult.rows[0]?.username || 'Unknown'
       };
 

@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { api } from '../utils/api';
 import { toast } from 'react-hot-toast';
 import { useRef, useCallback } from 'react';
+import { supabase } from '../utils/supabase';
 
 export const usePostDetail = (postId) => {
   const { user } = useAuth();
@@ -70,8 +71,8 @@ export const usePostDetail = (postId) => {
 
   // Add solution mutation
   const addSolutionMutation = useMutation({
-    mutationFn: async (solutionText) => {
-      const response = await api.post(`/posts/${postId}/solutions`, { content: solutionText });
+    mutationFn: async ({ content, file_url }) => {
+      const response = await api.post(`/posts/${postId}/solutions`, { content, file_url });
       return response.data;
     },
     onSuccess: () => {
@@ -241,18 +242,31 @@ export const usePostDetail = (postId) => {
     savePostMutation.mutate();
   };
 
-  const handleAddSolution = (solutionText) => {
+  const handleAddSolution = async (solutionText, file) => {
     if (!user) {
       toast.error('Please login to add solutions');
       return;
     }
-    
     if (!solutionText.trim()) {
       toast.error('Solution cannot be empty');
       return;
     }
-    
-    addSolutionMutation.mutate(solutionText);
+    let file_url = null;
+    if (file) {
+      try {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+        const { data, error } = await supabase.storage.from('solutions').upload(fileName, file);
+        if (error) throw error;
+        const { data: publicUrlData } = supabase.storage.from('solutions').getPublicUrl(fileName);
+        file_url = publicUrlData.publicUrl;
+      } catch (err) {
+        toast.error('File upload failed: ' + (err.message || err.error_description || 'Unknown error'));
+        return;
+      }
+    }
+    // FIX: Send content and file_url as separate fields
+    addSolutionMutation.mutate({ content: solutionText, file_url });
   };
 
   const handleVoteSolution = (solutionId, voteType) => {

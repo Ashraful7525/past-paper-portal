@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import Modal from '../common/Modal';
+import React, { useState, useEffect } from 'react';
 import { 
   ChatBubbleLeftIcon,
   BookmarkIcon,
@@ -12,6 +11,42 @@ import { BookmarkIcon as BookmarkSolidIcon } from '@heroicons/react/24/solid';
 const PostBody = ({ post, onSave, isSaving, formatNumber, solutionsCount }) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [showPdfPreview, setShowPdfPreview] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+
+  // Function to check if URL is an image
+  const isImageUrl = (url) => {
+    return /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(url);
+  };
+
+  // Function to check if URL is a video
+  const isVideoUrl = (url) => {
+    return /\.(mp4|webm|ogg|mov)$/i.test(url);
+  };
+
+  // Function to check if URL is a PDF
+  const isPdfUrl = (url) => {
+    return /\.pdf$/i.test(url);
+  };
+
+
+
+  // Handle keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!lightboxOpen && e.key === 'Escape') {
+        setLightboxOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [lightboxOpen]);
+
+
+
+  const handleImageClick = () => {
+    setLightboxOpen(true);
+  };
 
   const handleDownload = async (fileUrl) => {
     if (!fileUrl || isDownloading) return;
@@ -73,21 +108,6 @@ const PostBody = ({ post, onSave, isSaving, formatNumber, solutionsCount }) => {
     });
   };
 
-  // Function to check if URL is an image
-  const isImageUrl = (url) => {
-    return /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(url);
-  };
-
-  // Function to check if URL is a video
-  const isVideoUrl = (url) => {
-    return /\.(mp4|webm|ogg|mov)$/i.test(url);
-  };
-
-  // Function to check if URL is a PDF
-  const isPdfUrl = (url) => {
-    return /\.pdf$/i.test(url);
-  };
-
   // Function to render media content
   const renderMedia = (fileUrl, fileSize) => {
     if (!fileUrl) return null;
@@ -98,8 +118,10 @@ const PostBody = ({ post, onSave, isSaving, formatNumber, solutionsCount }) => {
           <img
             src={fileUrl}
             alt="Post attachment"
-            className="w-full h-auto max-h-96 object-contain bg-gray-50 dark:bg-gray-800"
+            className="w-full h-auto max-h-96 object-contain bg-gray-50 dark:bg-gray-800 cursor-pointer hover:opacity-90 transition-opacity duration-200"
             loading="lazy"
+            onClick={handleImageClick}
+            title="Click to view larger image"
           />
           {/* Removed download button for images as per request */}
         </div>
@@ -321,6 +343,31 @@ const PostBody = ({ post, onSave, isSaving, formatNumber, solutionsCount }) => {
             </a>
           </div>
         </Modal>
+      )}
+
+            {/* Lightbox Modal */}
+      {lightboxOpen && post.file_url && isImageUrl(post.file_url) && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80"
+          aria-modal="true"
+          role="dialog"
+          tabIndex={-1}
+          onClick={() => setLightboxOpen(false)}
+        >
+          <button
+            className="absolute top-6 right-6 text-white text-3xl font-bold bg-black bg-opacity-40 rounded-full px-3 py-1 hover:bg-opacity-70 focus:outline-none"
+            aria-label="Close image preview"
+            onClick={e => { e.stopPropagation(); setLightboxOpen(false); }}
+          >
+            &times;
+          </button>
+          <img
+            src={post.file_url}
+            alt="Full Size Post Attachment"
+            className="max-w-full max-h-full rounded shadow-lg border-4 border-white"
+            onClick={e => e.stopPropagation()}
+          />
+        </div>
       )}
       </div>
     </div>

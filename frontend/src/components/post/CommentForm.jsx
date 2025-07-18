@@ -9,16 +9,19 @@ const CommentForm = ({
   isReply = false 
 }) => {
   const [content, setContent] = useState('');
+  const [file, setFile] = useState(null);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!content.trim()) return;
-    onSubmit(content.trim());
+    onSubmit(content.trim(), file);
     setContent('');
+    setFile(null);
   };
 
   const handleCancel = () => {
     setContent('');
+    setFile(null);
     onCancel();
   };
 
@@ -38,6 +41,19 @@ const CommentForm = ({
           rows={isReply ? 2 : 3}
           disabled={isSubmitting}
         />
+        {/* File upload for solution (not for replies) */}
+        {!isReply && (
+          <div className="mt-3 flex items-center gap-3">
+            <input
+              type="file"
+              accept=".pdf,image/*"
+              onChange={e => setFile(e.target.files[0])}
+              disabled={isSubmitting}
+              className="block text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            />
+            {file && <span className="text-xs text-gray-600 dark:text-gray-300">{file.name}</span>}
+          </div>
+        )}
         <div className={`flex justify-end ${isReply ? 'space-x-2' : 'space-x-3'} ${isReply ? 'mt-2' : 'mt-4'}`}>
           <button
             type="button"

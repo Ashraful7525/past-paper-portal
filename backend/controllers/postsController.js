@@ -303,10 +303,10 @@ const postsController = {
   async addSolution(req, res) {
     try {
       const { post_id } = req.params;
-      const { content } = req.body;
+      const { content, file_url } = req.body;
       const { student_id } = req.user;
 
-      console.log('Adding solution:', { post_id, content, student_id });
+      console.log('Adding solution:', { post_id, content, file_url, student_id });
 
       // Validate post_id
       if (!post_id || isNaN(parseInt(post_id))) {
@@ -322,7 +322,7 @@ const postsController = {
         });
       }
 
-      const solution = await Solution.addSolution(parseInt(post_id), student_id, content.trim());
+      const solution = await Solution.addSolution(parseInt(post_id), student_id, content.trim(), file_url);
       
       res.status(201).json({ 
         success: true,

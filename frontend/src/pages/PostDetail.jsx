@@ -1,3 +1,5 @@
+import React, { useState, useEffect, useRef } from 'react';
+
 // Utility function to check if a file is an image by MIME type
 function isImageFile(file) {
   // file.type preferred, fallback to extension if needed
@@ -9,8 +11,6 @@ function isImageFile(file) {
   }
   return false;
 }
-
-import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PlusIcon, LightBulbIcon } from '@heroicons/react/24/outline';
 import { usePostDetail } from '../hooks/usePostDetail';
@@ -61,8 +61,8 @@ const PostDetail = () => {
     viewTrackedRef.current = false;
   }, [postId]);
 
-  const handleAddSolutionSubmit = (solutionText) => {
-    handleAddSolution(solutionText);
+  const handleAddSolutionSubmit = (solutionText, file) => {
+    handleAddSolution(solutionText, file);
     setShowSolutionForm(false);
   };
 
