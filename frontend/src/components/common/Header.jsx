@@ -1,17 +1,18 @@
 import React from 'react';
+import { ShieldCheck, UserCircle, User, LogOut } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { BookOpenIcon } from 'lucide-react';
 import { useAuth } from "../../contexts/AuthContext";
 import EnhancedSearch from './EnhancedSearch';
 
 const Header = ({ searchFilters, onSearchChange }) => {
-  const { isAuthenticated, user, logout, isLoggingOut } = useAuth();
+  const { isAuthenticated, user, isAdmin, logout, isLoggingOut } = useAuth();
   const location = useLocation();
   const isNewsfeed = location.pathname === '/home' || location.pathname === '/feed';
 
   return (
     <header className="fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 z-40">
-      <div className="w-full px-2 sm:px-3 lg:px-4 py-3">
+      <div className="w-full px-2 sm:px-3 lg:px-4 py-1.5">
         <div className="flex items-center justify-between">
           {/* Logo - Tightly aligned to the left */}
           <div className="flex items-center flex-shrink-0 pl-0">
@@ -36,21 +37,36 @@ const Header = ({ searchFilters, onSearchChange }) => {
           
           {/* Navigation - Tightly aligned to the right */}
           <div className="flex items-center flex-shrink-0 pr-0">
-            <nav className="flex items-center space-x-1 sm:space-x-2 lg:space-x-3">
+            <nav className="flex items-center h-10 sm:h-12 space-x-1 sm:space-x-2 lg:space-x-3">
               {isAuthenticated && (
                 <>
-                  {user?.role === 'admin' ? (
-                    <Link 
-                      to="/admin/dashboard" 
-                      className="bg-amber-500 hover:bg-amber-600 text-white font-semibold transition-colors text-sm sm:text-base px-2.5 py-1.5 rounded-lg shadow-sm border border-amber-600 mr-2"
-                    >
-                      <span className="hidden sm:inline">Admin Dashboard</span>
-                      <span className="sm:hidden">Admin</span>
-                    </Link>
-                  ) : (
+                  {isAdmin && (
+                    <>
+                      <Link 
+                        to="/admin/dashboard" 
+                        className="bg-amber-500 hover:bg-amber-600 text-white font-semibold transition-colors text-sm sm:text-base px-2 py-1 rounded-lg shadow-sm border border-amber-600 flex items-center gap-1 h-8 sm:h-10"
+                        title="Go to admin panel"
+                      >
+                        <ShieldCheck className="h-4 w-4 mr-1" />
+                        <span className="hidden sm:inline">Admin Dashboard</span>
+                        <span className="sm:hidden">Admin</span>
+                      </Link>
+                      <span className="mx-2 text-gray-300 dark:text-gray-600 select-none">|</span>
+                      <Link 
+                        to="/user/dashboard" 
+                        className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-colors font-medium text-sm sm:text-base px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-1 h-8 sm:h-10"
+                        title="Go to your student dashboard"
+                      >
+                        <UserCircle className="h-4 w-4 mr-1" />
+                        <span className="hidden sm:inline">Dashboard</span>
+                        <span className="sm:hidden">Dash</span>
+                      </Link>
+                    </>
+                  )}
+                  {!isAdmin && (
                     <Link 
                       to="/user/dashboard" 
-                      className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-colors font-medium text-sm sm:text-base px-1.5 sm:px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+                      className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-colors font-medium text-sm sm:text-base px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 h-8 sm:h-10 flex items-center gap-1"
                     >
                       <span className="hidden sm:inline">Dashboard</span>
                       <span className="sm:hidden">Dash</span>
@@ -58,16 +74,19 @@ const Header = ({ searchFilters, onSearchChange }) => {
                   )}
                   <Link 
                     to="/profile" 
-                    className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-colors font-medium text-sm sm:text-base px-1.5 sm:px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+                    className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-colors font-medium text-sm sm:text-base px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-1 h-8 sm:h-10"
                   >
+                    <User className="h-4 w-4 mr-1" />
                     <span className="hidden sm:inline">Profile</span>
                     <span className="sm:hidden">Prof</span>
                   </Link>
                   <button
                     onClick={logout}
                     disabled={isLoggingOut}
-                    className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-colors disabled:opacity-50 font-medium text-sm sm:text-base px-1.5 sm:px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 disabled:hover:bg-transparent"
+                    className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-colors disabled:opacity-50 font-medium text-sm sm:text-base px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 disabled:hover:bg-transparent flex items-center gap-1 h-8 sm:h-10"
+                    title="Logout"
                   >
+                    <LogOut className="h-4 w-4 mr-1" />
                     {isLoggingOut ? (
                       <span className="hidden sm:inline">Logging out...</span>
                     ) : (

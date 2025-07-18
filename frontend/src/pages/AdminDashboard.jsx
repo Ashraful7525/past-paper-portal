@@ -78,9 +78,7 @@ const AdminDashboard = () => {
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
             </div>
             <div className="flex items-center space-x-4">
-              <Link to="/profile" className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">
-                Profile
-              </Link>
+
               <div className="text-right">
                 <span className="text-sm text-gray-600 dark:text-gray-300">Administrator,</span>
                 <p className="text-sm font-medium text-gray-900 dark:text-white">{user?.username}</p>
