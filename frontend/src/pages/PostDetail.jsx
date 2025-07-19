@@ -321,6 +321,7 @@ const PostDetail = () => {
                   onSubmit={handleAddSolutionSubmit}
                   onCancel={handleCancelSolution}
                   placeholder="Share your solution, explanation, or insights that could help fellow students..."
+                  heading="Add your solution"
                   buttonText="Publish Solution"
                   isSubmitting={isAddingSolution}
                   isReply={false}

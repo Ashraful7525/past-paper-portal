@@ -7,6 +7,7 @@ import {
   DocumentIcon
 } from '@heroicons/react/24/outline';
 import { BookmarkIcon as BookmarkSolidIcon } from '@heroicons/react/24/solid';
+import Modal from '../common/Modal';
 
 const PostBody = ({ post, onSave, isSaving, formatNumber, solutionsCount }) => {
   const [isDownloading, setIsDownloading] = useState(false);

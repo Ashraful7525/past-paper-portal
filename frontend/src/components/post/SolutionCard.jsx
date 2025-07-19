@@ -333,7 +333,7 @@ const SolutionCard = ({
               )}
               {/* Solution Text */}
               <div className="prose prose-gray dark:prose-invert max-w-none flex-1">
-                <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
+                <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap mb-4">
                   {solution.content}
                 </p>
               </div>
@@ -341,7 +341,7 @@ const SolutionCard = ({
 
             {/* Tags */}
             {solution.tags && solution.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-4">
+              <div className="flex flex-wrap gap-2 mb-4 mt-2">
                 {solution.tags.map((tag, tagIndex) => (
                   <span
                     key={tagIndex}
@@ -354,14 +354,15 @@ const SolutionCard = ({
             )}
 
             {/* Solution Actions */}
-            <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+            <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 mt-4">
               <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
                 <button
                   onClick={() => setShowComments(!showComments)}
                   className="flex items-center space-x-1 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
                 >
                   <ChatBubbleLeftIcon className="h-4 w-4" />
-                  <span className="font-medium">{solution.comment_count || 0}</span>
+                  <span className="font-medium">Comment</span>
+                  <span className="font-medium">({solution.comment_count || 0})</span>
                 </button>
                 <div className="flex items-center space-x-1">
                   <ChevronUpIcon className="h-4 w-4" />
