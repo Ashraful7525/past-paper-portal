@@ -1,29 +1,30 @@
 import React, { useState } from 'react';
-import { 
-  UserIcon, 
-  ChevronUpIcon, 
+import {
+  UserIcon,
+  ChevronUpIcon,
   ChevronDownIcon,
-  ChatBubbleLeftIcon
+  EllipsisVerticalIcon,
 } from '@heroicons/react/24/outline';
-import { 
+import {
   ChevronUpIcon as ChevronUpSolidIcon,
-  ChevronDownIcon as ChevronDownSolidIcon
+  ChevronDownIcon as ChevronDownSolidIcon,
 } from '@heroicons/react/24/solid';
 import CommentForm from './CommentForm';
 
-const CommentCard = ({ 
-  comment, 
-  onReply, 
+const CommentCard = ({
+  comment,
+  onReply,
   onVote,
-  isReplying, 
+  isReplying,
   isVoting,
-  formatTimeAgo, 
+  formatTimeAgo,
   depth = 0,
   user,
-  isLastChild = false
+  isLastChild = false,
 }) => {
   const [showReplyForm, setShowReplyForm] = useState(false);
-  const maxDepth = 1; // Limit to 1 level of nesting
+  const [repliesCollapsed, setRepliesCollapsed] = useState(false);
+  const maxDepth = 1; // Only one reply level
 
   const handleReply = (content) => {
     onReply(comment.comment_id || comment.id, content);
@@ -36,8 +37,6 @@ const CommentCard = ({
 
   const handleVote = (voteType) => {
     if (!user) return;
-    
-    // Toggle vote: if same vote type, remove it (set to 0), otherwise set new vote
     const newVoteType = comment.user_vote === voteType ? 0 : voteType;
     onVote(comment.comment_id || comment.id, newVoteType);
   };
@@ -51,162 +50,183 @@ const CommentCard = ({
   const userVote = comment.user_vote || 0;
   const replies = comment.replies || [];
 
-  // Debug logging to see what vote state we're getting for comments
-  console.log(`🎯 [COMMENT CARD] Comment ${commentId} vote state:`, {
-    user_vote: comment.user_vote,
-    user_vote_type: typeof comment.user_vote,
-    userVote,
-    upvotes: comment.upvotes,
-    downvotes: comment.downvotes,
-    netVotes,
-    comment_id: commentId
-  });
+  // Avatar fallback: first letter
+  const avatar = (
+    <div className="w-9 h-9 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-lg font-bold text-white">
+      {authorUsername.charAt(0).toUpperCase()}
+    </div>
+  );
 
+  // Replies collapse/expand
+  const repliesSection = replies.length > 0 && depth < maxDepth && (
+    <div className="mt-2 ml-12">
+      <button
+        onClick={() => setRepliesCollapsed((c) => !c)}
+        className="flex items-center text-xs text-blue-600 dark:text-blue-400 hover:underline mb-1 focus:outline-none"
+      >
+        {repliesCollapsed ? (
+          <ChevronDownIcon className="h-4 w-4 mr-1" />
+        ) : (
+          <ChevronUpIcon className="h-4 w-4 mr-1" />
+        )}
+        {repliesCollapsed
+          ? `Show ${replies.length} repl${replies.length === 1 ? 'y' : 'ies'}`
+          : `Hide replies`}
+      </button>
+      {!repliesCollapsed && (
+        <div className="space-y-2">
+          {replies.map((reply, index) => (
+            <CommentCard
+              key={reply.comment_id || reply.id}
+              comment={reply}
+              onReply={onReply}
+              onVote={onVote}
+              isReplying={isReplying}
+              isVoting={isVoting}
+              formatTimeAgo={formatTimeAgo}
+              depth={depth + 1}
+              user={user}
+              isLastChild={index === replies.length - 1}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  // Main card style
   return (
-    <div className="relative">
-      <div className={`flex ${depth > 0 ? 'ml-6' : ''}`}>
-        {/* Tree connector for nested replies */}
-        {depth > 0 && (
-          <div className="flex-shrink-0 w-4 mr-2 relative">
-            {/* Vertical line - continuous from top to bottom, stops at horizontal connector for final reply */}
-            <div className={`absolute left-0 top-0 w-0.5 bg-gray-400 dark:bg-gray-500 ${
-              isLastChild ? 'h-1/2' : 'bottom-0'
-            }`}></div>
-            {/* Horizontal connector - connects to center of card */}
-            <div className="absolute left-0 top-1/2 w-4 h-0.5 bg-gray-400 dark:bg-gray-500 transform -translate-y-1/2"></div>
+    <div
+      className={`flex items-start w-full py-3 px-2 rounded-xl bg-white dark:bg-gray-800 ${depth === 0 ? 'shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md' : ''} transition-all duration-200 group`}
+    >
+      {avatar}
+      <div className="flex-1 ml-3 min-w-0 flex flex-col">
+        <div className="flex items-center space-x-2">
+          <span className="font-medium text-sm text-gray-900 dark:text-white truncate">
+            {authorUsername}
+          </span>
+          <span className="text-xs text-gray-400 select-none">&middot;</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400">
+            {formatTimeAgo(createdAt)}
+          </span>
+        </div>
+        <div className="mb-2">
+          <p className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed whitespace-pre-wrap break-words mt-1.5">
+            {commentText}
+          </p>
+        </div>
+        {/* Action row: only show Reply for top-level comments */}
+        <div className="flex items-center space-x-2 mt-1">
+          <button
+            onClick={() => handleVote(1)}
+            className={`p-1 rounded-full transition-all duration-200 focus:ring-2 focus:ring-emerald-500 ${
+              userVote === 1
+                ? 'text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/20 shadow'
+                : 'text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:text-emerald-400 dark:hover:bg-emerald-900/20'
+            } ${isVoting ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={!user || isVoting}
+            title={userVote === 1 ? 'You upvoted this comment - click to remove' : 'Upvote this comment'}
+            style={{ lineHeight: 1 }}
+          >
+            {userVote === 1 ? (
+              <ChevronUpSolidIcon className="h-4 w-4" />
+            ) : (
+              <ChevronUpIcon className="h-4 w-4" />
+            )}
+          </button>
+          <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${
+            userVote === 1
+              ? 'text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/20'
+              : userVote === -1
+              ? 'text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/20'
+              : 'text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700'
+          }`}>
+            {netVotes}
+          </span>
+          <button
+            onClick={() => handleVote(-1)}
+            className={`p-1 rounded-full transition-all duration-200 focus:ring-2 focus:ring-red-500 ${
+              userVote === -1
+                ? 'text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/20 shadow'
+                : 'text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-900/20'
+            } ${isVoting ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={!user || isVoting}
+            title={userVote === -1 ? 'You downvoted this comment - click to remove' : 'Downvote this comment'}
+            style={{ lineHeight: 1 }}
+          >
+            {userVote === -1 ? (
+              <ChevronDownSolidIcon className="h-4 w-4" />
+            ) : (
+              <ChevronDownIcon className="h-4 w-4" />
+            )}
+          </button>
+          {/* Only show Reply for top-level comments */}
+          {depth === 0 && (
+            <button
+              onClick={() => setShowReplyForm(!showReplyForm)}
+              className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline px-2 py-1 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={!canReply}
+            >
+              Reply
+            </button>
+          )}
+          <button
+            className="ml-2 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none"
+            title="More actions"
+          >
+            <EllipsisVerticalIcon className="h-5 w-5" />
+          </button>
+        </div>
+        {showReplyForm && canReply && (
+          <div className="mt-2 w-full">
+            <CommentForm
+              onSubmit={handleReply}
+              onCancel={handleCancelReply}
+              placeholder="Write a reply..."
+              buttonText="Reply"
+              isSubmitting={isReplying}
+              isReply={true}
+              user={user}
+            />
           </div>
         )}
-        
-        <div className="flex-1">
-          <div className="bg-gray-50 dark:bg-gray-700/50 p-2 rounded-lg max-w-2xl">
-            {/* Header: Author and Timestamp (Most Important) */}
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
-                  <UserIcon className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-                </div>
-                <span className="font-semibold text-base text-gray-900 dark:text-white">
-                  {authorUsername}
-                </span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                  {formatTimeAgo(createdAt)}
-                </span>
-              </div>
-              
-              {canReply && (
-                <button
-                  onClick={() => setShowReplyForm(!showReplyForm)}
-                  className="text-xs text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors font-medium"
-                >
-                  Reply
-                </button>
-              )}
-            </div>
-
-            {/* Comment Content (Second Priority) */}
-            <div className="mb-3 ml-4">
-              <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
-                {commentText}
-              </p>
-            </div>
-
-            {/* Vote Section (Third Priority) */}
-            <div className="flex items-center justify-between ml-4">
-              <div className="flex items-center space-x-3">
-                <div className="flex items-center space-x-1">
-                  <button
-                    onClick={() => handleVote(1)}
-                    className={`p-1 rounded transition-all duration-200 ${
-                      userVote === 1 
-                        ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 shadow-sm' 
-                        : 'text-gray-400 dark:text-gray-500 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20'
-                    } ${isVoting ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    disabled={!user || isVoting}
-                    title={userVote === 1 ? 'You upvoted this comment - click to remove' : 'Upvote this comment'}
-                  >
-                                  {userVote === 1 ? (
-                <ChevronUpSolidIcon className="h-4 w-4" />
+        {/* Replies section: align with action row, not avatar */}
+        {replies.length > 0 && depth < maxDepth && (
+          <div>
+            <button
+              onClick={() => setRepliesCollapsed((c) => !c)}
+              className="flex items-center text-xs text-blue-600 dark:text-blue-400 hover:underline mb-1 focus:outline-none ml-12 mt-1.5"
+              style={{ marginLeft: 0 }}
+            >
+              {repliesCollapsed ? (
+                <ChevronDownIcon className="h-4 w-4 mr-1" />
               ) : (
-                <ChevronUpIcon className="h-4 w-4" />
+                <ChevronUpIcon className="h-4 w-4 mr-1" />
               )}
-                  </button>
-                  
-                  <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${
-                    userVote === 1 ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20' : 
-                    userVote === -1 ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20' : 
-                    'text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700'
-                  }`}>
-                    {netVotes}
-                  </span>
-                  
-                  <button
-                    onClick={() => handleVote(-1)}
-                    className={`p-1 rounded transition-all duration-200 ${
-                      userVote === -1 
-                        ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 shadow-sm' 
-                        : 'text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
-                    } ${isVoting ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    disabled={!user || isVoting}
-                    title={userVote === -1 ? 'You downvoted this comment - click to remove' : 'Downvote this comment'}
-                  >
-                                  {userVote === -1 ? (
-                <ChevronDownSolidIcon className="h-4 w-4" />
-              ) : (
-                <ChevronDownIcon className="h-4 w-4" />
-              )}
-                  </button>
-                </div>
-                
-
+              {repliesCollapsed
+                ? `Show ${replies.length} repl${replies.length === 1 ? 'y' : 'ies'}`
+                : `Hide replies`}
+            </button>
+            {!repliesCollapsed && (
+              <div className="space-y-1 ml-12" style={{ marginLeft: 0 }}>
+                {replies.map((reply, index) => (
+                  <CommentCard
+                    key={reply.comment_id || reply.id}
+                    comment={reply}
+                    onReply={onReply}
+                    onVote={onVote}
+                    isReplying={isReplying}
+                    isVoting={isVoting}
+                    formatTimeAgo={formatTimeAgo}
+                    depth={depth + 1}
+                    user={user}
+                    isLastChild={index === replies.length - 1}
+                  />
+                ))}
               </div>
-            </div>
-            
+            )}
           </div>
-          
-          {/* Reply Form - Detached box underneath */}
-          {showReplyForm && canReply && (
-            <div className="mt-2 ml-6 max-w-2xl">
-              <CommentForm
-                onSubmit={handleReply}
-                onCancel={handleCancelReply}
-                placeholder="Write a reply..."
-                buttonText="Reply"
-                isSubmitting={isReplying}
-                isReply={true}
-              />
-            </div>
-          )}
-          
-          {/* Nested Replies - Only show if depth < maxDepth */}
-          {replies.length > 0 && depth < maxDepth && (
-            <div className="mt-2 space-y-2">
-              {replies.map((reply, index) => (
-                <CommentCard
-                  key={reply.comment_id || reply.id}
-                  comment={reply}
-                  onReply={onReply}
-                  onVote={onVote}
-                  isReplying={isReplying}
-                  isVoting={isVoting}
-                  formatTimeAgo={formatTimeAgo}
-                  depth={depth + 1}
-                  user={user}
-                  isLastChild={index === replies.length - 1}
-                />
-              ))}
-            </div>
-          )}
-          
-          {/* Show message if max depth reached */}
-          {replies.length > 0 && depth >= maxDepth && (
-            <div className="mt-3 p-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg max-w-2xl ml-6">
-              <p className="text-sm text-amber-800 dark:text-amber-200">
-                💬 {replies.length} more replies available. 
-                <span className="font-medium"> Maximum nesting level reached.</span>
-              </p>
-            </div>
-          )}
-        </div>
+        )}
       </div>
     </div>
   );

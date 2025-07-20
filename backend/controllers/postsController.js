@@ -190,6 +190,7 @@ const postsController = {
         sortBy = 'hot', 
         timeRange = 'all',
         department_id = null,
+        forYou = false,
         search = null,
         course_id = null,
         level = null,
@@ -202,7 +203,7 @@ const postsController = {
       const offset = (page - 1) * limit;
 
       console.log('Feed request params:', { 
-        page, limit, sortBy, timeRange, department_id, search, course_id, level, term, year, question_no, student_id 
+        page, limit, sortBy, timeRange, department_id, forYou, search, course_id, level, term, year, question_no, student_id 
       });
 
       const posts = await Post.getFeedPosts({
@@ -211,6 +212,7 @@ const postsController = {
         sortBy,
         timeRange,
         department_id: department_id ? parseInt(department_id) : null,
+        forYou: forYou === 'true',
         search,
         course_id: course_id ? parseInt(course_id) : null,
         level: level ? parseInt(level) : null,

@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useFilters } from '../contexts/FilterContext';
 import { usePosts } from '../hooks/usePosts';
+import { useLocation } from 'react-router-dom';
 import { api } from '../utils/api';
 import Header from '../components/common/Header';
 import DarkModeToggle from '../components/common/DarkModeToggle';
@@ -11,31 +13,21 @@ import PostsList from '../components/newsfeed/PostsList';
 
 const Newsfeed = () => {
   const { user } = useAuth();
-  const [sortBy, setSortBy] = useState('hot');
-  const [timeRange, setTimeRange] = useState('all');
-  const [selectedDepartment, setSelectedDepartment] = useState(null);
+  const { filters, updateFilter, updateSearchFilters } = useFilters();
+  const location = useLocation();
+  const hasRestoredFilters = useRef(false);
   const [departments, setDepartments] = useState([]);
   const [globalStats, setGlobalStats] = useState(null);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
 
-  // Enhanced search filters
-  const [searchFilters, setSearchFilters] = useState({
-    course_id: '',
-    level: '',
-    term: '',
-    year: '',
-    question_no: '',
-    search: ''
-  });
-
   // Use React Query for posts data with memoized filters
-  const filters = useMemo(() => ({
-    sortBy,
-    timeRange,
-    department_id: selectedDepartment,
-    ...searchFilters
-  }), [sortBy, timeRange, selectedDepartment, searchFilters]);
+  const apiFilters = useMemo(() => ({
+    sortBy: filters.sortBy,
+    timeRange: filters.timeRange,
+    department_id: filters.selectedDepartment,
+    forYou: filters.forYou,
+    ...filters.searchFilters
+  }), [filters]);
 
   const {
     data: postsData,
@@ -45,10 +37,30 @@ const Newsfeed = () => {
     isLoading,
     isError,
     error: postsError
-  } = usePosts(filters);
+  } = usePosts(apiFilters);
 
   // Flatten posts from all pages
   const posts = postsData?.pages?.flatMap(page => page.data?.posts || []) || [];
+
+  // Handle preserved filter state when navigating back
+  useEffect(() => {
+    if (
+      !hasRestoredFilters.current &&
+      location.state?.preserveFilters &&
+      location.state?.filters
+    ) {
+      const preservedFilters = location.state.filters;
+      Object.entries(preservedFilters).forEach(([key, value]) => {
+        if (key === 'searchFilters') {
+          updateSearchFilters(value);
+        } else {
+          updateFilter(key, value);
+        }
+      });
+      hasRestoredFilters.current = true;
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state, updateFilter, updateSearchFilters]);
 
   // Fetch departments and stats on component mount
   useEffect(() => {
@@ -70,15 +82,15 @@ const Newsfeed = () => {
   }, []);
 
   const handleSearchChange = (newFilters) => {
-    setSearchFilters(newFilters);
+    updateSearchFilters(newFilters);
   };
 
   const handleSortChange = (newSort) => {
-    setSortBy(newSort);
+    updateFilter('sortBy', newSort);
   };
 
   const handleTimeRangeChange = (newTimeRange) => {
-    setTimeRange(newTimeRange);
+    updateFilter('timeRange', newTimeRange);
   };
 
   const handleLoadMore = () => {
@@ -88,7 +100,7 @@ const Newsfeed = () => {
   };
 
   const handleToggleSidebar = () => {
-    setIsSidebarCollapsed(!isSidebarCollapsed);
+    updateFilter('isSidebarCollapsed', !filters.isSidebarCollapsed);
   };
 
   const handleShowUploadModal = () => {
@@ -108,24 +120,26 @@ const Newsfeed = () => {
       
       {/* Enhanced Header with Search */}
       <Header 
-        searchFilters={searchFilters}
+        searchFilters={filters.searchFilters}
         onSearchChange={handleSearchChange}
       />
       
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         {/* Left Sidebar */}
         <LeftSidebar
-          sortBy={sortBy}
+          sortBy={filters.sortBy}
           onSortChange={handleSortChange}
-          timeRange={timeRange}
+          timeRange={filters.timeRange}
           onTimeRangeChange={handleTimeRangeChange}
-          isCollapsed={isSidebarCollapsed}
+          isCollapsed={filters.isSidebarCollapsed}
           onToggleCollapse={handleToggleSidebar}
           onShowUploadModal={handleShowUploadModal}
+          forYou={filters.forYou}
+          onForYouChange={(value) => updateFilter('forYou', value)}
         />
 
         {/* Main Content */}
-        <div className={`transition-all duration-300 ${isSidebarCollapsed ? 'ml-16' : 'ml-64'} pt-16`}>
+        <div className={`transition-all duration-300 ${filters.isSidebarCollapsed ? 'ml-16' : 'ml-64'} pt-16`}>
           <div className="px-4 py-8">
             <div className="flex gap-6 justify-center">
               {/* Posts Feed */}
@@ -138,7 +152,7 @@ const Newsfeed = () => {
                   hasNextPage={hasNextPage}
                   isFetchingNextPage={isFetchingNextPage}
                   onLoadMore={handleLoadMore}
-                  searchFilters={searchFilters}
+                  searchFilters={filters.searchFilters}
                 />
               </div>
 
@@ -146,8 +160,8 @@ const Newsfeed = () => {
               <div className="w-80 flex-shrink-0">
                 <DepartmentSidebar
                   departments={departments}
-                  selectedDepartment={selectedDepartment}
-                  onDepartmentSelect={setSelectedDepartment}
+                  selectedDepartment={filters.selectedDepartment}
+                  onDepartmentSelect={(dept) => updateFilter('selectedDepartment', dept)}
                   globalStats={globalStats}
                 />
               </div>

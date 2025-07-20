@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useFilters } from '../../contexts/FilterContext';
 import { 
   ChevronUpIcon, 
   ChevronDownIcon, 
@@ -15,10 +16,21 @@ import {
 
 const PostHeader = ({ post, onVote, isVoting, formatNumber, formatTimeAgo }) => {
   const navigate = useNavigate();
+  const { filters } = useFilters();
 
   const handleVote = (voteType) => {
     const newVoteType = post.user_vote === voteType ? 0 : voteType;
     onVote(newVoteType);
+  };
+
+  const handleBackToFeed = () => {
+    // Navigate back to feed with preserved filter state
+    navigate('/feed', { 
+      state: { 
+        filters: filters,
+        preserveFilters: true 
+      } 
+    });
   };
 
   return (
@@ -27,7 +39,7 @@ const PostHeader = ({ post, onVote, isVoting, formatNumber, formatTimeAgo }) => 
       <div className="bg-gradient-to-r from-gray-700 to-gray-800 dark:from-gray-800 dark:to-gray-900 text-white">
         <div className="max-w-6xl mx-auto px-4 py-6">
           <button
-            onClick={() => navigate(-1)}
+            onClick={handleBackToFeed}
             className="flex items-center space-x-2 text-gray-200 hover:text-white mb-4 transition-colors group"
           >
             <ArrowLeftIcon className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
@@ -85,7 +97,7 @@ const PostHeader = ({ post, onVote, isVoting, formatNumber, formatTimeAgo }) => 
               
               <span className={`text-xl font-bold ${
                 post.user_vote === 1 ? 'text-emerald-600' : 
-                post.user_vote === -1 ? 'text-amber-600' : 'text-gray-700 dark:text-gray-300'
+                post.user_vote === -1 ? 'text-red-600' : 'text-gray-700 dark:text-gray-300'
               }`}>
                 {formatNumber((post.upvotes || 0) - (post.downvotes || 0))}
               </span>
@@ -93,7 +105,7 @@ const PostHeader = ({ post, onVote, isVoting, formatNumber, formatTimeAgo }) => 
               <button
                 onClick={() => handleVote(-1)}
                 className={`p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 ${
-                  post.user_vote === -1 ? 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 shadow-lg' : 'text-gray-400 dark:text-gray-500'
+                  post.user_vote === -1 ? 'text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/20 shadow-lg' : 'text-gray-400 dark:text-gray-500'
                 }`}
                 disabled={isVoting}
               >

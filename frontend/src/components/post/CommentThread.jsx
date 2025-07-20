@@ -1,7 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { PlusIcon } from '@heroicons/react/24/outline';
+import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import CommentCard from './CommentCard';
 import CommentForm from './CommentForm';
+
+const SORT_OPTIONS = [
+  { value: 'top', label: 'Top' },
+  { value: 'newest', label: 'Newest' },
+];
+
+const sortComments = (comments, sortBy) => {
+  if (sortBy === 'newest') {
+    return [...comments].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  }
+  // Default: Top (by net votes)
+  return [...comments].sort((a, b) => ((b.upvotes || 0) - (b.downvotes || 0)) - ((a.upvotes || 0) - (a.downvotes || 0)));
+};
 
 const CommentThread = ({ 
   comments = [], 
@@ -15,9 +28,9 @@ const CommentThread = ({
   user 
 }) => {
   const [showCommentForm, setShowCommentForm] = useState(true);
+  const [sortBy, setSortBy] = useState('top');
   const textareaRef = useRef(null);
 
-  // Focus the textarea when the component mounts
   useEffect(() => {
     if (showCommentForm && textareaRef.current) {
       textareaRef.current.focus();
@@ -26,7 +39,6 @@ const CommentThread = ({
 
   const handleAddComment = (content) => {
     onAddComment(content);
-    // Keep the form open for more comments
     setShowCommentForm(true);
   };
 
@@ -42,46 +54,56 @@ const CommentThread = ({
     onVoteComment(commentId, voteType);
   };
 
+  const sortedComments = sortComments(comments, sortBy);
+
   return (
     <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-600">
       <div className="flex items-center justify-between mb-3">
         <h4 className="font-semibold text-gray-900 dark:text-white text-base">
-          Comments ({comments.length})
+          {comments.length} Comment{comments.length !== 1 ? 's' : ''}
         </h4>
+        <div className="flex items-center space-x-2">
+          <label htmlFor="sort-comments" className="text-xs text-gray-500 dark:text-gray-400 font-medium">Sort by:</label>
+          <select
+            id="sort-comments"
+            value={sortBy}
+            onChange={e => setSortBy(e.target.value)}
+            className="text-xs rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 px-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+          >
+            {SORT_OPTIONS.map(opt => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+        </div>
       </div>
-
-      {/* Add Comment Form - Always visible when user is logged in */}
       {user && showCommentForm && (
         <div className="mb-3">
           <CommentForm
             ref={textareaRef}
             onSubmit={handleAddComment}
             onCancel={handleCancelComment}
-            placeholder="Add a thoughtful comment..."
-            buttonText="Add Comment"
+            placeholder="Add a public comment..."
+            buttonText="Comment"
             isSubmitting={isAddingComment}
             isReply={false}
+            user={user}
           />
         </div>
       )}
-
-      {/* Show button to reopen form if it was closed */}
       {user && !showCommentForm && (
         <div className="mb-3">
           <button
             onClick={() => setShowCommentForm(true)}
-            className="flex items-center space-x-1 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors font-medium text-base"
+            className="flex items-center space-x-1 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium text-base"
           >
-            <PlusIcon className="h-4 w-4" />
+            <span className="text-lg">+</span>
             <span>Add Comment</span>
           </button>
         </div>
       )}
-
-      {/* Comments List */}
-      {comments.length > 0 ? (
+      {sortedComments.length > 0 ? (
         <div className="space-y-2">
-          {comments.map((comment, index) => (
+          {sortedComments.map((comment, index) => (
             <CommentCard
               key={comment.comment_id}
               comment={comment}
@@ -92,7 +114,7 @@ const CommentThread = ({
               formatTimeAgo={formatTimeAgo}
               depth={0}
               user={user}
-              isLastChild={index === comments.length - 1}
+              isLastChild={index === sortedComments.length - 1}
             />
           ))}
         </div>

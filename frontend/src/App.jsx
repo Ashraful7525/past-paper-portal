@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
+import { FilterProvider } from './contexts/FilterContext';
 import Header from './components/common/Header';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import DarkModeToggle from './components/common/DarkModeToggle';
@@ -102,6 +103,7 @@ function App() {
       <ThemeProvider>
         <Router>
           <AuthProvider>
+            <FilterProvider>
             <Routes>
               {/* Public routes without layout */}
               <Route path="/login" element={<Login />} />
@@ -165,6 +167,7 @@ function App() {
             
             {/* Toast notifications with dynamic dark mode support */}
             <ToastContainer />
+            </FilterProvider>
           </AuthProvider>
         </Router>
       </ThemeProvider>

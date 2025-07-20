@@ -1,5 +1,5 @@
 import React from 'react';
-import { Filter, ChevronLeft, ChevronRight, Upload, Flame, Clock, TrendingUp, BookOpen, Users, MessageCircle } from 'lucide-react';
+import { Filter, ChevronLeft, ChevronRight, Upload, Flame, Clock, TrendingUp, BookOpen, Users, MessageCircle, Heart } from 'lucide-react';
 
 const LeftSidebar = ({ 
   sortBy, 
@@ -8,7 +8,9 @@ const LeftSidebar = ({
   onTimeRangeChange, 
   isCollapsed, 
   onToggleCollapse,
-  onShowUploadModal
+  onShowUploadModal,
+  forYou,
+  onForYouChange
 }) => {
   const sortOptions = [
     { key: 'hot', label: 'Hot', icon: Flame, description: 'Trending posts', color: 'text-red-500' },
@@ -75,6 +77,26 @@ const LeftSidebar = ({
                 );
               })}
             </div>
+          </div>
+
+          {/* For You Button */}
+          <div className="px-3 mb-6">
+            <button 
+              onClick={() => onForYouChange(!forYou)}
+              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-2 py-3' : 'px-3 py-2.5'} rounded-lg text-sm font-medium transition-all duration-200 ${
+                forYou
+                  ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-sm'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-600'
+              }`}
+              title={isCollapsed ? 'For You' : undefined}
+            >
+              <div className={`${isCollapsed ? 'w-6 h-6' : 'w-5 h-5'} flex items-center justify-center`}>
+                <Heart className={`h-4 w-4 ${forYou ? 'text-white' : 'text-gray-500 dark:text-gray-400'}`} />
+              </div>
+              {!isCollapsed && (
+                <span className="ml-3">For You</span>
+              )}
+            </button>
           </div>
 
           {/* Upload Button */}

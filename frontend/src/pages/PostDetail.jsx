@@ -14,6 +14,7 @@ function isImageFile(file) {
 import { useParams, useNavigate } from 'react-router-dom';
 import { PlusIcon, LightBulbIcon } from '@heroicons/react/24/outline';
 import { usePostDetail } from '../hooks/usePostDetail';
+import { useFilters } from '../contexts/FilterContext';
 import { formatNumber, formatTimeAgo } from '../utils/formatters';
 import PostBody from '../components/post/PostBody';
 import CommentForm from '../components/post/CommentForm';
@@ -22,6 +23,7 @@ import SolutionCard from '../components/post/SolutionCard';
 const PostDetail = () => {
   const { postId } = useParams();
   const navigate = useNavigate();
+  const { filters } = useFilters();
   const [showSolutionForm, setShowSolutionForm] = useState(false);
   const viewTrackedRef = useRef(false); // Track if view has been tracked for this component instance
 
@@ -105,7 +107,12 @@ const PostDetail = () => {
             The academic resource you're looking for doesn't exist or has been removed from our knowledge base.
           </p>
           <button
-            onClick={() => navigate('/feed')}
+            onClick={() => navigate('/feed', { 
+              state: { 
+                filters: filters,
+                preserveFilters: true 
+              } 
+            })}
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors shadow-lg hover:shadow-xl"
           >
             Back to Feed
@@ -122,6 +129,22 @@ const PostDetail = () => {
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden mb-8">
           {/* Header Section */}
           <div className="bg-gradient-to-r from-gray-700 to-gray-800 dark:from-gray-800 dark:to-gray-900 text-white p-8">
+            {/* Back Button */}
+            <button
+              onClick={() => navigate('/feed', { 
+                state: { 
+                  filters: filters,
+                  preserveFilters: true 
+                } 
+              })}
+              className="flex items-center space-x-2 text-gray-200 hover:text-white mb-4 transition-colors group"
+            >
+              <svg className="h-5 w-5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              <span className="font-medium">Back to Feed</span>
+            </button>
+            
             <div className="flex items-center space-x-4">
               <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center">
                 <span className="text-2xl">{post.department_icon || '📚'}</span>

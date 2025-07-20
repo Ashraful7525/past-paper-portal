@@ -1,12 +1,13 @@
 import React, { useState, forwardRef } from 'react';
 
-const CommentForm = forwardRef(({ 
-  onSubmit, 
-  onCancel, 
-  placeholder = "Add a thoughtful comment...", 
-  buttonText = "Add Comment",
+const CommentForm = forwardRef(({
+  onSubmit,
+  onCancel,
+  placeholder = "Add a thoughtful comment...",
+  buttonText = "Comment",
   isSubmitting = false,
-  isReply = false 
+  isReply = false,
+  user
 }, ref) => {
   const [content, setContent] = useState('');
 
@@ -22,30 +23,57 @@ const CommentForm = forwardRef(({
     onCancel();
   };
 
+  // Avatar: first letter of username or fallback
+  const avatar = user ? (
+    <div className="w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-base font-bold text-white select-none">
+      {user.username ? user.username.charAt(0).toUpperCase() : '?'}
+    </div>
+  ) : null;
+
   return (
-    <div className={`${isReply ? 'p-2' : 'p-3'} border border-gray-200 dark:border-gray-600 ${isReply ? 'rounded-md' : 'rounded-lg'} bg-gray-50/50 dark:bg-gray-800/50`}>
-      <form onSubmit={handleSubmit} className="flex items-center gap-2">
-        <textarea
-          ref={ref}
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder={placeholder}
-          className={`flex-1 ${isReply ? 'p-2' : 'p-2'} border border-gray-300 dark:border-gray-600 ${isReply ? 'rounded-md' : 'rounded-lg'} bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent resize-none ${isReply ? 'text-sm' : 'text-base'}`}
-          rows={1}
-          style={{ minHeight: '40px', maxHeight: '120px' }}
-          onInput={(e) => {
-            e.target.style.height = 'auto';
-            e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
-          }}
-          disabled={isSubmitting}
-        />
-        <button
-          type="submit"
-          disabled={isSubmitting || !content.trim()}
-          className={`${isReply ? 'px-2' : 'px-4'} py-1.5 ${isReply ? 'text-xs' : 'text-sm'} bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors`}
-        >
-          {isSubmitting ? (isReply ? 'Adding...' : 'Publishing...') : buttonText}
-        </button>
+    <div className={`${isReply ? '' : 'border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900'} rounded-xl w-full`}>
+      <form onSubmit={handleSubmit} className="flex flex-col w-full">
+        {/* Input area: avatar + textarea */}
+        <div className="flex flex-row items-start w-full px-2 pt-2 pb-1">
+          {avatar && (
+            <div className="mt-2 ml-1 mr-2">{avatar}</div>
+          )}
+          <textarea
+            ref={ref}
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder={placeholder}
+            className="flex-1 p-2 text-sm border-none bg-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none resize-none min-h-[36px] max-h-[120px] w-full mt-1.5"
+            rows={1}
+            style={{ minHeight: '36px', maxHeight: '120px' }}
+            onInput={(e) => {
+              e.target.style.height = 'auto';
+              e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+            }}
+            disabled={isSubmitting}
+            aria-label={placeholder}
+          />
+        </div>
+        {/* Always show horizontal bar for both comment and reply forms */}
+        <div className="border-t border-gray-200 dark:border-gray-600 mx-2" />
+        {/* Action buttons below the bar */}
+        <div className="flex justify-end gap-2 mt-2 mb-2 pr-2">
+          <button
+            type="button"
+            onClick={handleCancel}
+            className="px-4 py-1.5 text-sm font-semibold bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded"
+            tabIndex={-1}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={isSubmitting || !content.trim()}
+            className="px-4 py-1.5 text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSubmitting ? 'Publishing...' : buttonText}
+          </button>
+        </div>
       </form>
     </div>
   );

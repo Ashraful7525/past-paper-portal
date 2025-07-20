@@ -10,6 +10,7 @@ class Post {
         sortBy = 'hot',
         timeRange = 'all',
         department_id = null,
+        forYou = false,
         search = null,
         student_id = null,
         course_id = null,
@@ -58,6 +59,7 @@ class Post {
       let termFilter = '';
       let yearFilter = '';
       let questionNoFilter = '';
+      let forYouFilter = '';
       
       const queryParams = [limit, offset];
       let paramIndex = 3;
@@ -101,6 +103,17 @@ class Post {
       if (question_no) {
         questionNoFilter = `AND q.question_no = $${paramIndex}`;
         queryParams.push(parseInt(question_no));
+        paramIndex++;
+      }
+
+      // For You filter - only show posts from courses the user is enrolled in
+      if (forYou && student_id) {
+        forYouFilter = `AND c.course_id IN (
+          SELECT e.course_id 
+          FROM enrollments e 
+          WHERE e.student_id = $${paramIndex} AND e.is_currently_enrolled = true
+        )`;
+        queryParams.push(student_id);
         paramIndex++;
       }
 
@@ -173,6 +186,7 @@ class Post {
         ${termFilter}
         ${yearFilter}
         ${questionNoFilter}
+        ${forYouFilter}
         GROUP BY p.post_id, u.username, d.department_name, d.icon, c.course_title, c.course_code, s.semester_name, s.level, s.term, q.is_verified, q.question_title, q.question_text, q.question_no, q.year${groupByUserColumns}
         ${orderClause}
         LIMIT $1 OFFSET $2
