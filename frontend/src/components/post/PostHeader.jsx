@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFilters } from '../../contexts/FilterContext';
 import { 
@@ -7,16 +7,21 @@ import {
   AcademicCapIcon,
   CalendarDaysIcon,
   ArrowLeftIcon,
-  ShieldCheckIcon
+  ShieldCheckIcon,
+  FlagIcon
 } from '@heroicons/react/24/outline';
 import { 
   ChevronUpIcon as ChevronUpSolidIcon,
   ChevronDownIcon as ChevronDownSolidIcon
 } from '@heroicons/react/24/solid';
+import ReportModal from '../common/ReportModal';
+import { useAuth } from '../../contexts/AuthContext';
 
 const PostHeader = ({ post, onVote, isVoting, formatNumber, formatTimeAgo }) => {
   const navigate = useNavigate();
   const { filters } = useFilters();
+  const { user } = useAuth();
+  const [showReportModal, setShowReportModal] = useState(false);
 
   const handleVote = (voteType) => {
     const newVoteType = post.user_vote === voteType ? 0 : voteType;
@@ -118,7 +123,18 @@ const PostHeader = ({ post, onVote, isVoting, formatNumber, formatTimeAgo }) => 
             </div>
 
             {/* Content */}
-            <div className="flex-1">
+            <div className="flex-1 relative">
+              {/* Report Button - Top Right Corner */}
+              {user && (
+                <button
+                  onClick={() => setShowReportModal(true)}
+                  className="absolute top-0 right-0 p-2 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 z-10"
+                  title="Report this question"
+                >
+                  <FlagIcon className="h-5 w-5" />
+                </button>
+              )}
+              
               {/* Question Information */}
               {(post.course_title || post.semester_name || post.question_title || post.question_no) && (
                 <div className="mb-6">
@@ -165,6 +181,15 @@ const PostHeader = ({ post, onVote, isVoting, formatNumber, formatTimeAgo }) => 
           </div>
         </div>
       </div>
+
+      {/* Report Modal */}
+      <ReportModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        contentType="question"
+        contentId={post.post_id}
+        contentTitle={post.title}
+      />
     </>
   );
 };

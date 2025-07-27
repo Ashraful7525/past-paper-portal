@@ -9,6 +9,8 @@ import postsRoutes from './routes/posts.js';
 import solutionsRoutes from './routes/solutions.js';
 import commentsRoutes from './routes/comments.js';
 import coursesRoutes from './routes/courses.js';
+import adminRoutes from './routes/admin.js';
+import reportsRoutes from './routes/reports.js';
 import { testConnection } from './config/db.js'; // FIXED: Added config/ path
 
 dotenv.config();
@@ -83,6 +85,8 @@ app.get('/', (req, res) => {
       solutions: '/api/solutions',
       comments: '/api/comments',
       courses: '/api/courses',
+      admin: '/api/admin',
+      reports: '/api/reports',
       health: '/health'
     }
   });
@@ -94,6 +98,8 @@ app.use('/api/posts', postsRoutes);
 app.use('/api/solutions', solutionsRoutes);
 app.use('/api/comments', commentsRoutes);
 app.use('/api/courses', coursesRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/reports', reportsRoutes);
 
 // --- ERROR HANDLING ---
 // Global error handler
@@ -141,4 +147,5 @@ app.listen(PORT, () => {
   console.log(`📝 Posts endpoints: http://localhost:${PORT}/api/posts`);
   console.log(`💡 Solutions endpoints: http://localhost:${PORT}/api/solutions`);
   console.log(`💬 Comments endpoints: http://localhost:${PORT}/api/comments`);
+  console.log(`👨‍💼 Admin endpoints: http://localhost:${PORT}/api/admin`);
 });

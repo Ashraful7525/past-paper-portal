@@ -1,6 +1,105 @@
 import pool from '../config/db.js';
 
 class Solution {
+  // Get pending solutions for admin moderation
+  static async getPendingSolutions(status = 'pending', limit = 20, offset = 0) {
+    const client = await pool.connect();
+    try {
+      let whereClause = '';
+      const queryParams = [limit, offset];
+      
+      if (status === 'pending') {
+        whereClause = 'WHERE s.is_verified = false';
+      }
+      
+      const query = `
+        SELECT 
+          s.solution_id as id,
+          s.solution_title as title,
+          s.solution_text as content,
+          s.is_verified,
+          s.upvotes,
+          s.downvotes,
+          s.created_at,
+          u.username as author,
+          q.question_title as questionTitle
+        FROM public.solutions s
+        LEFT JOIN public.users u ON s.student_id = u.student_id
+        LEFT JOIN public.questions q ON s.question_id = q.question_id
+        ${whereClause}
+        ORDER BY s.created_at DESC
+        LIMIT $1 OFFSET $2
+      `;
+      
+      const result = await client.query(query, queryParams);
+      
+      return result.rows.map(row => ({
+        ...row,
+        createdAt: new Date(row.created_at).toLocaleDateString()
+      }));
+    } catch (error) {
+      console.error('Error fetching pending solutions:', error);
+      throw new Error('Database query failed');
+    } finally {
+      client.release();
+    }
+  }
+
+  // Approve a solution
+  static async approveSolution(solutionId) {
+    const client = await pool.connect();
+    try {
+      const query = `
+        UPDATE public.solutions 
+        SET is_verified = true, updated_at = NOW()
+        WHERE solution_id = $1
+        RETURNING solution_id, is_verified
+      `;
+      
+      const result = await client.query(query, [solutionId]);
+      return result.rows.length > 0 ? result.rows[0] : null;
+    } catch (error) {
+      console.error('Error approving solution:', error);
+      throw new Error('Database update failed');
+    } finally {
+      client.release();
+    }
+  }
+
+  // Delete a solution and all related data
+  static async deleteSolution(solutionId) {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      
+      // Delete related data first
+      await client.query('DELETE FROM public.comments WHERE solution_id = $1', [solutionId]);
+      await client.query('DELETE FROM public.solution_votes WHERE solution_id = $1', [solutionId]);
+      await client.query('DELETE FROM public.bookmarks WHERE solution_id = $1', [solutionId]);
+      await client.query('DELETE FROM public.solution_tags WHERE solution_id = $1', [solutionId]);
+      
+      // Delete the solution
+      const result = await client.query(
+        'DELETE FROM public.solutions WHERE solution_id = $1 RETURNING solution_id',
+        [solutionId]
+      );
+      
+      if (result.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return null;
+      }
+      
+      await client.query('COMMIT');
+      return result.rows[0];
+    } catch (error) {
+      await client.query('ROLLBACK');
+      console.error('Error deleting solution:', error);
+      throw new Error('Database delete failed');
+    } finally {
+      client.release();
+    }
+  }
+
   static async getSolutionsByPostId(postId, studentId = null) {
     const client = await pool.connect();
     try {

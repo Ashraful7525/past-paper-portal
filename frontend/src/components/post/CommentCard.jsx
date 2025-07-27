@@ -4,12 +4,15 @@ import {
   ChevronUpIcon,
   ChevronDownIcon,
   EllipsisVerticalIcon,
+  FlagIcon,
 } from '@heroicons/react/24/outline';
 import {
   ChevronUpIcon as ChevronUpSolidIcon,
   ChevronDownIcon as ChevronDownSolidIcon,
 } from '@heroicons/react/24/solid';
 import CommentForm from './CommentForm';
+import ReportModal from '../common/ReportModal';
+import { useAuth } from '../../contexts/AuthContext';
 
 const CommentCard = ({
   comment,
@@ -22,8 +25,10 @@ const CommentCard = ({
   user,
   isLastChild = false,
 }) => {
+  const { user: currentUser } = useAuth();
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [repliesCollapsed, setRepliesCollapsed] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
   const maxDepth = 1; // Only one reply level
 
   const handleReply = (content) => {
@@ -170,6 +175,18 @@ const CommentCard = ({
               Reply
             </button>
           )}
+          
+          {/* Report Button */}
+          {currentUser && (
+            <button
+              onClick={() => setShowReportModal(true)}
+              className="text-xs font-medium text-gray-400 hover:text-red-500 px-2 py-1 rounded focus:outline-none focus:ring-2 focus:ring-red-500"
+              title="Report this comment"
+            >
+              <FlagIcon className="h-4 w-4" />
+            </button>
+          )}
+          
           <button
             className="ml-2 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none"
             title="More actions"
@@ -228,6 +245,15 @@ const CommentCard = ({
           </div>
         )}
       </div>
+      
+      {/* Report Modal */}
+      <ReportModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        contentType="comment"
+        contentId={comment.comment_id || comment.id}
+        contentTitle={`Comment by ${comment.author_username || 'Anonymous'}`}
+      />
     </div>
   );
 };

@@ -1,0 +1,176 @@
+import { body, validationResult, param, query } from 'express-validator';
+import { ValidationError } from './errorHandler.js';
+
+// Enhanced validation result handler
+export const handleValidationErrors = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    const formattedErrors = errors.array().map(error => ({
+      field: error.path || error.param,
+      message: error.msg,
+      value: error.value
+    }));
+    
+    throw new ValidationError('Validation failed', formattedErrors);
+  }
+  next();
+};
+
+// Sanitization helpers
+const sanitizeString = (value) => {
+  if (typeof value !== 'string') return value;
+  return value.trim().replace(/[<>]/g, ''); // Basic XSS prevention
+};
+
+export const validateRegistration = [
+  body('student_id')
+    .notEmpty()
+    .withMessage('Student ID is required')
+    .isInt({ min: 1 })
+    .withMessage('Student ID must be a positive integer')
+    .custom((value) => {
+      const strValue = value.toString();
+      if (strValue.length < 5 || strValue.length > 15) {
+        throw new Error('Student ID must be between 5 and 15 digits');
+      }
+      return true;
+    })
+    .toInt(),
+
+  body('username')
+    .trim()
+    .isLength({ min: 3, max: 50 })
+    .withMessage('Username must be 3-50 characters long')
+    .matches(/^[a-zA-Z0-9_]+$/)
+    .withMessage('Username can only contain letters, numbers, and underscores')
+    .customSanitizer(sanitizeString),
+
+  body('email')
+    .isEmail()
+    .withMessage('Please provide a valid email address')
+    .normalizeEmail()
+    .isLength({ max: 255 })
+    .withMessage('Email too long'),
+
+  body('password')
+    .isLength({ min: 8, max: 128 })
+    .withMessage('Password must be 8-128 characters long')
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+    .withMessage('Password must contain at least one lowercase letter, one uppercase letter, and one number'),
+
+  body('profile')
+    .optional()
+    .isLength({ max: 500 })
+    .withMessage('Profile description cannot exceed 500 characters')
+    .customSanitizer(sanitizeString),
+
+  handleValidationErrors
+];
+
+export const validateLogin = [
+  body('email')
+    .isEmail()
+    .withMessage('Please provide a valid email address')
+    .normalizeEmail(),
+
+  body('password')
+    .notEmpty()
+    .withMessage('Password is required'),
+
+  handleValidationErrors
+];
+
+export const validatePost = [
+  body('title')
+    .trim()
+    .isLength({ min: 5, max: 200 })
+    .withMessage('Title must be 5-200 characters long')
+    .customSanitizer(sanitizeString),
+
+  body('content')
+    .optional()
+    .isLength({ max: 10000 })
+    .withMessage('Content cannot exceed 10,000 characters')
+    .customSanitizer(sanitizeString),
+
+  body('course_id')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Course ID must be a positive integer'),
+
+  body('question_no')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Question number must be a positive integer'),
+
+  handleValidationErrors
+];
+
+export const validateComment = [
+  body('comment_text')
+    .trim()
+    .isLength({ min: 1, max: 1000 })
+    .withMessage('Comment must be 1-1000 characters long')
+    .customSanitizer(sanitizeString),
+
+  body('solution_id')
+    .isInt({ min: 1 })
+    .withMessage('Solution ID must be a positive integer'),
+
+  body('parent_comment_id')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Parent comment ID must be a positive integer'),
+
+  handleValidationErrors
+];
+
+export const validateReport = [
+  body('content_type')
+    .isIn(['post', 'solution', 'comment'])
+    .withMessage('Content type must be post, solution, or comment'),
+
+  body('content_id')
+    .isInt({ min: 1 })
+    .withMessage('Content ID must be a positive integer'),
+
+  body('reason')
+    .trim()
+    .isLength({ min: 5, max: 500 })
+    .withMessage('Reason must be 5-500 characters long')
+    .customSanitizer(sanitizeString),
+
+  body('description')
+    .optional()
+    .isLength({ max: 1000 })
+    .withMessage('Description cannot exceed 1000 characters')
+    .customSanitizer(sanitizeString),
+
+  handleValidationErrors
+];
+
+// Parameter validation
+export const validateId = [
+  param('id')
+    .isInt({ min: 1 })
+    .withMessage('ID must be a positive integer'),
+  
+  handleValidationErrors
+];
+
+// Query validation
+export const validatePagination = [
+  query('page')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Page must be a positive integer')
+    .toInt(),
+
+  query('limit')
+    .optional()
+    .isInt({ min: 1, max: 100 })
+    .withMessage('Limit must be between 1 and 100')
+    .toInt(),
+
+  handleValidationErrors
+];

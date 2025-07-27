@@ -1,6 +1,31 @@
 import pool from '../config/db.js';
 
 class Stats {
+  // Get admin dashboard stats
+  static async getAdminStats() {
+    const client = await pool.connect();
+    try {
+      const [usersResult, questionsResult, solutionsResult, pendingResult] = await Promise.all([
+        client.query('SELECT COUNT(*) as count FROM public.users'),
+        client.query('SELECT COUNT(*) as count FROM public.questions'),
+        client.query('SELECT COUNT(*) as count FROM public.solutions'),
+        client.query('SELECT COUNT(*) as count FROM public.questions WHERE is_verified = false')
+      ]);
+      
+      return {
+        users: parseInt(usersResult.rows[0].count),
+        questions: parseInt(questionsResult.rows[0].count),
+        solutions: parseInt(solutionsResult.rows[0].count),
+        pendingReviews: parseInt(pendingResult.rows[0].count)
+      };
+    } catch (error) {
+      console.error('Error fetching admin stats:', error);
+      throw new Error('Database query failed');
+    } finally {
+      client.release();
+    }
+  }
+
   // Get global platform statistics
   static async getGlobalStats() {
     const client = await pool.connect();

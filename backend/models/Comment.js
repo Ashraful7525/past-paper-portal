@@ -1,6 +1,87 @@
 import pool from '../config/db.js';
 
 class Comment {
+  // Get flagged comments for admin moderation
+  static async getFlaggedComments(status = 'flagged', limit = 20, offset = 0) {
+    const client = await pool.connect();
+    try {
+      // For now, we'll return comments with negative net votes as "flagged"
+      // In a real implementation, you'd have a flags table
+      const query = `
+        SELECT 
+          c.comment_id as id,
+          c.comment_text as content,
+          c.upvotes,
+          c.downvotes,
+          c.created_at,
+          u.username as author,
+          q.question_title as solutionTitle,
+          (c.downvotes - c.upvotes) as flagCount,
+          'Inappropriate content' as flagReason
+        FROM public.comments c
+        LEFT JOIN public.users u ON c.student_id = u.student_id
+        LEFT JOIN public.solutions s ON c.solution_id = s.solution_id
+        LEFT JOIN public.questions q ON s.question_id = q.question_id
+        WHERE (c.downvotes - c.upvotes) > 2
+        ORDER BY (c.downvotes - c.upvotes) DESC, c.created_at DESC
+        LIMIT $1 OFFSET $2
+      `;
+      
+      const result = await client.query(query, [limit, offset]);
+      
+      return result.rows.map(row => ({
+        ...row,
+        createdAt: new Date(row.created_at).toLocaleDateString()
+      }));
+    } catch (error) {
+      console.error('Error fetching flagged comments:', error);
+      throw new Error('Database query failed');
+    } finally {
+      client.release();
+    }
+  }
+
+  // Approve comment (remove flag)
+  static async approveComment(commentId) {
+    // In a real implementation, you'd update a flags table
+    // For now, we'll just return success
+    return { id: commentId, approved: true };
+  }
+
+  // Delete a comment and all related data
+  static async deleteComment(commentId) {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      
+      // Delete related data first
+      await client.query('DELETE FROM public.comment_votes WHERE comment_id = $1', [commentId]);
+      
+      // Delete child comments first
+      await client.query('DELETE FROM public.comments WHERE parent_comment_id = $1', [commentId]);
+      
+      // Delete the comment
+      const result = await client.query(
+        'DELETE FROM public.comments WHERE comment_id = $1 RETURNING comment_id',
+        [commentId]
+      );
+      
+      if (result.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return null;
+      }
+      
+      await client.query('COMMIT');
+      return result.rows[0];
+    } catch (error) {
+      await client.query('ROLLBACK');
+      console.error('Error deleting comment:', error);
+      throw new Error('Database delete failed');
+    } finally {
+      client.release();
+    }
+  }
+
   static async getCommentsBySolutionId(solutionId, studentId = null) {
     const client = await pool.connect();
     try {

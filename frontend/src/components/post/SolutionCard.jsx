@@ -8,7 +8,8 @@ import {
   StarIcon,
   FireIcon,
   ShieldCheckIcon,
-  PlusIcon
+  PlusIcon,
+  FlagIcon
 } from '@heroicons/react/24/outline';
 import { 
   ChevronUpIcon as ChevronUpSolidIcon,
@@ -16,6 +17,8 @@ import {
   BookmarkIcon as BookmarkSolidIcon
 } from '@heroicons/react/24/solid';
 import CommentThread from './CommentThread';
+import ReportModal from '../common/ReportModal';
+import { useAuth } from '../../contexts/AuthContext';
 
 const isImage = (url) => /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i.test(url);
 const isPDF = (url) => /\.pdf$/i.test(url);
@@ -36,9 +39,11 @@ const SolutionCard = ({
   formatTimeAgo, 
   user 
 }) => {
+  const { user: currentUser } = useAuth();
   const [showComments, setShowComments] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [pdfModalOpen, setPdfModalOpen] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
   const lightboxRef = useRef(null);
   const pdfModalRef = useRef(null);
 
@@ -207,6 +212,17 @@ const SolutionCard = ({
                     <BookmarkIcon className="h-5 w-5" />
                   )}
                 </button>
+                
+                {/* Report Button */}
+                {currentUser && (
+                  <button
+                    onClick={() => setShowReportModal(true)}
+                    className="p-2 rounded-lg text-gray-400 dark:text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200"
+                    title="Report this solution"
+                  >
+                    <FlagIcon className="h-5 w-5" />
+                  </button>
+                )}
               </div>
             </div>
 
@@ -392,6 +408,15 @@ const SolutionCard = ({
           </div>
         </div>
       </div>
+
+      {/* Report Modal */}
+      <ReportModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        contentType="solution"
+        contentId={solution.id}
+        contentTitle={solution.title || 'Solution'}
+      />
     </div>
   );
 };

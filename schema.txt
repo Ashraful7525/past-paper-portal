@@ -2,59 +2,60 @@
 -- Table order and constraints may not be valid for execution.
 
 CREATE TABLE public.bookmarks (
+  bookmark_id integer NOT NULL DEFAULT nextval('bookmarks_bookmark_id_seq'::regclass),
   student_id integer NOT NULL,
   solution_id integer NOT NULL,
-  bookmark_id integer NOT NULL DEFAULT nextval('bookmarks_bookmark_id_seq'::regclass),
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT bookmarks_pkey PRIMARY KEY (bookmark_id),
-  CONSTRAINT bookmarks_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.users(student_id),
-  CONSTRAINT bookmarks_solution_id_fkey FOREIGN KEY (solution_id) REFERENCES public.solutions(solution_id)
+  CONSTRAINT bookmarks_solution_id_fkey FOREIGN KEY (solution_id) REFERENCES public.solutions(solution_id),
+  CONSTRAINT bookmarks_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.users(student_id)
 );
 CREATE TABLE public.comment_votes (
+  vote_id integer NOT NULL DEFAULT nextval('comment_votes_vote_id_seq'::regclass),
   student_id integer NOT NULL,
   comment_id integer NOT NULL,
-  vote_id integer NOT NULL DEFAULT nextval('comment_votes_vote_id_seq'::regclass),
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   vote_type integer NOT NULL CHECK (vote_type = ANY (ARRAY['-1'::integer, 0, 1])),
   CONSTRAINT comment_votes_pkey PRIMARY KEY (vote_id),
-  CONSTRAINT comment_votes_comment_id_fkey FOREIGN KEY (comment_id) REFERENCES public.comments(comment_id),
-  CONSTRAINT comment_votes_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.users(student_id)
+  CONSTRAINT comment_votes_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.users(student_id),
+  CONSTRAINT comment_votes_comment_id_fkey FOREIGN KEY (comment_id) REFERENCES public.comments(comment_id)
 );
 CREATE TABLE public.comments (
-  parent_comment_id integer,
+  comment_id integer NOT NULL DEFAULT nextval('comments_comment_id_seq'::regclass),
   solution_id integer NOT NULL,
   student_id integer NOT NULL,
   comment_text text NOT NULL,
-  comment_id integer NOT NULL DEFAULT nextval('comments_comment_id_seq'::regclass),
   upvotes integer NOT NULL DEFAULT 0,
   downvotes integer NOT NULL DEFAULT 0,
+  parent_comment_id integer,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  is_flagged boolean DEFAULT false,
   CONSTRAINT comments_pkey PRIMARY KEY (comment_id),
   CONSTRAINT comments_solution_id_fkey FOREIGN KEY (solution_id) REFERENCES public.solutions(solution_id),
   CONSTRAINT fk_comments_parent FOREIGN KEY (parent_comment_id) REFERENCES public.comments(comment_id),
   CONSTRAINT comments_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.users(student_id)
 );
 CREATE TABLE public.courses (
-  course_code character varying,
-  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  course_id integer NOT NULL DEFAULT nextval('courses_course_id_seq'::regclass),
   course_title character varying NOT NULL,
   department_id integer NOT NULL,
-  course_id integer NOT NULL DEFAULT nextval('courses_course_id_seq'::regclass),
+  course_code character varying,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT courses_pkey PRIMARY KEY (course_id),
   CONSTRAINT courses_department_id_fkey FOREIGN KEY (department_id) REFERENCES public.departments(department_id)
 );
 CREATE TABLE public.departments (
+  department_id integer NOT NULL DEFAULT nextval('departments_department_id_seq'::regclass),
+  department_name character varying NOT NULL UNIQUE,
   icon text NOT NULL DEFAULT '🏫'::text,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
-  department_name character varying NOT NULL UNIQUE,
-  department_id integer NOT NULL DEFAULT nextval('departments_department_id_seq'::regclass),
   CONSTRAINT departments_pkey PRIMARY KEY (department_id)
 );
 CREATE TABLE public.enrollments (
+  enrollment_id bigint NOT NULL DEFAULT nextval('enrollments_enrollment_id_seq'::regclass),
   student_id integer NOT NULL,
   course_id integer NOT NULL,
-  enrollment_id bigint NOT NULL DEFAULT nextval('enrollments_enrollment_id_seq'::regclass),
   is_currently_enrolled boolean NOT NULL DEFAULT true,
   enrolled_at timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT enrollments_pkey PRIMARY KEY (enrollment_id),
@@ -62,14 +63,14 @@ CREATE TABLE public.enrollments (
   CONSTRAINT enrollments_course_id_fkey FOREIGN KEY (course_id) REFERENCES public.courses(course_id)
 );
 CREATE TABLE public.notifications (
+  notification_id integer NOT NULL DEFAULT nextval('notifications_notification_id_seq'::regclass),
+  student_id integer NOT NULL,
+  message text NOT NULL,
+  is_read boolean NOT NULL DEFAULT false,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
   notification_type character varying DEFAULT 'general'::character varying,
   reference_id integer,
   reference_type character varying,
-  student_id integer NOT NULL,
-  message text NOT NULL,
-  notification_id integer NOT NULL DEFAULT nextval('notifications_notification_id_seq'::regclass),
-  is_read boolean NOT NULL DEFAULT false,
-  created_at timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT notifications_pkey PRIMARY KEY (notification_id),
   CONSTRAINT notifications_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.users(student_id)
 );
@@ -81,45 +82,46 @@ CREATE TABLE public.post_tags (
   CONSTRAINT post_tags_tag_id_fkey FOREIGN KEY (tag_id) REFERENCES public.tags(tag_id)
 );
 CREATE TABLE public.post_votes (
+  vote_id integer NOT NULL DEFAULT nextval('post_votes_vote_id_seq'::regclass),
   post_id integer NOT NULL,
   student_id integer NOT NULL,
   vote_type integer NOT NULL CHECK (vote_type = ANY (ARRAY['-1'::integer, 0, 1])),
-  vote_id integer NOT NULL DEFAULT nextval('post_votes_vote_id_seq'::regclass),
   created_at timestamp with time zone DEFAULT now(),
   CONSTRAINT post_votes_pkey PRIMARY KEY (vote_id),
   CONSTRAINT post_votes_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.users(student_id),
   CONSTRAINT post_votes_post_id_fkey FOREIGN KEY (post_id) REFERENCES public.posts(post_id)
 );
 CREATE TABLE public.posts (
+  post_id integer NOT NULL DEFAULT nextval('posts_post_id_seq'::regclass),
   question_id integer,
   title character varying NOT NULL,
   content text,
   student_id integer NOT NULL,
   department_id integer,
-  file_url text,
-  file_size character varying,
-  preview_text text,
-  post_id integer NOT NULL DEFAULT nextval('posts_post_id_seq'::regclass),
   upvotes integer DEFAULT 0,
   downvotes integer DEFAULT 0,
   view_count integer DEFAULT 0,
   download_count integer DEFAULT 0,
+  file_url text,
+  file_size character varying,
+  preview_text text,
   is_featured boolean DEFAULT false,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
+  is_verified boolean NOT NULL DEFAULT false,
   CONSTRAINT posts_pkey PRIMARY KEY (post_id),
-  CONSTRAINT posts_department_id_fkey FOREIGN KEY (department_id) REFERENCES public.departments(department_id),
   CONSTRAINT posts_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.users(student_id),
-  CONSTRAINT posts_question_id_fkey FOREIGN KEY (question_id) REFERENCES public.questions(question_id)
+  CONSTRAINT posts_question_id_fkey FOREIGN KEY (question_id) REFERENCES public.questions(question_id),
+  CONSTRAINT posts_department_id_fkey FOREIGN KEY (department_id) REFERENCES public.departments(department_id)
 );
 CREATE TABLE public.question_bookmarks (
+  bookmark_id integer NOT NULL DEFAULT nextval('question_bookmarks_bookmark_id_seq'::regclass),
   student_id integer NOT NULL,
   question_id integer NOT NULL,
-  bookmark_id integer NOT NULL DEFAULT nextval('question_bookmarks_bookmark_id_seq'::regclass),
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT question_bookmarks_pkey PRIMARY KEY (bookmark_id),
-  CONSTRAINT question_bookmarks_question_id_fkey FOREIGN KEY (question_id) REFERENCES public.questions(question_id),
-  CONSTRAINT question_bookmarks_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.users(student_id)
+  CONSTRAINT question_bookmarks_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.users(student_id),
+  CONSTRAINT question_bookmarks_question_id_fkey FOREIGN KEY (question_id) REFERENCES public.questions(question_id)
 );
 CREATE TABLE public.question_tags (
   question_id integer NOT NULL,
@@ -130,97 +132,112 @@ CREATE TABLE public.question_tags (
   CONSTRAINT question_tags_question_id_fkey FOREIGN KEY (question_id) REFERENCES public.questions(question_id)
 );
 CREATE TABLE public.question_views (
+  view_id integer NOT NULL DEFAULT nextval('question_views_view_id_seq'::regclass),
   question_id integer NOT NULL,
   student_id integer,
   ip_address inet,
-  view_id integer NOT NULL DEFAULT nextval('question_views_view_id_seq'::regclass),
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT question_views_pkey PRIMARY KEY (view_id),
-  CONSTRAINT question_views_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.users(student_id),
-  CONSTRAINT question_views_question_id_fkey FOREIGN KEY (question_id) REFERENCES public.questions(question_id)
+  CONSTRAINT question_views_question_id_fkey FOREIGN KEY (question_id) REFERENCES public.questions(question_id),
+  CONSTRAINT question_views_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.users(student_id)
 );
 CREATE TABLE public.questions (
-  question_title character varying,
-  uploaded_by integer,
-  is_verified boolean DEFAULT false,
-  views integer DEFAULT 0,
+  question_id integer NOT NULL DEFAULT nextval('questions_question_id_seq'::regclass),
   question_no integer,
   question_text text NOT NULL,
   course_id integer NOT NULL,
   semester_id integer NOT NULL,
   year integer NOT NULL,
-  question_id integer NOT NULL DEFAULT nextval('questions_question_id_seq'::regclass),
+  question_title character varying,
+  uploaded_by integer,
+  is_verified boolean DEFAULT false,
+  views integer DEFAULT 0,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   updated_at timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT questions_pkey PRIMARY KEY (question_id),
   CONSTRAINT questions_course_id_fkey FOREIGN KEY (course_id) REFERENCES public.courses(course_id),
   CONSTRAINT questions_semester_id_fkey FOREIGN KEY (semester_id) REFERENCES public.semesters(semester_id)
 );
+CREATE TABLE public.reports (
+  report_id integer NOT NULL DEFAULT nextval('reports_report_id_seq'::regclass),
+  reporter_id integer NOT NULL,
+  content_type character varying NOT NULL CHECK (content_type::text = ANY (ARRAY['post'::character varying, 'solution'::character varying, 'comment'::character varying]::text[])),
+  content_id integer NOT NULL,
+  reason text NOT NULL,
+  status character varying DEFAULT 'pending'::character varying CHECK (status::text = ANY (ARRAY['pending'::character varying, 'resolved'::character varying, 'dismissed'::character varying]::text[])),
+  admin_action character varying,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT reports_pkey PRIMARY KEY (report_id),
+  CONSTRAINT reports_reporter_id_fkey FOREIGN KEY (reporter_id) REFERENCES public.users(student_id)
+);
 CREATE TABLE public.saved_posts (
+  save_id integer NOT NULL DEFAULT nextval('saved_posts_save_id_seq'::regclass),
   post_id integer NOT NULL,
   student_id integer NOT NULL,
-  save_id integer NOT NULL DEFAULT nextval('saved_posts_save_id_seq'::regclass),
   created_at timestamp with time zone DEFAULT now(),
   CONSTRAINT saved_posts_pkey PRIMARY KEY (save_id),
-  CONSTRAINT saved_posts_post_id_fkey FOREIGN KEY (post_id) REFERENCES public.posts(post_id),
-  CONSTRAINT saved_posts_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.users(student_id)
+  CONSTRAINT saved_posts_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.users(student_id),
+  CONSTRAINT saved_posts_post_id_fkey FOREIGN KEY (post_id) REFERENCES public.posts(post_id)
 );
 CREATE TABLE public.semesters (
-  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  semester_id integer NOT NULL DEFAULT nextval('semesters_semester_id_seq'::regclass),
   level integer NOT NULL,
   term integer NOT NULL,
-  semester_id integer NOT NULL DEFAULT nextval('semesters_semester_id_seq'::regclass),
   semester_name character varying,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT semesters_pkey PRIMARY KEY (semester_id)
 );
 CREATE TABLE public.solution_tags (
   solution_id integer NOT NULL,
   tag_id integer NOT NULL,
   CONSTRAINT solution_tags_pkey PRIMARY KEY (solution_id, tag_id),
-  CONSTRAINT solution_tags_tag_id_fkey FOREIGN KEY (tag_id) REFERENCES public.tags(tag_id),
-  CONSTRAINT solution_tags_solution_id_fkey FOREIGN KEY (solution_id) REFERENCES public.solutions(solution_id)
+  CONSTRAINT solution_tags_solution_id_fkey FOREIGN KEY (solution_id) REFERENCES public.solutions(solution_id),
+  CONSTRAINT solution_tags_tag_id_fkey FOREIGN KEY (tag_id) REFERENCES public.tags(tag_id)
 );
 CREATE TABLE public.solution_votes (
+  vote_id integer NOT NULL DEFAULT nextval('solution_votes_vote_id_seq'::regclass),
   student_id integer NOT NULL,
   solution_id integer NOT NULL,
-  vote_id integer NOT NULL DEFAULT nextval('solution_votes_vote_id_seq'::regclass),
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   vote_type integer NOT NULL CHECK (vote_type = ANY (ARRAY['-1'::integer, 0, 1])),
   CONSTRAINT solution_votes_pkey PRIMARY KEY (vote_id),
-  CONSTRAINT solution_votes_solution_id_fkey FOREIGN KEY (solution_id) REFERENCES public.solutions(solution_id),
-  CONSTRAINT solution_votes_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.users(student_id)
+  CONSTRAINT solution_votes_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.users(student_id),
+  CONSTRAINT solution_votes_solution_id_fkey FOREIGN KEY (solution_id) REFERENCES public.solutions(solution_id)
 );
 CREATE TABLE public.solutions (
-  solution_title character varying,
-  is_verified boolean DEFAULT false,
+  solution_id integer NOT NULL DEFAULT nextval('solutions_solution_id_seq'::regclass),
   student_id integer NOT NULL,
   question_id integer NOT NULL,
   solution_text text NOT NULL,
-  solution_id integer NOT NULL DEFAULT nextval('solutions_solution_id_seq'::regclass),
   upvotes integer NOT NULL DEFAULT 0,
   downvotes integer NOT NULL DEFAULT 0,
   rating integer NOT NULL DEFAULT 0,
+  solution_title character varying,
+  is_verified boolean DEFAULT false,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  file_url text,
+  is_approved boolean DEFAULT false,
   CONSTRAINT solutions_pkey PRIMARY KEY (solution_id),
   CONSTRAINT solutions_question_id_fkey FOREIGN KEY (question_id) REFERENCES public.questions(question_id),
   CONSTRAINT solutions_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.users(student_id)
 );
 CREATE TABLE public.tags (
-  tag_name character varying NOT NULL UNIQUE,
   tag_id integer NOT NULL DEFAULT nextval('tags_tag_id_seq'::regclass),
+  tag_name character varying NOT NULL UNIQUE,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT tags_pkey PRIMARY KEY (tag_id)
 );
 CREATE TABLE public.users (
-  email character varying UNIQUE,
-  password text,
-  created_at timestamp with time zone NOT NULL DEFAULT now(),
-  updated_at timestamp with time zone NOT NULL DEFAULT now(),
   student_id integer NOT NULL DEFAULT nextval('users_student_id_seq'::regclass),
-  contribution integer NOT NULL DEFAULT 0,
-  is_admin boolean NOT NULL DEFAULT false,
   username character varying NOT NULL UNIQUE,
   profile text,
+  contribution integer NOT NULL DEFAULT 0,
+  is_admin boolean NOT NULL DEFAULT false,
+  email character varying UNIQUE,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  password text,
   CONSTRAINT users_pkey PRIMARY KEY (student_id)
 );

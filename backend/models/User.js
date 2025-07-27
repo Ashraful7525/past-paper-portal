@@ -155,6 +155,65 @@ class User {
     }
   }
 
+  // Toggle user ban status (admin function)
+  static async toggleBan(userId, banned) {
+    try {
+      const query = `
+        UPDATE users 
+        SET is_banned = $1, updated_at = NOW()
+        WHERE student_id = $2
+        RETURNING student_id, username, email, is_banned
+      `;
+      
+      const result = await pool.query(query, [banned, userId]);
+      
+      if (result.rows.length === 0) {
+        return null;
+      }
+      
+      return result.rows[0];
+    } catch (error) {
+      console.error('Error toggling user ban:', error);
+      throw new Error('Database update failed');
+    }
+  }
+
+  // Get user activity summary (admin function)
+  static async getUserActivity(userId, limit = 10) {
+    try {
+      const query = `
+        SELECT 
+          'post' as type,
+          p.title as content,
+          p.created_at
+        FROM public.posts p
+        WHERE p.student_id = $1
+        UNION ALL
+        SELECT 
+          'solution' as type,
+          s.solution_text as content,
+          s.created_at
+        FROM public.solutions s
+        WHERE s.student_id = $1
+        UNION ALL
+        SELECT 
+          'comment' as type,
+          c.comment_text as content,
+          c.created_at
+        FROM public.comments c
+        WHERE c.student_id = $1
+        ORDER BY created_at DESC
+        LIMIT $2
+      `;
+      
+      const result = await pool.query(query, [userId, limit]);
+      return result.rows;
+    } catch (error) {
+      console.error('Error fetching user activity:', error);
+      throw new Error('Database query failed');
+    }
+  }
+
   // Instance methods
   async save() {
     try {
