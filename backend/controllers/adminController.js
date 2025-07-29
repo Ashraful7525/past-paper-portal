@@ -4,6 +4,7 @@ import Comment from '../models/Comment.js';
 import User from '../models/User.js';
 import Stats from '../models/Stats.js';
 import Report from '../models/Report.js';
+import Post from '../models/Post.js';
 
 const adminController = {
   // Get pending questions for moderation
@@ -102,7 +103,7 @@ const adminController = {
   async deleteQuestion(req, res) {
     try {
       const { id } = req.params;
-      const result = await Question.deleteQuestion(id);
+      const result = await Post.deletePost(id);
       
       if (!result) {
         return res.status(404).json({ error: 'Question not found' });
@@ -252,6 +253,72 @@ const adminController = {
     } catch (error) {
       console.error('Delete report error:', error);
       res.status(500).json({ error: 'Failed to delete report' });
+    }
+  },
+
+  // Delete reported content (both report and the actual content)
+  async deleteReportedContent(req, res) {
+    try {
+      const { id } = req.params;
+      console.log(`🗑️ Delete reported content request for report ID: ${id}`);
+      
+      // First get the report details to know what content to delete
+      const report = await Report.getReportById(id);
+      
+      if (!report) {
+        console.log(`❌ Report not found: ${id}`);
+        return res.status(404).json({ error: 'Report not found' });
+      }
+      
+      console.log(`📋 Report found:`, {
+        reportId: report.report_id,
+        contentType: report.content_type,
+        contentId: report.content_id
+      });
+      
+      // Delete the actual content based on content type
+      let contentDeleted = false;
+      switch (report.content_type) {
+        case 'post':
+          console.log(`🗑️ Deleting post: ${report.content_id}`);
+          contentDeleted = await Post.deletePost(report.content_id);
+          break;
+        case 'solution':
+          console.log(`🗑️ Deleting solution: ${report.content_id}`);
+          contentDeleted = await Solution.deleteSolution(report.content_id);
+          break;
+        case 'comment':
+          console.log(`🗑️ Deleting comment: ${report.content_id}`);
+          contentDeleted = await Comment.deleteComment(report.content_id);
+          break;
+        default:
+          console.log(`❌ Invalid content type: ${report.content_type}`);
+          return res.status(400).json({ error: 'Invalid content type' });
+      }
+      
+      if (!contentDeleted) {
+        console.log(`❌ Content not found or failed to delete: ${report.content_type}:${report.content_id}`);
+        return res.status(404).json({ error: 'Reported content not found or could not be deleted' });
+      }
+      
+      console.log(`✅ Content deleted successfully: ${report.content_type}:${report.content_id}`);
+      
+      // Delete the report after successful content deletion
+      const reportDeleted = await Report.deleteReport(id);
+      if (!reportDeleted) {
+        console.log(`⚠️ Content deleted but report deletion failed: ${id}`);
+      } else {
+        console.log(`✅ Report deleted successfully: ${id}`);
+      }
+      
+      res.json({ 
+        message: 'Reported content and report deleted successfully',
+        contentType: report.content_type,
+        contentId: report.content_id
+      });
+    } catch (error) {
+      console.error('❌ Delete reported content error:', error);
+      res.status(500).json({ error: 'Failed to delete reported content' });
     }
   },
 

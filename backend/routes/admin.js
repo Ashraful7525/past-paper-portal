@@ -40,6 +40,7 @@ router.put('/users/:id/ban', adminController.toggleUserBan);
 router.get('/reports', adminController.getAllReports);
 router.put('/reports/:id', adminController.updateReportStatus);
 router.delete('/reports/:id', adminController.deleteReport);
+router.delete('/reports/:id/delete-content', adminController.deleteReportedContent);
 router.get('/reports/stats', adminController.getReportStats);
 
 export default router;

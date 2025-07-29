@@ -142,28 +142,13 @@ const AdminDashboard = () => {
   };
 
   // Report management functions
-  const resolveReport = async (reportId) => {
-    try {
-      await api.put(`/admin/reports/${reportId}`, { 
-        status: 'resolved',
-        adminNotes: 'Report reviewed and resolved by admin'
-      });
-      toast.success('Report resolved successfully');
-      fetchModerationData();
-      fetchDashboardStats();
-      fetchRecentActivity();
-    } catch (error) {
-      toast.error('Failed to resolve report');
-      console.error('Resolve report error:', error);
-    }
-  };
-
   const dismissReport = async (reportId) => {
+    if (!window.confirm('Are you sure you want to dismiss this report? The report will be deleted but the content will remain.')) {
+      return;
+    }
+    
     try {
-      await api.put(`/admin/reports/${reportId}`, { 
-        status: 'dismissed',
-        adminNotes: 'Report reviewed and dismissed by admin'
-      });
+      await api.delete(`/admin/reports/${reportId}`);
       toast.success('Report dismissed successfully');
       fetchModerationData();
       fetchDashboardStats();
@@ -174,20 +159,20 @@ const AdminDashboard = () => {
     }
   };
 
-  const deleteReport = async (reportId) => {
-    if (!window.confirm('Are you sure you want to delete this report? This action cannot be undone.')) {
+  const deleteReportedContent = async (report) => {
+    if (!window.confirm('Are you sure you want to delete the reported content? This will delete both the report and the actual content (post/comment/solution). This action cannot be undone.')) {
       return;
     }
     
     try {
-      await api.delete(`/admin/reports/${reportId}`);
-      toast.success('Report deleted successfully');
+      await api.delete(`/admin/reports/${report.report_id}/delete-content`);
+      toast.success('Reported content deleted successfully');
       fetchModerationData();
       fetchDashboardStats();
       fetchRecentActivity();
     } catch (error) {
-      toast.error('Failed to delete report');
-      console.error('Delete report error:', error);
+      toast.error('Failed to delete reported content');
+      console.error('Delete reported content error:', error);
     }
   };
 
@@ -675,28 +660,20 @@ const AdminDashboard = () => {
                               View Content
                             </button>
                             <button
-                              onClick={() => resolveReport(report.report_id)}
-                              className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                              title="Mark as resolved"
-                            >
-                              <CheckCircleIcon className="h-4 w-4 mr-1" />
-                              Resolve
-                            </button>
-                            <button
                               onClick={() => dismissReport(report.report_id)}
                               className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-                              title="Dismiss report"
+                              title="Dismiss report (delete report only, keep content)"
                             >
                               <XMarkIcon className="h-4 w-4 mr-1" />
                               Dismiss
                             </button>
                             <button
-                              onClick={() => deleteReport(report.report_id)}
+                              onClick={() => deleteReportedContent(report)}
                               className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                              title="Delete report"
+                              title="Delete reported content (delete both report and content)"
                             >
                               <TrashIcon className="h-4 w-4 mr-1" />
-                              Delete
+                              Delete Content
                             </button>
                           </div>
                         </div>

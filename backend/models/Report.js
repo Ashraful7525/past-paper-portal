@@ -14,7 +14,7 @@ class Report {
       
       // Check if user has already reported this content
       const existingReportQuery = `
-        SELECT report_id FROM reports 
+        SELECT report_id FROM public.reports 
         WHERE reporter_id = $1 AND content_type = $2 AND content_id = $3
       `;
       const existingReport = await client.query(existingReportQuery, [studentId, contentType, contentId]);
@@ -24,7 +24,7 @@ class Report {
       }
       
       const insertQuery = `
-        INSERT INTO reports (reporter_id, content_type, content_id, reason, created_at)
+        INSERT INTO public.reports (reporter_id, content_type, content_id, reason, created_at)
         VALUES ($1, $2, $3, $4, NOW())
         RETURNING report_id, content_type, content_id, reason, created_at
       `;
@@ -91,7 +91,7 @@ class Report {
             WHEN r.content_type = 'comment' THEN cq.post_id
           END as post_id,
           COUNT(*) OVER() as total_count
-        FROM reports r
+        FROM public.reports r
         LEFT JOIN users reporter ON r.reporter_id = reporter.student_id
         LEFT JOIN posts q ON r.content_type = 'post' AND r.content_id = q.post_id
         LEFT JOIN users q_author ON q.student_id = q_author.student_id
@@ -132,7 +132,7 @@ class Report {
           r.status,
           r.created_at,
           u.username as reporter_username
-        FROM reports r
+        FROM public.reports r
         LEFT JOIN users u ON r.reporter_id = u.student_id
         WHERE r.content_type = $1 AND r.content_id = $2
         ORDER BY r.created_at DESC
@@ -153,7 +153,7 @@ class Report {
     const client = await pool.connect();
     try {
       const query = `
-        UPDATE reports 
+        UPDATE public.reports 
         SET status = $1, admin_notes = $2, resolved_at = CASE WHEN $1 != 'pending' THEN NOW() ELSE NULL END
         WHERE report_id = $3
         RETURNING report_id, status, resolved_at
@@ -182,13 +182,13 @@ class Report {
           COUNT(*) FILTER (WHERE content_type = 'post') as question_reports,
           COUNT(*) FILTER (WHERE content_type = 'solution') as solution_reports,
           COUNT(*) FILTER (WHERE content_type = 'comment') as comment_reports
-        FROM reports
+        FROM public.reports
         WHERE created_at >= NOW() - INTERVAL '30 days'
       `;
 
       const prevMonthQuery = `
         SELECT COUNT(*) as prev_month_reports
-        FROM reports
+        FROM public.reports
         WHERE created_at >= NOW() - INTERVAL '60 days' 
         AND created_at < NOW() - INTERVAL '30 days'
       `;
@@ -219,11 +219,38 @@ class Report {
     }
   }
   
+  // Get a single report by ID
+  static async getReportById(reportId) {
+    const client = await pool.connect();
+    try {
+      const query = `
+        SELECT 
+          r.report_id,
+          r.content_type,
+          r.content_id,
+          r.reason,
+          r.status,
+          r.created_at,
+          r.reporter_id
+        FROM public.reports r
+        WHERE r.report_id = $1
+      `;
+      
+      const result = await client.query(query, [reportId]);
+      return result.rows[0] || null;
+    } catch (error) {
+      console.error('Error fetching report by ID:', error);
+      throw new Error('Failed to fetch report');
+    } finally {
+      client.release();
+    }
+  }
+  
   // Delete a report
   static async deleteReport(reportId) {
     const client = await pool.connect();
     try {
-      const query = 'DELETE FROM reports WHERE report_id = $1 RETURNING report_id';
+      const query = 'DELETE FROM public.reports WHERE report_id = $1 RETURNING report_id';
       const result = await client.query(query, [reportId]);
       return result.rows.length > 0;
     } catch (error) {

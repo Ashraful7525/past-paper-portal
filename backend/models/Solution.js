@@ -172,7 +172,7 @@ class Solution {
         ${userBookmarkJoin}
         WHERE s.question_id = $1
         GROUP BY s.solution_id, s.solution_text, s.file_url, s.solution_title, s.is_verified, s.upvotes, s.downvotes, s.rating, s.created_at, s.updated_at, u.username, u.student_id, u.contribution${studentId ? ', sv.vote_type, b.bookmark_id' : ''}
-        ORDER BY s.is_verified DESC, s.upvotes DESC, s.created_at DESC
+        ORDER BY s.upvotes DESC, s.created_at DESC
       `;
 
       console.log('Executing solutions query with question_id:', questionId, 'and student_id:', studentId);
@@ -389,7 +389,7 @@ class Solution {
           orderClause = 'ORDER BY s.upvotes DESC, s.created_at DESC';
           break;
         case 'verified':
-          orderClause = 'ORDER BY s.is_verified DESC, s.created_at DESC';
+          orderClause = 'ORDER BY s.upvotes DESC, s.created_at DESC';
           break;
         default:
           orderClause = 'ORDER BY s.created_at DESC';

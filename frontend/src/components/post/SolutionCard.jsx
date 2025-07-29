@@ -7,7 +7,6 @@ import {
   UserIcon,
   StarIcon,
   FireIcon,
-  ShieldCheckIcon,
   PlusIcon,
   FlagIcon
 } from '@heroicons/react/24/outline';
@@ -108,11 +107,7 @@ const SolutionCard = ({
   return (
     <div 
       id={`solution-${solution.id}`}
-      className={`border-2 rounded-xl transition-all duration-300 hover:shadow-lg ${
-        solution.is_verified 
-          ? 'border-emerald-200 dark:border-emerald-700 bg-emerald-50/30 dark:bg-emerald-900/10' 
-          : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
-      }`}
+      className="border-2 rounded-xl transition-all duration-300 hover:shadow-lg border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600"
     >
       <div className="p-6">
         <div className="flex gap-4 flex-col md:flex-row">
@@ -188,12 +183,6 @@ const SolutionCard = ({
               </div>
               
               <div className="flex items-center space-x-2">
-                {solution.is_verified && (
-                  <div className="flex items-center space-x-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 px-3 py-1 rounded-full">
-                    <ShieldCheckIcon className="h-4 w-4" />
-                    <span className="text-sm font-semibold">Verified</span>
-                  </div>
-                )}
                 {solution.rating > 0 && (
                   <div className="flex items-center space-x-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 px-3 py-1 rounded-full">
                     <StarIcon className="h-4 w-4" />
