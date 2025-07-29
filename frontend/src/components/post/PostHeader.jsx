@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFilters } from '../../contexts/FilterContext';
 import { 
@@ -7,21 +7,16 @@ import {
   AcademicCapIcon,
   CalendarDaysIcon,
   ArrowLeftIcon,
-  ShieldCheckIcon,
-  FlagIcon
+  ShieldCheckIcon
 } from '@heroicons/react/24/outline';
 import { 
   ChevronUpIcon as ChevronUpSolidIcon,
   ChevronDownIcon as ChevronDownSolidIcon
 } from '@heroicons/react/24/solid';
-import ReportModal from '../common/ReportModal';
-import { useAuth } from '../../contexts/AuthContext';
 
 const PostHeader = ({ post, onVote, isVoting, formatNumber, formatTimeAgo }) => {
   const navigate = useNavigate();
   const { filters } = useFilters();
-  const { user } = useAuth();
-  const [showReportModal, setShowReportModal] = useState(false);
 
   const handleVote = (voteType) => {
     const newVoteType = post.user_vote === voteType ? 0 : voteType;
@@ -51,30 +46,32 @@ const PostHeader = ({ post, onVote, isVoting, formatNumber, formatTimeAgo }) => 
             <span className="font-medium">Back to Feed</span>
           </button>
           
-          <div className="flex items-center space-x-4">
-            <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center">
-              <span className="text-2xl">{post.department_icon || '📚'}</span>
-            </div>
-            <div>
-              <div className="flex items-center space-x-2 text-gray-200 mb-2">
-                <span className="font-semibold">r/{post.department_name || 'General'}</span>
-                <span>•</span>
-                <span>by u/{post.author_username || 'Unknown'}</span>
-                <span>•</span>
-                <span>{formatTimeAgo(post.created_at)}</span>
-                {post.is_verified && (
-                  <>
-                    <span>•</span>
-                    <span className="text-emerald-300 font-semibold flex items-center gap-1">
-                      <ShieldCheckIcon className="h-4 w-4" />
-                      Verified
-                    </span>
-                  </>
-                )}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center">
+                <span className="text-2xl">{post.department_icon || '📚'}</span>
               </div>
-              <h1 className="text-3xl font-bold text-white leading-tight">
-                {post.title}
-              </h1>
+              <div>
+                <div className="flex items-center space-x-2 text-gray-200 mb-2">
+                  <span className="font-semibold">r/{post.department_name || 'General'}</span>
+                  <span>•</span>
+                  <span>by u/{post.author_username || 'Unknown'}</span>
+                  <span>•</span>
+                  <span>{formatTimeAgo(post.created_at)}</span>
+                  {post.is_verified && (
+                    <>
+                      <span>•</span>
+                      <span className="text-emerald-300 font-semibold flex items-center gap-1">
+                        <ShieldCheckIcon className="h-4 w-4" />
+                        Verified
+                      </span>
+                    </>
+                  )}
+                </div>
+                <h1 className="text-3xl font-bold text-white leading-tight">
+                  {post.title}
+                </h1>
+              </div>
             </div>
           </div>
         </div>
@@ -123,17 +120,7 @@ const PostHeader = ({ post, onVote, isVoting, formatNumber, formatTimeAgo }) => 
             </div>
 
             {/* Content */}
-            <div className="flex-1 relative">
-              {/* Report Button - Top Right Corner */}
-              {user && (
-                <button
-                  onClick={() => setShowReportModal(true)}
-                  className="absolute top-0 right-0 p-2 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 z-10"
-                  title="Report this question"
-                >
-                  <FlagIcon className="h-5 w-5" />
-                </button>
-              )}
+            <div className="flex-1">
               
               {/* Question Information */}
               {(post.course_title || post.semester_name || post.question_title || post.question_no) && (
@@ -157,7 +144,7 @@ const PostHeader = ({ post, onVote, isVoting, formatNumber, formatTimeAgo }) => 
                       </div>
                     )}
                     {post.question_no && (
-                      <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 px-4 py-2 rounded-full border border-amber-200 dark:border-amber-700">
+                      <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 px-4 py-2 rounded-full border border-ember-200 dark:border-amber-700">
                         <span className="font-semibold">Q{post.question_no}</span>
                       </div>
                     )}
@@ -181,15 +168,6 @@ const PostHeader = ({ post, onVote, isVoting, formatNumber, formatTimeAgo }) => 
           </div>
         </div>
       </div>
-
-      {/* Report Modal */}
-      <ReportModal
-        isOpen={showReportModal}
-        onClose={() => setShowReportModal(false)}
-        contentType="question"
-        contentId={post.post_id}
-        contentTitle={post.title}
-      />
     </>
   );
 };

@@ -1,17 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  ChatBubbleLeftIcon,
+  ChatBubbleLeftIcon, 
+  EyeIcon, 
   BookmarkIcon,
   ArrowDownTrayIcon,
-  EyeIcon,
-  DocumentIcon
+  DocumentIcon,
+  FlagIcon
 } from '@heroicons/react/24/outline';
 import { BookmarkIcon as BookmarkSolidIcon } from '@heroicons/react/24/solid';
 import Modal from '../common/Modal';
+import ReportModal from '../common/ReportModal';
+import { useAuth } from '../../contexts/AuthContext';
 
 const PostBody = ({ post, onSave, isSaving, formatNumber, solutionsCount }) => {
-  const [isDownloading, setIsDownloading] = useState(false);
+  const { user } = useAuth();
   const [showPdfPreview, setShowPdfPreview] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
   // Function to check if URL is an image
@@ -254,7 +259,7 @@ const PostBody = ({ post, onSave, isSaving, formatNumber, solutionsCount }) => {
 
       {/* Enhanced Actions */}
       <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
-        <div className="flex items-center space-x-6">
+        <div className="flex items-center space-x-3">
           <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
             <ChatBubbleLeftIcon className="h-5 w-5" />
             <span className="font-medium">{formatNumber(solutionsCount || 0)} Solutions</span>
@@ -264,6 +269,18 @@ const PostBody = ({ post, onSave, isSaving, formatNumber, solutionsCount }) => {
             <EyeIcon className="h-5 w-5" />
             <span className="font-medium">{formatNumber(post.view_count || 0)} Views</span>
           </div>
+          
+          {/* Report Button */}
+          {user && (
+            <button
+              onClick={() => setShowReportModal(true)}
+              className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 px-3 py-2 rounded-lg transition-all duration-200"
+              title="Report this question"
+            >
+              <FlagIcon className="h-5 w-5" />
+              <span className="font-medium">Report</span>
+            </button>
+          )}
         </div>
 
         <div className="flex items-center space-x-3">
@@ -323,6 +340,7 @@ const PostBody = ({ post, onSave, isSaving, formatNumber, solutionsCount }) => {
             <span>{post.is_saved ? 'Saved' : 'Save Post'}</span>
           </button>
         </div>
+      </div>
 
       {/* PDF Preview Modal */}
       {post.file_url && isPdfUrl(post.file_url) && (
@@ -370,7 +388,15 @@ const PostBody = ({ post, onSave, isSaving, formatNumber, solutionsCount }) => {
           />
         </div>
       )}
-      </div>
+
+      {/* Report Modal */}
+      <ReportModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        contentType="question"
+        contentId={post.post_id}
+        contentTitle={post.title}
+      />
     </div>
   );
 };
