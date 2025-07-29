@@ -106,11 +106,14 @@ const SolutionCard = ({
   };
 
   return (
-    <div className={`border-2 rounded-xl transition-all duration-300 hover:shadow-lg ${
-      solution.is_verified 
-        ? 'border-emerald-200 dark:border-emerald-700 bg-emerald-50/30 dark:bg-emerald-900/10' 
-        : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
-    }`}>
+    <div 
+      id={`solution-${solution.id}`}
+      className={`border-2 rounded-xl transition-all duration-300 hover:shadow-lg ${
+        solution.is_verified 
+          ? 'border-emerald-200 dark:border-emerald-700 bg-emerald-50/30 dark:bg-emerald-900/10' 
+          : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
+      }`}
+    >
       <div className="p-6">
         <div className="flex gap-4 flex-col md:flex-row">
           {/* Vote Section */}

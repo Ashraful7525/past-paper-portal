@@ -102,6 +102,7 @@ const CommentCard = ({
   // Main card style
   return (
     <div
+      id={`comment-${comment.comment_id || comment.id}`}
       className={`flex items-start w-full py-3 px-2 rounded-xl bg-white dark:bg-gray-800 ${depth === 0 ? 'shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md' : ''} transition-all duration-200 group`}
     >
       {avatar}

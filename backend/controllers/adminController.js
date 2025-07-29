@@ -263,6 +263,111 @@ const adminController = {
       console.error('Get report stats error:', error);
       res.status(500).json({ error: 'Failed to fetch report statistics' });
     }
+  },
+
+  // New dashboard endpoints
+  async getDashboardStats(req, res) {
+    console.log('🔍 getDashboardStats called');
+    try {
+      console.log('🔄 Fetching dashboard stats from models...');
+      const [userStats, questionStats, reportStats, systemStats] = await Promise.all([
+        User.getUserStats(),
+        Question.getQuestionStats(),
+        Report.getReportStats(),
+        Stats.getSystemStats()
+      ]);
+
+      console.log('📊 Raw stats data:', {
+        userStats,
+        questionStats,
+        reportStats,
+        systemStats
+      });
+
+      const stats = [
+        {
+          title: 'Total Users',
+          value: userStats.totalUsers || 0,
+          trend: userStats.growth || 0,
+          icon: 'users'
+        },
+        {
+          title: 'Total Questions',
+          value: questionStats.totalQuestions || 0,
+          trend: questionStats.growth || 0,
+          icon: 'document-text'
+        },
+        {
+          title: 'Pending Reports',
+          value: parseInt(reportStats.pending_reports) || 0,
+          trend: reportStats.growth || 0,
+          icon: 'flag'
+        },
+        {
+          title: 'Active Users (7d)',
+          value: systemStats.activeUsers || 0,
+          trend: systemStats.activeUsersTrend || 0,
+          icon: 'user-group'
+        }
+      ];
+
+      console.log('📈 Formatted stats response:', stats);
+      res.json(stats);
+    } catch (error) {
+      console.error('Get dashboard stats error:', error);
+      res.status(500).json({ error: 'Failed to fetch dashboard statistics' });
+    }
+  },
+
+  async getRecentActivity(req, res) {
+    try {
+      const activities = await Stats.getRecentActivity(10);
+      res.json(activities);
+    } catch (error) {
+      console.error('Get recent activity error:', error);
+      res.status(500).json({ error: 'Failed to fetch recent activity' });
+    }
+  },
+
+  async getPendingActions(req, res) {
+    try {
+      const [pendingQuestions, pendingReports] = await Promise.all([
+        Question.getPendingQuestions('pending', 5, 0),
+        Report.getAllReports({ status: 'pending', limit: 5, offset: 0 })
+      ]);
+
+      const actions = [
+        ...pendingQuestions.map(q => ({
+          type: 'question',
+          id: q.id,
+          title: q.title,
+          created_at: q.created_at,
+          priority: 'medium'
+        })),
+        ...pendingReports.map(r => ({
+          type: 'report',
+          id: r.id,
+          title: `Report: ${r.reason}`,
+          created_at: r.created_at,
+          priority: 'high'
+        }))
+      ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+      res.json(actions);
+    } catch (error) {
+      console.error('Get pending actions error:', error);
+      res.status(500).json({ error: 'Failed to fetch pending actions' });
+    }
+  },
+
+  async getSystemHealth(req, res) {
+    try {
+      const health = await Stats.getSystemHealth();
+      res.json(health);
+    } catch (error) {
+      console.error('Get system health error:', error);
+      res.status(500).json({ error: 'Failed to fetch system health' });
+    }
   }
 };
 

@@ -14,9 +14,9 @@ const reportsController = {
         });
       }
       
-      if (!['question', 'solution', 'comment'].includes(contentType)) {
+      if (!['post', 'solution', 'comment'].includes(contentType)) {
         return res.status(400).json({ 
-          error: 'Invalid content type. Must be question, solution, or comment' 
+          error: 'Invalid content type. Must be post, solution, or comment' 
         });
       }
       

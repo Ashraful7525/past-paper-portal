@@ -306,6 +306,47 @@ class User {
     this.updated_at = new Date();
   }
 
+  static async getUserStats() {
+    try {
+      const totalUsersQuery = 'SELECT COUNT(*) as total FROM users';
+      const recentUsersQuery = `
+        SELECT COUNT(*) as recent 
+        FROM users 
+        WHERE created_at >= NOW() - INTERVAL '30 days'
+      `;
+      const prevMonthUsersQuery = `
+        SELECT COUNT(*) as prev_month 
+        FROM users 
+        WHERE created_at >= NOW() - INTERVAL '60 days' 
+        AND created_at < NOW() - INTERVAL '30 days'
+      `;
+
+      const [totalResult, recentResult, prevMonthResult] = await Promise.all([
+        pool.query(totalUsersQuery),
+        pool.query(recentUsersQuery),
+        pool.query(prevMonthUsersQuery)
+      ]);
+
+      const totalUsers = parseInt(totalResult.rows[0].total);
+      const recentUsers = parseInt(recentResult.rows[0].recent);
+      const prevMonthUsers = parseInt(prevMonthResult.rows[0].prev_month);
+
+      // Calculate growth percentage
+      const growth = prevMonthUsers > 0 
+        ? Math.round(((recentUsers - prevMonthUsers) / prevMonthUsers) * 100)
+        : recentUsers > 0 ? 100 : 0;
+
+      return {
+        totalUsers,
+        recentUsers,
+        growth
+      };
+    } catch (error) {
+      console.error('Error getting user stats:', error);
+      throw new Error('Failed to fetch user statistics');
+    }
+  }
+
   toJSON() {
     const { password, ...userWithoutPassword } = this;
     return userWithoutPassword;

@@ -85,6 +85,11 @@ class Report {
             WHEN r.content_type = 'solution' THEN s_author.username
             WHEN r.content_type = 'comment' THEN c_author.username
           END as content_author,
+          CASE 
+            WHEN r.content_type = 'post' THEN q.post_id
+            WHEN r.content_type = 'solution' THEN sq.post_id
+            WHEN r.content_type = 'comment' THEN cq.post_id
+          END as post_id,
           COUNT(*) OVER() as total_count
         FROM reports r
         LEFT JOIN users reporter ON r.reporter_id = reporter.student_id
@@ -92,8 +97,11 @@ class Report {
         LEFT JOIN users q_author ON q.student_id = q_author.student_id
         LEFT JOIN solutions s ON r.content_type = 'solution' AND r.content_id = s.solution_id
         LEFT JOIN users s_author ON s.student_id = s_author.student_id
+        LEFT JOIN posts sq ON s.question_id = sq.question_id
         LEFT JOIN comments c ON r.content_type = 'comment' AND r.content_id = c.comment_id
         LEFT JOIN users c_author ON c.student_id = c_author.student_id
+        LEFT JOIN solutions cs ON c.solution_id = cs.solution_id
+        LEFT JOIN posts cq ON cs.question_id = cq.question_id
         ${whereClause}
         ORDER BY r.created_at DESC
         LIMIT $${queryParams.length - 1} OFFSET $${queryParams.length}
@@ -165,21 +173,44 @@ class Report {
   static async getReportStats() {
     const client = await pool.connect();
     try {
-      const query = `
+      const currentMonthQuery = `
         SELECT 
           COUNT(*) as total_reports,
           COUNT(*) FILTER (WHERE status = 'pending') as pending_reports,
           COUNT(*) FILTER (WHERE status = 'resolved') as resolved_reports,
           COUNT(*) FILTER (WHERE status = 'dismissed') as dismissed_reports,
-          COUNT(*) FILTER (WHERE content_type = 'question') as question_reports,
+          COUNT(*) FILTER (WHERE content_type = 'post') as question_reports,
           COUNT(*) FILTER (WHERE content_type = 'solution') as solution_reports,
           COUNT(*) FILTER (WHERE content_type = 'comment') as comment_reports
         FROM reports
         WHERE created_at >= NOW() - INTERVAL '30 days'
       `;
+
+      const prevMonthQuery = `
+        SELECT COUNT(*) as prev_month_reports
+        FROM reports
+        WHERE created_at >= NOW() - INTERVAL '60 days' 
+        AND created_at < NOW() - INTERVAL '30 days'
+      `;
       
-      const result = await client.query(query);
-      return result.rows[0];
+      const [currentResult, prevResult] = await Promise.all([
+        client.query(currentMonthQuery),
+        client.query(prevMonthQuery)
+      ]);
+
+      const currentStats = currentResult.rows[0];
+      const prevMonthReports = parseInt(prevResult.rows[0].prev_month_reports) || 0;
+      const currentMonthReports = parseInt(currentStats.pending_reports) || 0;
+
+      // Calculate growth percentage
+      const growth = prevMonthReports > 0 
+        ? Math.round(((currentMonthReports - prevMonthReports) / prevMonthReports) * 100)
+        : currentMonthReports > 0 ? 100 : 0;
+
+      return {
+        ...currentStats,
+        growth
+      };
     } catch (error) {
       console.error('Error fetching report stats:', error);
       throw new Error('Failed to fetch report statistics');

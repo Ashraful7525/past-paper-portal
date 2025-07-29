@@ -300,6 +300,50 @@ class Question {
     }
   }
 
+  static async getQuestionStats() {
+    const client = await pool.connect();
+    try {
+      const totalQuestionsQuery = 'SELECT COUNT(*) as total FROM public.posts';
+      const recentQuestionsQuery = `
+        SELECT COUNT(*) as recent 
+        FROM public.posts 
+        WHERE created_at >= NOW() - INTERVAL '30 days'
+      `;
+      const prevMonthQuestionsQuery = `
+        SELECT COUNT(*) as prev_month 
+        FROM public.posts 
+        WHERE created_at >= NOW() - INTERVAL '60 days' 
+        AND created_at < NOW() - INTERVAL '30 days'
+      `;
+
+      const [totalResult, recentResult, prevMonthResult] = await Promise.all([
+        client.query(totalQuestionsQuery),
+        client.query(recentQuestionsQuery),
+        client.query(prevMonthQuestionsQuery)
+      ]);
+
+      const totalQuestions = parseInt(totalResult.rows[0].total);
+      const recentQuestions = parseInt(recentResult.rows[0].recent);
+      const prevMonthQuestions = parseInt(prevMonthResult.rows[0].prev_month);
+
+      // Calculate growth percentage
+      const growth = prevMonthQuestions > 0 
+        ? Math.round(((recentQuestions - prevMonthQuestions) / prevMonthQuestions) * 100)
+        : recentQuestions > 0 ? 100 : 0;
+
+      return {
+        totalQuestions,
+        recentQuestions,
+        growth
+      };
+    } catch (error) {
+      console.error('Error getting question stats:', error);
+      throw new Error('Failed to fetch question statistics');
+    } finally {
+      client.release();
+    }
+  }
+
   // Convert to JSON
   toJSON() {
     return {

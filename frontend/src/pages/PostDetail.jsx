@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 
 // Utility function to check if a file is an image by MIME type
 function isImageFile(file) {
@@ -11,7 +12,6 @@ function isImageFile(file) {
   }
   return false;
 }
-import { useParams, useNavigate } from 'react-router-dom';
 import { PlusIcon, LightBulbIcon } from '@heroicons/react/24/outline';
 import { usePostDetail } from '../hooks/usePostDetail';
 import { useFilters } from '../contexts/FilterContext';
@@ -23,9 +23,14 @@ import SolutionCard from '../components/post/SolutionCard';
 const PostDetail = () => {
   const { postId } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { filters } = useFilters();
   const [showSolutionForm, setShowSolutionForm] = useState(false);
   const viewTrackedRef = useRef(false); // Track if view has been tracked for this component instance
+
+  // Get highlighting parameters from URL
+  const highlightType = searchParams.get('highlight'); // 'solution' or 'comment'
+  const highlightId = searchParams.get('id');
 
   const {
     post,
@@ -62,6 +67,30 @@ const PostDetail = () => {
   useEffect(() => {
     viewTrackedRef.current = false;
   }, [postId]);
+
+  // Scroll to highlighted content when data is loaded
+  useEffect(() => {
+    if (highlightType && highlightId && (post || solutions.length > 0)) {
+      // Add a small delay to ensure DOM is rendered
+      const timer = setTimeout(() => {
+        const element = document.getElementById(`${highlightType}-${highlightId}`);
+        if (element) {
+          element.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+          });
+          // Add a temporary highlight effect
+          element.classList.add('bg-yellow-100', 'dark:bg-yellow-900/30', 'ring-2', 'ring-yellow-400', 'rounded-lg');
+          // Remove highlight after 3 seconds
+          setTimeout(() => {
+            element.classList.remove('bg-yellow-100', 'dark:bg-yellow-900/30', 'ring-2', 'ring-yellow-400', 'rounded-lg');
+          }, 3000);
+        }
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [highlightType, highlightId, post, solutions]);
 
   const handleAddSolutionSubmit = (solutionText, file) => {
     handleAddSolution(solutionText, file);

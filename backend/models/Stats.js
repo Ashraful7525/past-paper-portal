@@ -365,6 +365,169 @@ class Stats {
     }
   }
 
+  // Get system statistics for dashboard
+  static async getSystemStats() {
+    const client = await pool.connect();
+    try {
+      // Improved active users query that considers multiple activity types
+      const query = `
+        WITH active_users_7d AS (
+          SELECT DISTINCT student_id FROM (
+            -- Users who created posts
+            SELECT student_id FROM public.posts WHERE created_at >= NOW() - INTERVAL '7 days'
+            UNION
+            -- Users who created solutions
+            SELECT student_id FROM public.solutions WHERE created_at >= NOW() - INTERVAL '7 days'
+            UNION
+            -- Users who made comments
+            SELECT student_id FROM public.comments WHERE created_at >= NOW() - INTERVAL '7 days'
+            UNION
+            -- Users who voted on posts
+            SELECT student_id FROM public.post_votes WHERE created_at >= NOW() - INTERVAL '7 days'
+            UNION
+            -- Users who voted on solutions
+            SELECT student_id FROM public.solution_votes WHERE created_at >= NOW() - INTERVAL '7 days'
+            UNION
+            -- Users who voted on comments
+            SELECT student_id FROM public.comment_votes WHERE created_at >= NOW() - INTERVAL '7 days'
+            UNION
+            -- Users who bookmarked content
+            SELECT student_id FROM public.bookmarks WHERE created_at >= NOW() - INTERVAL '7 days'
+            UNION
+            SELECT student_id FROM public.question_bookmarks WHERE created_at >= NOW() - INTERVAL '7 days'
+            UNION
+            -- Users who saved posts
+            SELECT student_id FROM public.saved_posts WHERE created_at >= NOW() - INTERVAL '7 days'
+            UNION
+            -- Users who viewed questions (if they're logged in)
+            SELECT student_id FROM public.question_views WHERE created_at >= NOW() - INTERVAL '7 days' AND student_id IS NOT NULL
+            UNION
+            -- Users who enrolled in courses
+            SELECT student_id FROM public.enrollments WHERE enrolled_at >= NOW() - INTERVAL '7 days'
+          ) AS all_activities
+        ),
+        active_users_prev_7d AS (
+          SELECT DISTINCT student_id FROM (
+            -- Same activities for previous week comparison
+            SELECT student_id FROM public.posts WHERE created_at >= NOW() - INTERVAL '14 days' AND created_at < NOW() - INTERVAL '7 days'
+            UNION
+            SELECT student_id FROM public.solutions WHERE created_at >= NOW() - INTERVAL '14 days' AND created_at < NOW() - INTERVAL '7 days'
+            UNION
+            SELECT student_id FROM public.comments WHERE created_at >= NOW() - INTERVAL '14 days' AND created_at < NOW() - INTERVAL '7 days'
+            UNION
+            SELECT student_id FROM public.post_votes WHERE created_at >= NOW() - INTERVAL '14 days' AND created_at < NOW() - INTERVAL '7 days'
+            UNION
+            SELECT student_id FROM public.solution_votes WHERE created_at >= NOW() - INTERVAL '14 days' AND created_at < NOW() - INTERVAL '7 days'
+            UNION
+            SELECT student_id FROM public.comment_votes WHERE created_at >= NOW() - INTERVAL '14 days' AND created_at < NOW() - INTERVAL '7 days'
+            UNION
+            SELECT student_id FROM public.bookmarks WHERE created_at >= NOW() - INTERVAL '14 days' AND created_at < NOW() - INTERVAL '7 days'
+            UNION
+            SELECT student_id FROM public.question_bookmarks WHERE created_at >= NOW() - INTERVAL '14 days' AND created_at < NOW() - INTERVAL '7 days'
+            UNION
+            SELECT student_id FROM public.saved_posts WHERE created_at >= NOW() - INTERVAL '14 days' AND created_at < NOW() - INTERVAL '7 days'
+            UNION
+            SELECT student_id FROM public.question_views WHERE created_at >= NOW() - INTERVAL '14 days' AND created_at < NOW() - INTERVAL '7 days' AND student_id IS NOT NULL
+            UNION
+            SELECT student_id FROM public.enrollments WHERE enrolled_at >= NOW() - INTERVAL '14 days' AND enrolled_at < NOW() - INTERVAL '7 days'
+          ) AS all_activities
+        )
+        SELECT 
+          (SELECT COUNT(*) FROM active_users_7d) as active_users,
+          (SELECT COUNT(*) FROM active_users_prev_7d) as prev_week_active
+      `;
+      
+      const result = await client.query(query);
+      const activeUsers = parseInt(result.rows[0].active_users) || 0;
+      const prevWeekActive = parseInt(result.rows[0].prev_week_active) || 0;
+      
+      // Calculate trend
+      const activeUsersTrend = prevWeekActive > 0 
+        ? Math.round(((activeUsers - prevWeekActive) / prevWeekActive) * 100)
+        : activeUsers > 0 ? 100 : 0;
+
+      return {
+        activeUsers,
+        activeUsersTrend
+      };
+    } catch (error) {
+      console.error('Error fetching system stats:', error);
+      throw new Error('Failed to fetch system statistics');
+    } finally {
+      client.release();
+    }
+  }
+
+  // Get recent activity for dashboard
+  static async getRecentActivity(limit = 10) {
+    const client = await pool.connect();
+    try {
+      const query = `
+        SELECT 
+          'new_post' as type,
+          p.title as description,
+          u.username,
+          p.created_at as timestamp
+        FROM public.posts p
+        LEFT JOIN public.users u ON p.student_id = u.student_id
+        WHERE p.created_at >= NOW() - INTERVAL '24 hours'
+        ORDER BY p.created_at DESC
+        LIMIT $1
+      `;
+      
+      const result = await client.query(query, [limit]);
+      return result.rows.map(row => ({
+        type: row.type,
+        action: `New post: ${row.description}`,
+        user: row.username || 'Unknown User',
+        time: new Date(row.timestamp).toLocaleString(),
+        timestamp: new Date(row.timestamp).toISOString()
+      }));
+    } catch (error) {
+      console.error('Error fetching recent activity:', error);
+      throw new Error('Failed to fetch recent activity');
+    } finally {
+      client.release();
+    }
+  }
+
+  // Get system health metrics
+  static async getSystemHealth() {
+    const client = await pool.connect();
+    try {
+      const query = `
+        SELECT 
+          (SELECT COUNT(*) FROM public.posts WHERE created_at >= NOW() - INTERVAL '24 hours') as posts_today,
+          (SELECT COUNT(*) FROM public.solutions WHERE created_at >= NOW() - INTERVAL '24 hours') as solutions_today,
+          (SELECT COUNT(*) FROM public.comments WHERE created_at >= NOW() - INTERVAL '24 hours') as comments_today,
+          (SELECT COUNT(*) FROM public.users WHERE created_at >= NOW() - INTERVAL '24 hours') as new_users_today,
+          (SELECT COUNT(*) FROM public.reports WHERE status = 'pending') as pending_reports
+      `;
+      
+      const result = await client.query(query);
+      const data = result.rows[0];
+      
+      // Determine overall system status
+      let status = 'excellent';
+      if (data.pending_reports > 10) status = 'warning';
+      if (data.pending_reports > 50) status = 'critical';
+      
+      return {
+        status,
+        postsToday: parseInt(data.posts_today) || 0,
+        solutionsToday: parseInt(data.solutions_today) || 0,
+        commentsToday: parseInt(data.comments_today) || 0,
+        newUsersToday: parseInt(data.new_users_today) || 0,
+        pendingReports: parseInt(data.pending_reports) || 0
+      };
+    } catch (error) {
+      console.error('Error fetching system health:', error);
+      throw new Error('Failed to fetch system health');
+    } finally {
+      client.release();
+    }
+  }
+
   // Get engagement metrics
   static async getEngagementMetrics(options = {}) {
     const client = await pool.connect();

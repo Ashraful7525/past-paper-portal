@@ -9,7 +9,7 @@ const ReportModal = ({ isOpen, onClose, contentType, contentId, contentTitle }) 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const reportReasons = {
-    question: [
+    post: [
       { value: 'inappropriate', label: 'Inappropriate Content' },
       { value: 'spam', label: 'Spam or Promotional' },
       { value: 'false_info', label: 'False Information' },
@@ -89,7 +89,7 @@ const ReportModal = ({ isOpen, onClose, contentType, contentId, contentTitle }) 
               <FlagIcon className="h-5 w-5 text-red-600 dark:text-red-400" />
             </div>
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-              Report {contentType === 'question' ? 'Question' : contentType === 'comment' ? 'Comment' : 'Solution'}
+              Report {contentType === 'post' ? 'Question' : contentType === 'comment' ? 'Comment' : 'Solution'}
             </h2>
           </div>
           <button

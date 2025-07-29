@@ -26,6 +26,12 @@ router.delete('/comments/:id', adminController.deleteComment);
 // Admin dashboard stats
 router.get('/stats', adminController.getAdminStats);
 
+// New dashboard data routes
+router.get('/dashboard/stats', adminController.getDashboardStats);
+router.get('/dashboard/activity', adminController.getRecentActivity);
+router.get('/dashboard/pending-actions', adminController.getPendingActions);
+router.get('/dashboard/system-health', adminController.getSystemHealth);
+
 // User management routes
 router.get('/users', adminController.getAllUsers);
 router.put('/users/:id/ban', adminController.toggleUserBan);

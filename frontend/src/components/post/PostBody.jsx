@@ -393,7 +393,7 @@ const PostBody = ({ post, onSave, isSaving, formatNumber, solutionsCount }) => {
       <ReportModal
         isOpen={showReportModal}
         onClose={() => setShowReportModal(false)}
-        contentType="question"
+        contentType="post"
         contentId={post.post_id}
         contentTitle={post.title}
       />
