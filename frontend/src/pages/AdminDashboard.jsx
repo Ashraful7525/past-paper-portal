@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { api } from '../utils/api';
 import toast from 'react-hot-toast';
 import { 
@@ -23,6 +23,7 @@ import {
 const AdminDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState('overview');
   const [moderationData, setModerationData] = useState({
     questions: [],
@@ -98,6 +99,55 @@ const AdminDashboard = () => {
       setSystemHealth({});
     }
   };
+
+  // Restore admin state when navigating back from a post
+  useEffect(() => {
+    console.log('🔍 AdminDashboard useEffect triggered');
+    console.log('📍 Location state:', location.state);
+    
+    if (location.state?.from === 'post-detail') {
+      console.log('🔄 Detected return from post-detail');
+      
+      // Check if we have adminState in the current location.state
+      if (location.state.adminState) {
+        const { adminState } = location.state;
+        console.log('� Restoring admin state:', adminState);
+        
+        // Restore all the state
+        setActiveTab(adminState.activeTab || 'overview');
+        if (adminState.moderationData) {
+          setModerationData(adminState.moderationData);
+        }
+        if (adminState.dashboardStats) {
+          setDashboardStats(adminState.dashboardStats);
+        }
+        if (adminState.recentActivity) {
+          setRecentActivity(adminState.recentActivity);
+        }
+        if (adminState.systemHealth) {
+          setSystemHealth(adminState.systemHealth);
+        }
+        
+        console.log('✅ Admin state restored successfully');
+      } else {
+        // If there's no adminState, check if it was spread into the root of location.state
+        const possibleAdminState = { ...location.state };
+        delete possibleAdminState.from; // Remove the 'from' field
+        
+        if (Object.keys(possibleAdminState).length > 0) {
+          console.log('🔄 Restoring from spread admin state:', possibleAdminState);
+          
+          if (possibleAdminState.activeTab) setActiveTab(possibleAdminState.activeTab);
+          if (possibleAdminState.moderationData) setModerationData(possibleAdminState.moderationData);
+          if (possibleAdminState.dashboardStats) setDashboardStats(possibleAdminState.dashboardStats);
+          if (possibleAdminState.recentActivity) setRecentActivity(possibleAdminState.recentActivity);
+          if (possibleAdminState.systemHealth) setSystemHealth(possibleAdminState.systemHealth);
+          
+          console.log('✅ Admin state restored from spread values');
+        }
+      }
+    }
+  }, [location.state]);
 
   useEffect(() => {
     if (activeTab === 'overview') {
@@ -178,29 +228,57 @@ const AdminDashboard = () => {
 
   // Navigation function
   const navigateToPost = (postId) => {
-    navigate(`/post/${postId}`);
+    const stateToPass = {
+      from: 'admin-dashboard',
+      adminState: {
+        activeTab,
+        moderationData,
+        dashboardStats,
+        recentActivity,
+        systemHealth
+      }
+    };
+    
+    console.log('🚀 Admin navigating to post:', postId);
+    console.log('📦 Passing state:', stateToPass);
+    
+    navigate(`/post/${postId}`, {
+      state: stateToPass
+    });
   };
 
   // Navigation function for reported content
   const navigateToReportedContent = async (report) => {
     console.log('Navigating to reported content:', report);
+    
+    const navigationState = {
+      from: 'admin-dashboard',
+      adminState: {
+        activeTab,
+        moderationData,
+        dashboardStats,
+        recentActivity,
+        systemHealth
+      }
+    };
+
     try {
       if (report.post_id) {
         // Navigate to the post page containing the reported content
         switch (report.content_type) {
           case 'post':
-            navigate(`/post/${report.post_id}`);
+            navigate(`/post/${report.post_id}`, { state: navigationState });
             break;
           case 'solution':
             // Navigate to post and scroll to specific solution
-            navigate(`/post/${report.post_id}?highlight=solution&id=${report.content_id}`);
+            navigate(`/post/${report.post_id}?highlight=solution&id=${report.content_id}`, { state: navigationState });
             break;
           case 'comment':
             // Navigate to post and scroll to specific comment
-            navigate(`/post/${report.post_id}?highlight=comment&id=${report.content_id}`);
+            navigate(`/post/${report.post_id}?highlight=comment&id=${report.content_id}`, { state: navigationState });
             break;
           default:
-            navigate(`/post/${report.post_id}`);
+            navigate(`/post/${report.post_id}`, { state: navigationState });
         }
       } else {
         // Fallback for content types without post_id
@@ -211,7 +289,7 @@ const AdminDashboard = () => {
             try {
               await api.get(`/posts/${report.content_id}`);
               console.log(`Post ${report.content_id} exists, navigating...`);
-              navigate(`/post/${report.content_id}`);
+              navigate(`/post/${report.content_id}`, { state: navigationState });
             } catch (error) {
               console.error(`Error accessing post ${report.content_id}:`, error);
               if (error.response?.status === 404) {

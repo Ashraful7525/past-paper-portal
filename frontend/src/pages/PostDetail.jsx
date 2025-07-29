@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 
 // Utility function to check if a file is an image by MIME type
 function isImageFile(file) {
@@ -23,6 +23,7 @@ import SolutionCard from '../components/post/SolutionCard';
 const PostDetail = () => {
   const { postId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const { filters } = useFilters();
   const [showSolutionForm, setShowSolutionForm] = useState(false);
@@ -54,6 +55,37 @@ const PostDetail = () => {
     handleVoteComment,
     handleTrackView,
   } = usePostDetail(postId);
+
+  // Smart navigation function to handle different return paths
+  const handleGoBack = () => {
+    const fromAdmin = location.state?.from === 'admin-dashboard';
+    const adminState = location.state?.adminState;
+    
+    console.log('🔙 PostDetail handleGoBack called');
+    console.log('📍 Location state:', location.state);
+    console.log('🏛️ From admin:', fromAdmin);
+    console.log('💾 Admin state:', adminState);
+    
+    if (fromAdmin && adminState) {
+      // Return to admin dashboard with preserved state
+      console.log('🎯 Navigating back to admin dashboard with state');
+      navigate('/admin/dashboard', { 
+        state: { 
+          from: 'post-detail',
+          adminState: adminState
+        } 
+      });
+    } else {
+      // Default return to feed with filter preservation
+      console.log('🎯 Navigating back to feed with filters');
+      navigate('/feed', { 
+        state: { 
+          filters: filters,
+          preserveFilters: true 
+        } 
+      });
+    }
+  };
 
   // Track view only once when post is loaded
   useEffect(() => {
@@ -136,12 +168,28 @@ const PostDetail = () => {
             The academic resource you're looking for doesn't exist or has been removed from our knowledge base.
           </p>
           <button
-            onClick={() => navigate('/feed', { 
-              state: { 
-                filters: filters,
-                preserveFilters: true 
-              } 
-            })}
+            onClick={() => {
+              const fromAdmin = location.state?.from === 'admin-dashboard';
+              const adminState = location.state?.adminState;
+              
+              if (fromAdmin && adminState) {
+                // Return to admin dashboard with preserved state
+                navigate('/admin/dashboard', { 
+                  state: { 
+                    from: 'post-detail',
+                    adminState: adminState
+                  } 
+                });
+              } else {
+                // Default return to feed with filters
+                navigate('/feed', { 
+                  state: { 
+                    filters: filters,
+                    preserveFilters: true 
+                  } 
+                });
+              }
+            }}
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors shadow-lg hover:shadow-xl"
           >
             Back to Feed
@@ -160,12 +208,7 @@ const PostDetail = () => {
           <div className="bg-gradient-to-r from-gray-700 to-gray-800 dark:from-gray-800 dark:to-gray-900 text-white p-8">
             {/* Back Button */}
             <button
-              onClick={() => navigate('/feed', { 
-                state: { 
-                  filters: filters,
-                  preserveFilters: true 
-                } 
-              })}
+              onClick={handleGoBack}
               className="flex items-center space-x-2 text-gray-200 hover:text-white mb-4 transition-colors group"
             >
               <svg className="h-5 w-5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">

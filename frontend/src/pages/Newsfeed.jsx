@@ -58,7 +58,6 @@ const Newsfeed = () => {
         }
       });
       hasRestoredFilters.current = true;
-      window.history.replaceState({}, document.title);
     }
   }, [location.state, updateFilter, updateSearchFilters]);
 
