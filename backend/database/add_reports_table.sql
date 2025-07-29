@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS reports (
   content_type VARCHAR(20) NOT NULL CHECK (content_type IN ('question', 'solution', 'comment')),
   content_id INTEGER NOT NULL,
   reason VARCHAR(100) NOT NULL,
-  description TEXT,
   status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'resolved', 'dismissed')),
   admin_notes TEXT,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
@@ -31,6 +30,5 @@ COMMENT ON TABLE reports IS 'User reports for suspicious or inappropriate conten
 COMMENT ON COLUMN reports.content_type IS 'Type of content being reported: question, solution, or comment';
 COMMENT ON COLUMN reports.content_id IS 'ID of the specific content being reported';
 COMMENT ON COLUMN reports.reason IS 'Predefined reason for the report (e.g., spam, inappropriate, false_info)';
-COMMENT ON COLUMN reports.description IS 'Optional additional details from the reporter';
 COMMENT ON COLUMN reports.status IS 'Current status: pending, resolved, or dismissed';
 COMMENT ON COLUMN reports.admin_notes IS 'Notes added by admin when resolving the report';

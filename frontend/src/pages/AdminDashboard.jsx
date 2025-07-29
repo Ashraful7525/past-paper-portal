@@ -684,11 +684,6 @@ const AdminDashboard = () => {
                             <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-1">
                               {report.content_title}
                             </h4>
-                            {report.description && (
-                              <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
-                                <strong>Report Details:</strong> {report.description}
-                              </p>
-                            )}
                             <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500 dark:text-gray-400">
                               <span>Reported by: {report.reporter_username}</span>
                               <span>•</span>

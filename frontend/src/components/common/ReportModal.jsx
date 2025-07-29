@@ -6,7 +6,6 @@ import { api } from '../../utils/api';
 
 const ReportModal = ({ isOpen, onClose, contentType, contentId, contentTitle }) => {
   const [reason, setReason] = useState('');
-  const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const reportReasons = {
@@ -59,7 +58,6 @@ const ReportModal = ({ isOpen, onClose, contentType, contentId, contentTitle }) 
       toast.success('Report submitted successfully. Thank you for helping us maintain quality content.');
       onClose();
       setReason('');
-      setDescription('');
     } catch (error) {
       if (error.response?.status === 409) {
         toast.error('You have already reported this content');
@@ -76,7 +74,6 @@ const ReportModal = ({ isOpen, onClose, contentType, contentId, contentTitle }) 
     if (!isSubmitting) {
       onClose();
       setReason('');
-      setDescription('');
     }
   };
 
@@ -140,28 +137,6 @@ const ReportModal = ({ isOpen, onClose, contentType, contentId, contentTitle }) 
               </label>
             ))}
           </div>
-        </div>
-
-        {/* Additional Details */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Additional details (optional)
-          </label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            disabled={isSubmitting}
-            placeholder="Please provide any additional information that might help us understand your report..."
-            rows={3}
-            maxLength={500}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm 
-              focus:ring-2 focus:ring-red-500 focus:border-red-500 
-              dark:bg-gray-700 dark:text-white dark:placeholder-gray-400
-              resize-none"
-          />
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            {description.length}/500 characters
-          </p>
         </div>
 
         {/* Submit Buttons */}
