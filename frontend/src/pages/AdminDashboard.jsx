@@ -36,7 +36,6 @@ const AdminDashboard = () => {
   });
 
   const [recentActivity, setRecentActivity] = useState([]);
-  const [pendingActions, setPendingActions] = useState([]);
   const [systemHealth, setSystemHealth] = useState([]);
 
   // Fetch moderation data
@@ -89,17 +88,6 @@ const AdminDashboard = () => {
     }
   };
 
-  // Fetch pending actions
-  const fetchPendingActions = async () => {
-    try {
-      const response = await api.get('/admin/dashboard/pending-actions');
-      setPendingActions(response.data || []);
-    } catch (error) {
-      console.error('Failed to fetch pending actions:', error);
-      setPendingActions([]);
-    }
-  };
-
   // Fetch system health
   const fetchSystemHealth = async () => {
     try {
@@ -115,7 +103,6 @@ const AdminDashboard = () => {
     if (activeTab === 'overview') {
       fetchDashboardStats();
       fetchRecentActivity();
-      fetchPendingActions();
       fetchSystemHealth();
     } else {
       fetchModerationData();
@@ -134,7 +121,6 @@ const AdminDashboard = () => {
       fetchModerationData();
       fetchDashboardStats();
       fetchRecentActivity();
-      fetchPendingActions();
     } catch (error) {
       toast.error('Failed to delete question');
       console.error('Delete question error:', error);
@@ -149,7 +135,6 @@ const AdminDashboard = () => {
       fetchModerationData();
       fetchDashboardStats();
       fetchRecentActivity();
-      fetchPendingActions();
     } catch (error) {
       toast.error('Failed to approve question');
       console.error('Approve question error:', error);
@@ -167,7 +152,6 @@ const AdminDashboard = () => {
       fetchModerationData();
       fetchDashboardStats();
       fetchRecentActivity();
-      fetchPendingActions();
     } catch (error) {
       toast.error('Failed to resolve report');
       console.error('Resolve report error:', error);
@@ -184,7 +168,6 @@ const AdminDashboard = () => {
       fetchModerationData();
       fetchDashboardStats();
       fetchRecentActivity();
-      fetchPendingActions();
     } catch (error) {
       toast.error('Failed to dismiss report');
       console.error('Dismiss report error:', error);
@@ -202,7 +185,6 @@ const AdminDashboard = () => {
       fetchModerationData();
       fetchDashboardStats();
       fetchRecentActivity();
-      fetchPendingActions();
     } catch (error) {
       toast.error('Failed to delete report');
       console.error('Delete report error:', error);
@@ -447,45 +429,8 @@ const AdminDashboard = () => {
 
               {/* Sidebar */}
               <div className="lg:col-span-1 space-y-6">
-                {/* Pending Actions */}
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/20 border border-gray-200 dark:border-gray-700">
-                  <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">Pending Actions</h3>
-                  </div>
-                  <div className="p-6">
-                    <div className="space-y-4">
-                      {pendingActions.length === 0 ? (
-                        <div className="text-center py-4">
-                          <p className="text-sm text-gray-500 dark:text-gray-400">No pending actions</p>
-                        </div>
-                      ) : (
-                        pendingActions.map((action, index) => (
-                          <div key={index} className="p-3 bg-gray-50 dark:bg-gray-700 rounded-md">
-                            <div className="flex items-center justify-between mb-2">
-                              <p className="text-sm font-medium text-gray-900 dark:text-white">
-                                {action.type === 'question' ? 'Question Review' : 'Report Review'}
-                              </p>
-                              <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                action.priority === 'high' ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300' :
-                                action.priority === 'medium' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300' :
-                                'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
-                              }`}>
-                                {action.priority}
-                              </div>
-                            </div>
-                            <p className="text-xs text-gray-600 dark:text-gray-300 mb-1">{action.title}</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                              {new Date(action.created_at).toLocaleDateString()}
-                            </p>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                </div>
-
                 {/* System Health */}
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/20 border border-gray-200 dark:border-gray-700">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/20 border border-gray-200 dark:border-gray-700">{" "}
                   <div className="p-6 border-b border-gray-200 dark:border-gray-700">
                     <h3 className="text-lg font-medium text-gray-900 dark:text-white">System Health</h3>
                   </div>
