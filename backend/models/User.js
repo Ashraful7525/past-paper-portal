@@ -10,6 +10,9 @@ class User {
     is_admin = false,
     profile = '',
     contribution = 0,
+    profile_picture_url = null,
+    profile_picture_filename = null,
+    profile_picture_uploaded_at = null,
     created_at = new Date(),
     updated_at = new Date()
   }) {
@@ -20,6 +23,9 @@ class User {
     this.is_admin = is_admin;
     this.profile = profile;
     this.contribution = contribution;
+    this.profile_picture_url = profile_picture_url;
+    this.profile_picture_filename = profile_picture_filename;
+    this.profile_picture_uploaded_at = profile_picture_uploaded_at;
     this.created_at = created_at;
     this.updated_at = updated_at;
   }
@@ -214,14 +220,73 @@ class User {
     }
   }
 
+  // Update user profile picture
+  static async updateProfilePicture(studentId, profilePictureData) {
+    try {
+      const { profile_picture_url, profile_picture_filename } = profilePictureData;
+      
+      const query = `
+        UPDATE users 
+        SET profile_picture_url = $1, 
+            profile_picture_filename = $2, 
+            profile_picture_uploaded_at = NOW(),
+            updated_at = NOW()
+        WHERE student_id = $3
+        RETURNING student_id, username, email, profile, contribution, 
+                 profile_picture_url, profile_picture_filename, profile_picture_uploaded_at,
+                 is_admin, created_at, updated_at
+      `;
+      
+      const result = await pool.query(query, [profile_picture_url, profile_picture_filename, studentId]);
+      
+      if (result.rows.length === 0) {
+        return null;
+      }
+      
+      return new User(result.rows[0]);
+    } catch (error) {
+      console.error('Error updating profile picture:', error);
+      throw new Error('Failed to update profile picture');
+    }
+  }
+
+  // Remove user profile picture
+  static async removeProfilePicture(studentId) {
+    try {
+      const query = `
+        UPDATE users 
+        SET profile_picture_url = NULL, 
+            profile_picture_filename = NULL, 
+            profile_picture_uploaded_at = NULL,
+            updated_at = NOW()
+        WHERE student_id = $1
+        RETURNING student_id, username, email, profile, contribution, 
+                 profile_picture_url, profile_picture_filename, profile_picture_uploaded_at,
+                 is_admin, created_at, updated_at
+      `;
+      
+      const result = await pool.query(query, [studentId]);
+      
+      if (result.rows.length === 0) {
+        return null;
+      }
+      
+      return new User(result.rows[0]);
+    } catch (error) {
+      console.error('Error removing profile picture:', error);
+      throw new Error('Failed to remove profile picture');
+    }
+  }
+
   // Instance methods
   async save() {
     try {
       const query = `
         UPDATE users 
         SET username = $1, email = $2, is_admin = $3, profile = $4, 
-            contribution = $5, updated_at = NOW()
-        WHERE student_id = $6
+            contribution = $5, profile_picture_url = $6, 
+            profile_picture_filename = $7, updated_at = NOW()
+        WHERE student_id = $8
         RETURNING *
       `;
       
@@ -231,6 +296,8 @@ class User {
         this.is_admin,
         this.profile,
         this.contribution,
+        this.profile_picture_url,
+        this.profile_picture_filename,
         this.student_id
       ];
 

@@ -114,6 +114,7 @@ class Comment {
           u.username as author_username,
           u.student_id as author_id,
           u.contribution as author_contribution,
+          u.profile_picture_url as author_profile_picture,
           ${userVoteSelect}
           COUNT(DISTINCT replies.comment_id) as reply_count
         FROM public.comments c
@@ -121,7 +122,7 @@ class Comment {
         LEFT JOIN public.comments replies ON c.comment_id = replies.parent_comment_id
         ${userVoteJoin}
         WHERE c.solution_id = $1
-        GROUP BY c.comment_id, c.comment_text, c.parent_comment_id, c.upvotes, c.downvotes, c.created_at, c.updated_at, u.username, u.student_id, u.contribution${groupByUserColumns}
+        GROUP BY c.comment_id, c.comment_text, c.parent_comment_id, c.upvotes, c.downvotes, c.created_at, c.updated_at, u.username, u.student_id, u.contribution, u.profile_picture_url${groupByUserColumns}
         ORDER BY c.parent_comment_id NULLS FIRST, c.created_at ASC
       `;
 
@@ -146,6 +147,7 @@ class Comment {
           author_username: comment.author_username,
           author_id: comment.author_id,
           author_contribution: comment.author_contribution,
+          author_profile_picture: comment.author_profile_picture,
           user_vote: comment.user_vote,
           reply_count: comment.reply_count,
           replies: []

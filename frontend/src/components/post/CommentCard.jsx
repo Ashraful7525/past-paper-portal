@@ -55,9 +55,26 @@ const CommentCard = ({
   const userVote = comment.user_vote || 0;
   const replies = comment.replies || [];
 
-  // Avatar fallback: first letter
-  const avatar = (
-    <div className="w-9 h-9 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-lg font-bold text-white">
+  // Avatar with profile picture support
+  const avatar = comment.author_profile_picture ? (
+    <img
+      src={comment.author_profile_picture}
+      alt={authorUsername}
+      className="w-9 h-9 rounded-full object-cover"
+      onError={(e) => {
+        // Fallback to letter avatar if image fails to load
+        e.target.style.display = 'none';
+        e.target.nextSibling.style.display = 'flex';
+      }}
+    />
+  ) : null;
+
+  const fallbackAvatar = (
+    <div
+      className={`w-9 h-9 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-lg font-bold text-white ${
+        comment.author_profile_picture ? 'hidden' : 'flex'
+      }`}
+    >
       {authorUsername.charAt(0).toUpperCase()}
     </div>
   );
@@ -103,9 +120,14 @@ const CommentCard = ({
   return (
     <div
       id={`comment-${comment.comment_id || comment.id}`}
-      className={`flex items-start w-full py-3 px-2 rounded-xl bg-white dark:bg-gray-800 ${depth === 0 ? 'shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md' : ''} transition-all duration-200 group`}
+      className={`flex items-start w-full py-3 px-2 rounded-xl bg-white dark:bg-gray-800 ${
+        depth === 0
+          ? 'shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md'
+          : ''
+      } transition-all duration-200 group`}
     >
       {avatar}
+      {fallbackAvatar}
       <div className="flex-1 ml-3 min-w-0 flex flex-col">
         <div className="flex items-center space-x-2">
           <span className="font-medium text-sm text-gray-900 dark:text-white truncate">
@@ -131,7 +153,11 @@ const CommentCard = ({
                 : 'text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:text-emerald-400 dark:hover:bg-emerald-900/20'
             } ${isVoting ? 'opacity-50 cursor-not-allowed' : ''}`}
             disabled={!user || isVoting}
-            title={userVote === 1 ? 'You upvoted this comment - click to remove' : 'Upvote this comment'}
+            title={
+              userVote === 1
+                ? 'You upvoted this comment - click to remove'
+                : 'Upvote this comment'
+            }
             style={{ lineHeight: 1 }}
           >
             {userVote === 1 ? (
@@ -140,13 +166,15 @@ const CommentCard = ({
               <ChevronUpIcon className="h-4 w-4" />
             )}
           </button>
-          <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${
-            userVote === 1
-              ? 'text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/20'
-              : userVote === -1
-              ? 'text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/20'
-              : 'text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700'
-          }`}>
+          <span
+            className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${
+              userVote === 1
+                ? 'text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/20'
+                : userVote === -1
+                ? 'text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/20'
+                : 'text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700'
+            }`}
+          >
             {netVotes}
           </span>
           <button
@@ -157,7 +185,11 @@ const CommentCard = ({
                 : 'text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-900/20'
             } ${isVoting ? 'opacity-50 cursor-not-allowed' : ''}`}
             disabled={!user || isVoting}
-            title={userVote === -1 ? 'You downvoted this comment - click to remove' : 'Downvote this comment'}
+            title={
+              userVote === -1
+                ? 'You downvoted this comment - click to remove'
+                : 'Downvote this comment'
+            }
             style={{ lineHeight: 1 }}
           >
             {userVote === -1 ? (
@@ -176,7 +208,7 @@ const CommentCard = ({
               Reply
             </button>
           )}
-          
+
           {/* Report Button */}
           {currentUser && (
             <button
@@ -187,7 +219,7 @@ const CommentCard = ({
               <FlagIcon className="h-4 w-4" />
             </button>
           )}
-          
+
           <button
             className="ml-2 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none"
             title="More actions"
@@ -246,7 +278,7 @@ const CommentCard = ({
           </div>
         )}
       </div>
-      
+
       {/* Report Modal */}
       <ReportModal
         isOpen={showReportModal}

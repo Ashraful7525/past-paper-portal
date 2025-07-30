@@ -284,6 +284,66 @@ const authController = {
         message: 'Internal server error'
       });
     }
+  },
+
+  // Update profile picture URL (after frontend upload)
+  async updateProfilePictureUrl(req, res) {
+    try {
+      const { student_id } = req.user;
+      const { profile_picture_url, profile_picture_filename } = req.body;
+
+      if (!profile_picture_url || !profile_picture_filename) {
+        return res.status(400).json({
+          message: 'Profile picture URL and filename are required'
+        });
+      }
+
+      const updatedUser = await User.updateProfilePicture(student_id, {
+        profile_picture_url,
+        profile_picture_filename
+      });
+
+      if (!updatedUser) {
+        return res.status(404).json({
+          message: 'User not found'
+        });
+      }
+
+      res.json({
+        message: 'Profile picture updated successfully',
+        user: updatedUser.toJSON()
+      });
+    } catch (error) {
+      console.error('Update profile picture URL error:', error);
+      res.status(500).json({
+        message: 'Internal server error'
+      });
+    }
+  },
+
+  // Remove profile picture
+  async removeProfilePicture(req, res) {
+    try {
+      const { student_id } = req.user;
+      
+      const updatedUser = await User.removeProfilePicture(student_id);
+
+      if (!updatedUser) {
+        return res.status(404).json({
+          message: 'User not found'
+        });
+      }
+
+      res.json({
+        message: 'Profile picture removed successfully',
+        user: updatedUser.toJSON()
+      });
+    } catch (error) {
+      console.error('Remove profile picture error:', error);
+      res.status(500).json({
+        message: 'Internal server error'
+      });
+    }
   }
 };
 

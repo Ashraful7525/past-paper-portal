@@ -17,7 +17,7 @@ import { usePostDetail } from '../hooks/usePostDetail';
 import { useFilters } from '../contexts/FilterContext';
 import { formatNumber, formatTimeAgo } from '../utils/formatters';
 import PostBody from '../components/post/PostBody';
-import CommentForm from '../components/post/CommentForm';
+import SolutionForm from '../components/post/SolutionForm';
 import SolutionCard from '../components/post/SolutionCard';
 
 const PostDetail = () => {
@@ -412,14 +412,13 @@ const PostDetail = () => {
             {/* Add Solution Form */}
             {showSolutionForm && (
               <div className="mb-8">
-                <CommentForm
+                <SolutionForm
                   onSubmit={handleAddSolutionSubmit}
                   onCancel={handleCancelSolution}
                   placeholder="Share your solution, explanation, or insights that could help fellow students..."
-                  heading="Add your solution"
                   buttonText="Publish Solution"
                   isSubmitting={isAddingSolution}
-                  isReply={false}
+                  user={user}
                 />
               </div>
             )}

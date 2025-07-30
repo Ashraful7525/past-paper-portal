@@ -159,6 +159,7 @@ class Solution {
           u.username as author_username,
           u.student_id as author_id,
           u.contribution as author_contribution,
+          u.profile_picture_url as author_profile_picture,
           ${userVoteSelect}
           ${userBookmarkSelect}
           ARRAY_AGG(DISTINCT t.tag_name) FILTER (WHERE t.tag_name IS NOT NULL) as tags,
@@ -171,7 +172,7 @@ class Solution {
         ${userVoteJoin}
         ${userBookmarkJoin}
         WHERE s.question_id = $1
-        GROUP BY s.solution_id, s.solution_text, s.file_url, s.solution_title, s.is_verified, s.upvotes, s.downvotes, s.rating, s.created_at, s.updated_at, u.username, u.student_id, u.contribution${studentId ? ', sv.vote_type, b.bookmark_id' : ''}
+        GROUP BY s.solution_id, s.solution_text, s.file_url, s.solution_title, s.is_verified, s.upvotes, s.downvotes, s.rating, s.created_at, s.updated_at, u.username, u.student_id, u.contribution, u.profile_picture_url${studentId ? ', sv.vote_type, b.bookmark_id' : ''}
         ORDER BY s.upvotes DESC, s.created_at DESC
       `;
 

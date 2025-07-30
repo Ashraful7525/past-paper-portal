@@ -17,6 +17,7 @@ import {
 } from '@heroicons/react/24/solid';
 import CommentThread from './CommentThread';
 import ReportModal from '../common/ReportModal';
+import ProfilePicture from '../common/ProfilePicture';
 import { useAuth } from '../../contexts/AuthContext';
 
 const isImage = (url) => /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i.test(url);
@@ -158,12 +159,17 @@ const SolutionCard = ({
 
           {/* Content */}
           <div className="flex-1">
-            {/* Enhanced Header */}
+            {/* Enhanced Header with Profile Picture */}
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-gray-600 to-gray-700 rounded-full flex items-center justify-center">
-                  <UserIcon className="h-5 w-5 text-white" />
-                </div>
+                <ProfilePicture 
+                  user={{ 
+                    username: solution.author_username, 
+                    author_username: solution.author_username,
+                    profile_picture_url: solution.author_profile_picture 
+                  }} 
+                  size="md" 
+                />
                 <div>
                   <div className="flex items-center space-x-2">
                     <span className="font-bold text-gray-800 dark:text-white">

@@ -1,153 +1,291 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { UserCircleIcon, AcademicCapIcon, ShieldCheckIcon, PencilIcon } from '@heroicons/react/24/outline';
+import React, { useState, useRef, useEffect } from 'react';
+import { CameraIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { useAuth } from '../../contexts/AuthContext';
+import { useQueryClient } from '@tanstack/react-query';
+import { supabase } from '../../utils/supabase';
+import toast from 'react-hot-toast';
 
-const ProfileHeader = ({ 
-  profile, 
-  isAdmin, 
-  isEditing, 
-  newProfileDescription, 
-  setNewProfileDescription, 
-  setIsEditing, 
-  handleUpdateProfile 
-}) => {
+const ProfileHeader = ({ profile, stats, isAdmin, isEditing, newProfileDescription, setNewProfileDescription, setIsEditing, handleUpdateProfile }) => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [showImageOptions, setShowImageOptions] = useState(false);
+  const imageOptionsRef = useRef(null);
+  const fileInputRef = useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (imageOptionsRef.current && !imageOptionsRef.current.contains(event.target)) {
+        setShowImageOptions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Please select a valid image file (JPEG, PNG, GIF, or WebP)');
+      return;
+    }
+
+    // Validate file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File size must be less than 5MB');
+      return;
+    }
+
+    setIsUploadingImage(true);
+    setShowImageOptions(false);
+
+    try {
+      // Create unique filename
+      const fileExt = file.name.split('.').pop();
+      const fileName = `profile-${user.student_id}-${Date.now()}.${fileExt}`;
+
+      // Upload to Supabase using frontend client (same as posts/solutions)
+      const { data, error } = await supabase.storage
+        .from('profile-pictures')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (error) throw error;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('profile-pictures')
+        .getPublicUrl(fileName);
+
+      // Update backend database via API (just saves URL to database)
+      const response = await fetch('/api/auth/profile-picture', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          profile_picture_url: publicUrl,
+          profile_picture_filename: fileName
+        })
+      });
+
+      const data_response = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data_response.message || 'Failed to update profile picture');
+      }
+
+      // Update the user data in React Query cache
+      queryClient.setQueryData(['user'], data_response.user);
+      
+      toast.success('Profile picture updated successfully!');
+    } catch (error) {
+      console.error('Error uploading profile picture:', error);
+      toast.error('Failed to upload profile picture: ' + error.message);
+    } finally {
+      setIsUploadingImage(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleRemoveProfilePicture = async () => {
+    if (!confirm('Are you sure you want to remove your profile picture?')) {
+      return;
+    }
+
+    setIsUploadingImage(true);
+    setShowImageOptions(false);
+
+    try {
+      const response = await fetch('/api/auth/profile-picture', {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to remove profile picture');
+      }
+
+      // Update the user data in React Query cache
+      queryClient.setQueryData(['user'], data.user);
+      
+      toast.success('Profile picture removed successfully!');
+    } catch (error) {
+      console.error('Error removing profile picture:', error);
+      toast.error('Failed to remove profile picture: ' + error.message);
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const triggerFileUpload = () => {
+    fileInputRef.current?.click();
+    setShowImageOptions(false);
+  };
+
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden transition-all duration-200 hover:shadow-md">
-      {/* Header with gradient background */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 px-8 py-6 border-b border-gray-100 dark:border-gray-600">
-        <div className="flex items-center">
-          <UserCircleIcon className="w-7 h-7 text-blue-600 dark:text-blue-400 mr-4" />
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-white tracking-tight">Personal Information</h2>
-        </div>
-      </div>
-
-      <div className="p-8">
-        {/* Profile Section */}
-        <div className="flex flex-col md:flex-row md:items-start space-y-8 md:space-y-0 md:space-x-8 mb-10">
-          {/* Avatar */}
-          <div className="flex-shrink-0 flex justify-center md:justify-start">
-            <div className="w-28 h-28 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg ring-4 ring-blue-100 dark:ring-blue-900/50 transition-all duration-200 hover:ring-6 hover:shadow-xl">
-              {profile.username.charAt(0).toUpperCase()}
+    <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-6">
+      <div className="flex items-center space-x-6">
+        {/* Profile Picture with Upload Options */}
+        <div className="relative">
+          <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+            {user?.profile_picture_url ? (
+              <img
+                src={user.profile_picture_url}
+                alt={user?.username || 'Profile'}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'flex';
+                }}
+              />
+            ) : null}
+            <div 
+              className={`w-full h-full flex items-center justify-center text-gray-400 text-2xl font-bold ${user?.profile_picture_url ? 'hidden' : 'flex'}`}
+            >
+              {user?.username?.charAt(0)?.toUpperCase() || 'U'}
             </div>
           </div>
 
-          {/* User Info */}
-          <div className="flex-1 text-center md:text-left">
-            <div className="mb-6">
-              <h1 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white mb-3 tracking-tight">
-                {profile.username}
-              </h1>
-              <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-6 space-y-3 sm:space-y-0">
-                <div className="flex items-center justify-center md:justify-start text-gray-600 dark:text-gray-300 font-medium">
-                  <svg className="w-5 h-5 mr-3 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                  {profile.email}
-                </div>
-                <div className="flex items-center justify-center md:justify-start text-gray-500 dark:text-gray-400 font-medium">
-                  <AcademicCapIcon className="w-5 h-5 mr-3" />
-                  Student ID: {profile.student_id}
-                </div>
-              </div>
-            </div>
-
-            {/* Role Badge */}
-            <div className="flex justify-center md:justify-start mb-6">
-              <div className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-bold shadow-sm border ${
-                isAdmin 
-                  ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-700' 
-                  : 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700'
-              }`}>
-                {isAdmin ? (
-                  <ShieldCheckIcon className="w-4 h-4 mr-2" />
-                ) : (
-                  <UserCircleIcon className="w-4 h-4 mr-2" />
-                )}
-                {isAdmin ? 'Administrator' : 'Student'}
-              </div>
-            </div>
-
-            {/* Admin Dashboard Link */}
-            {isAdmin && (
-              <div className="flex justify-center md:justify-start">
-                <Link
-                  to="/admin/dashboard"
-                  className="inline-flex items-center px-6 py-3 bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600 text-white rounded-xl transition-all duration-200 font-semibold shadow-sm hover:shadow-md transform hover:-translate-y-0.5 border border-purple-600 hover:border-purple-700"
-                >
-                  <ShieldCheckIcon className="w-5 h-5 mr-3" />
-                  Admin Dashboard
-                </Link>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Profile Description Section */}
-        <div className="border-t border-gray-100 dark:border-gray-600 pt-8">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold text-gray-800 dark:text-white flex items-center tracking-tight">
-              <PencilIcon className="w-6 h-6 mr-3 text-gray-500 dark:text-gray-400" />
-              About Me
-            </h3>
-            {!isEditing && (
+          {/* Upload button overlay */}
+          <div className="absolute -bottom-2 -right-2">
+            <div className="relative" ref={imageOptionsRef}>
               <button
-                onClick={() => setIsEditing(true)}
-                className="inline-flex items-center px-4 py-2 text-sm font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-xl transition-all duration-200 border border-blue-100 dark:border-blue-800/50 hover:border-blue-200 dark:hover:border-blue-700 shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
+                onClick={() => setShowImageOptions(!showImageOptions)}
+                disabled={isUploadingImage}
+                className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-full shadow-lg transition-colors disabled:opacity-50"
+                title="Change profile picture"
               >
-                <PencilIcon className="w-4 h-4 mr-2" />
-                Edit
+                {isUploadingImage ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <CameraIcon className="w-4 h-4" />
+                )}
               </button>
-            )}
-          </div>
 
+              {/* Dropdown menu */}
+              {showImageOptions && !isUploadingImage && (
+                <div className="absolute bottom-full right-0 mb-2 bg-white dark:bg-gray-700 border dark:border-gray-600 rounded-lg shadow-lg py-1 z-10 min-w-[160px]">
+                  <button
+                    onClick={triggerFileUpload}
+                    className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center gap-2"
+                  >
+                    <CameraIcon className="w-4 h-4" />
+                    Upload new photo
+                  </button>
+                  {user?.profile_picture_url && (
+                    <button
+                      onClick={handleRemoveProfilePicture}
+                      className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center gap-2"
+                    >
+                      <TrashIcon className="w-4 h-4" />
+                      Remove photo
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* User Info */}
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            {user?.username || 'Anonymous User'}
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Student ID: {user?.student_id || 'N/A'}
+          </p>
+          <p className="text-gray-600 dark:text-gray-400">
+            {user?.email || 'No email provided'}
+          </p>
           {isEditing ? (
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">
-                  Profile Description
-                </label>
-                <textarea
-                  className="w-full px-4 py-4 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-white rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none shadow-sm hover:shadow-md font-medium"
-                  rows="5"
-                  value={newProfileDescription}
-                  onChange={(e) => setNewProfileDescription(e.target.value)}
-                  placeholder="Tell us about yourself, your interests, and academic goals..."
-                />
-              </div>
-              <div className="flex items-center space-x-4">
+            <div className="mt-3">
+              <textarea
+                value={newProfileDescription}
+                onChange={(e) => setNewProfileDescription(e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                rows="2"
+                placeholder="Add a bio or description..."
+              />
+              <div className="flex gap-2 mt-2">
                 <button
                   onClick={handleUpdateProfile}
-                  className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white rounded-xl transition-all duration-200 font-semibold shadow-sm hover:shadow-md transform hover:-translate-y-0.5 border border-blue-600 hover:border-blue-700"
+                  className="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600"
                 >
-                  <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                  </svg>
-                  Save Changes
+                  Save
                 </button>
                 <button
                   onClick={() => setIsEditing(false)}
-                  className="inline-flex items-center px-6 py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded-xl transition-all duration-200 font-semibold shadow-sm hover:shadow-md transform hover:-translate-y-0.5 border border-gray-200 dark:border-gray-500 hover:border-gray-300 dark:hover:border-gray-400"
+                  className="px-3 py-1 bg-gray-500 text-white text-sm rounded hover:bg-gray-600"
                 >
-                  <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
                   Cancel
                 </button>
               </div>
             </div>
           ) : (
-            <div className="bg-gray-50/70 dark:bg-gray-700/50 rounded-xl p-6 border border-gray-100 dark:border-gray-600 transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-700/70">
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed font-medium">
-                {profile.profile || (
-                  <span className="text-gray-500 dark:text-gray-400 italic">
-                    No description provided. Click "Edit" to add information about yourself.
-                  </span>
-                )}
-              </p>
+            <div className="mt-2">
+              {user?.profile && (
+                <p className="text-gray-700 dark:text-gray-300 text-sm">
+                  {user.profile}
+                </p>
+              )}
+              <button
+                onClick={() => setIsEditing(true)}
+                className="text-blue-500 hover:text-blue-700 text-xs mt-1"
+              >
+                {user?.profile ? 'Edit bio' : 'Add bio'}
+              </button>
             </div>
           )}
         </div>
+
+        {/* Stats */}
+        <div className="flex space-x-8">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">
+              {stats?.questionsCount || 0}
+            </div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">Questions</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">
+              {stats?.solutionsCount || 0}
+            </div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">Solutions</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">
+              {stats?.contribution || 0}
+            </div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">Contribution</div>
+          </div>
+        </div>
       </div>
+
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleImageUpload}
+        className="hidden"
+      />
     </div>
   );
 };

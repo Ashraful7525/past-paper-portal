@@ -239,5 +239,8 @@ CREATE TABLE public.users (
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   updated_at timestamp with time zone NOT NULL DEFAULT now(),
   password text,
+  profile_picture_url text,
+  profile_picture_filename character varying,
+  profile_picture_uploaded_at timestamp with time zone,
   CONSTRAINT users_pkey PRIMARY KEY (student_id)
 );

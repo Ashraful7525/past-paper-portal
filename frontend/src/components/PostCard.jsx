@@ -18,6 +18,7 @@ import {
 import { useVotePost, useSavePost } from '../hooks/usePosts';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
+import ProfilePicture from './common/ProfilePicture';
 
 const PostCard = ({ post }) => {
   const { user } = useAuth();
@@ -190,8 +191,17 @@ const PostCard = ({ post }) => {
 
         {/* Content Section */}
         <div className="flex-1 min-w-0">
-          {/* Header */}
+          {/* Header with Profile Picture */}
           <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mb-4">
+            <ProfilePicture 
+              user={{ 
+                username: post.author_username, 
+                author_username: post.author_username,
+                profile_picture_url: post.author_profile_picture 
+              }} 
+              size="sm" 
+              className="mr-3"
+            />
             <span className="flex items-center">
               <span className="mr-2 text-base">{post.department_icon || '🏫'}</span>
               <span className="font-semibold text-gray-700 dark:text-gray-300">r/{post.department_name || 'General'}</span>

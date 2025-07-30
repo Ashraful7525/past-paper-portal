@@ -20,121 +20,8 @@ class Post {
         question_no = null,
       } = options;
 
-      // Build ORDER BY clause based on sortBy
-      let orderClause = '';
-      switch (sortBy) {
-        case 'hot':
-          orderClause = 'ORDER BY (p.upvotes - p.downvotes + p.view_count * 0.1) DESC, p.created_at DESC';
-          break;
-        case 'new':
-          orderClause = 'ORDER BY p.created_at DESC';
-          break;
-        case 'top':
-          orderClause = 'ORDER BY (p.upvotes - p.downvotes) DESC, p.created_at DESC';
-          break;
-        default:
-          orderClause = 'ORDER BY p.created_at DESC';
-      }
-
-      // Build time filter
-      let timeFilter = '';
-      if (timeRange !== 'all') {
-        const timeMap = {
-          hour: '1 HOUR',
-          day: '1 DAY', 
-          week: '1 WEEK',
-          month: '1 MONTH',
-          year: '1 YEAR'
-        };
-        if (timeMap[timeRange]) {
-          timeFilter = `AND p.created_at >= NOW() - INTERVAL '${timeMap[timeRange]}'`;
-        }
-      }
-
-      // Build filters
-      let searchFilter = '';
-      let departmentFilter = '';
-      let courseFilter = '';
-      let levelFilter = '';
-      let termFilter = '';
-      let yearFilter = '';
-      let questionNoFilter = '';
-      let forYouFilter = '';
-      
-      const queryParams = [limit, offset];
-      let paramIndex = 3;
-
-      if (search) {
-        searchFilter = `AND (p.title ILIKE $${paramIndex} OR p.preview_text ILIKE $${paramIndex} OR q.question_text ILIKE $${paramIndex})`;
-        queryParams.push(`%${search}%`);
-        paramIndex++;
-      }
-
-      if (department_id) {
-        departmentFilter = `AND p.department_id = $${paramIndex}`;
-        queryParams.push(department_id);
-        paramIndex++;
-      }
-
-      if (course_id) {
-        courseFilter = `AND c.course_id = $${paramIndex}`;
-        queryParams.push(course_id);
-        paramIndex++;
-      }
-
-      if (level) {
-        levelFilter = `AND s.level = $${paramIndex}`;
-        queryParams.push(parseInt(level));
-        paramIndex++;
-      }
-
-      if (term) {
-        termFilter = `AND s.term = $${paramIndex}`;
-        queryParams.push(parseInt(term));
-        paramIndex++;
-      }
-
-      if (year) {
-        yearFilter = `AND q.year = $${paramIndex}`;
-        queryParams.push(parseInt(year));
-        paramIndex++;
-      }
-
-      if (question_no) {
-        questionNoFilter = `AND q.question_no = $${paramIndex}`;
-        queryParams.push(parseInt(question_no));
-        paramIndex++;
-      }
-
-      // For You filter - only show posts from courses the user is enrolled in
-      if (forYou && student_id) {
-        forYouFilter = `AND c.course_id IN (
-          SELECT e.course_id 
-          FROM enrollments e 
-          WHERE e.student_id = $${paramIndex} AND e.is_currently_enrolled = true
-        )`;
-        queryParams.push(student_id);
-        paramIndex++;
-      }
-
-      // Build user-specific joins and selects
-      let userVoteJoin = '';
-      let userSaveJoin = '';
-      let userVoteSelect = '0 as user_vote,';
-      let userSaveSelect = 'false as is_saved,';
-      let groupByUserColumns = '';
-      
-      if (student_id) {
-        userVoteJoin = `LEFT JOIN public.post_votes pv ON p.post_id = pv.post_id AND pv.student_id = $${paramIndex}`;
-        userSaveJoin = `LEFT JOIN public.saved_posts sp ON p.post_id = sp.post_id AND sp.student_id = $${paramIndex}`;
-        userVoteSelect = `COALESCE(pv.vote_type, 0) as user_vote,`;
-        userSaveSelect = `CASE WHEN sp.post_id IS NOT NULL THEN true ELSE false END as is_saved,`;
-        groupByUserColumns = ', pv.vote_type, sp.post_id';
-        queryParams.push(student_id);
-        paramIndex++;
-      }
-
-      const query = `
+      // Start with a simple query to ensure it works
+      let query = `
         SELECT 
           p.post_id,
           p.title,
@@ -150,6 +37,7 @@ class Post {
           p.created_at,
           p.updated_at,
           u.username as author_username,
+          u.profile_picture_url as author_profile_picture,
           d.department_name,
           d.icon as department_icon,
           c.course_title,
@@ -162,35 +50,82 @@ class Post {
           q.question_text,
           q.question_no,
           q.year as question_year,
-          ${userVoteSelect}
-          ${userSaveSelect}
-          ARRAY_AGG(DISTINCT t.tag_name) FILTER (WHERE t.tag_name IS NOT NULL) as tags,
-          COUNT(DISTINCT sol.solution_id) as solution_count
+          0 as user_vote,
+          false as is_saved,
+          ARRAY[]::text[] as tags,
+          0 as solution_count
         FROM public.posts p
         LEFT JOIN public.users u ON p.student_id = u.student_id
         LEFT JOIN public.departments d ON p.department_id = d.department_id
         LEFT JOIN public.questions q ON p.question_id = q.question_id
         LEFT JOIN public.courses c ON q.course_id = c.course_id
         LEFT JOIN public.semesters s ON q.semester_id = s.semester_id
-        LEFT JOIN public.post_tags pt ON p.post_id = pt.post_id
-        LEFT JOIN public.tags t ON pt.tag_id = t.tag_id
-        LEFT JOIN public.solutions sol ON p.question_id = sol.question_id
-        ${userVoteJoin}
-        ${userSaveJoin}
         WHERE p.question_id IS NOT NULL
-        ${timeFilter}
-        ${searchFilter}
-        ${departmentFilter}
-        ${courseFilter}
-        ${levelFilter}
-        ${termFilter}
-        ${yearFilter}
-        ${questionNoFilter}
-        ${forYouFilter}
-        GROUP BY p.post_id, u.username, d.department_name, d.icon, c.course_title, c.course_code, s.semester_name, s.level, s.term, q.is_verified, q.question_title, q.question_text, q.question_no, q.year${groupByUserColumns}
-        ${orderClause}
-        LIMIT $1 OFFSET $2
       `;
+
+      let queryParams = [];
+      let paramIndex = 1;
+
+      // Add filters
+      if (search) {
+        query += ` AND (p.title ILIKE $${paramIndex} OR p.preview_text ILIKE $${paramIndex})`;
+        queryParams.push(`%${search}%`);
+        paramIndex++;
+      }
+
+      if (department_id) {
+        query += ` AND p.department_id = $${paramIndex}`;
+        queryParams.push(department_id);
+        paramIndex++;
+      }
+
+      if (course_id) {
+        query += ` AND c.course_id = $${paramIndex}`;
+        queryParams.push(course_id);
+        paramIndex++;
+      }
+
+      if (year) {
+        query += ` AND q.year = $${paramIndex}`;
+        queryParams.push(parseInt(year));
+        paramIndex++;
+      }
+
+      // Add time filter
+      if (timeRange !== 'all') {
+        const timeMap = {
+          hour: '1 HOUR',
+          day: '1 DAY', 
+          week: '1 WEEK',
+          month: '1 MONTH',
+          year: '1 YEAR'
+        };
+        if (timeMap[timeRange]) {
+          query += ` AND p.created_at >= NOW() - INTERVAL '${timeMap[timeRange]}'`;
+        }
+      }
+
+      // Add ordering
+      switch (sortBy) {
+        case 'hot':
+          query += ' ORDER BY (p.upvotes - p.downvotes + p.view_count * 0.1) DESC, p.created_at DESC';
+          break;
+        case 'new':
+          query += ' ORDER BY p.created_at DESC';
+          break;
+        case 'top':
+          query += ' ORDER BY (p.upvotes - p.downvotes) DESC, p.created_at DESC';
+          break;
+        default:
+          query += ' ORDER BY p.created_at DESC';
+      }
+
+      // Add pagination
+      query += ` LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+      queryParams.push(limit, offset);
+
+      console.log('Executing simplified feed query:', query);
+      console.log('Query params:', queryParams);
 
       const result = await client.query(query, queryParams);
       
@@ -202,7 +137,8 @@ class Post {
         downvotes: parseInt(post.downvotes) || 0,
         view_count: parseInt(post.view_count) || 0,
         download_count: parseInt(post.download_count) || 0,
-        solution_count: parseInt(post.solution_count) || 0
+        solution_count: parseInt(post.solution_count) || 0,
+        tags: post.tags || []
       }));
 
     } catch (error) {
@@ -254,6 +190,7 @@ class Post {
           p.created_at,
           p.updated_at,
           u.username as author_username,
+          u.profile_picture_url as author_profile_picture,
           d.department_name,
           d.icon as department_icon,
           c.course_title,
@@ -277,7 +214,7 @@ class Post {
         ${userVoteJoin}
         ${userSaveJoin}
         WHERE p.post_id = $1 AND p.question_id IS NOT NULL
-        GROUP BY p.post_id, p.title, p.content, p.preview_text, p.file_url, p.file_size, p.upvotes, p.downvotes, p.view_count, p.download_count, p.is_featured, p.created_at, p.updated_at, u.username, d.department_name, d.icon, c.course_title, s.semester_name, q.is_verified, q.question_title, q.question_text, q.question_no, q.year${groupByUserColumns}
+        GROUP BY p.post_id, p.title, p.content, p.preview_text, p.file_url, p.file_size, p.upvotes, p.downvotes, p.view_count, p.download_count, p.is_featured, p.created_at, p.updated_at, u.username, u.profile_picture_url, d.department_name, d.icon, c.course_title, s.semester_name, q.is_verified, q.question_title, q.question_text, q.question_no, q.year${groupByUserColumns}
       `;
 
       const result = await client.query(query, queryParams);

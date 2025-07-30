@@ -22,6 +22,6 @@
     "test:frontend": "cd frontend && npm test"
   },
   "devDependencies": {
-    "concurrently": "^8.2.0"
+    "concurrently": "^8.2.2"
   }
 }

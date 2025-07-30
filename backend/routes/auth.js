@@ -16,6 +16,10 @@ router.put('/password', authMiddleware, authController.changePassword);
 router.get('/stats', authMiddleware, authController.getUserStats);
 router.post('/logout', authMiddleware, authController.logout);
 
+// Profile picture routes - frontend upload approach
+router.put('/profile-picture', authMiddleware, authController.updateProfilePictureUrl);
+router.delete('/profile-picture', authMiddleware, authController.removeProfilePicture);
+
 // Admin routes
 router.get('/admin/test', authMiddleware, adminMiddleware, (req, res) => {
   res.json({

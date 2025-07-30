@@ -317,10 +317,10 @@ const postsController = {
         });
       }
 
-      // Validate content
-      if (!content || content.trim() === '') {
+      // Validate that either content or file_url is provided
+      if ((!content || content.trim() === '') && !file_url) {
         return res.status(400).json({ 
-          message: 'Solution content is required' 
+          message: 'Either solution content or file attachment is required' 
         });
       }
 

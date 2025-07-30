@@ -247,8 +247,8 @@ export const usePostDetail = (postId) => {
       toast.error('Please login to add solutions');
       return;
     }
-    if (!solutionText.trim()) {
-      toast.error('Solution cannot be empty');
+    if (!solutionText.trim() && !file) {
+      toast.error('Please provide either a solution text or attach a file');
       return;
     }
     let file_url = null;

@@ -23,9 +23,26 @@ const CommentForm = forwardRef(({
     onCancel();
   };
 
-  // Avatar: first letter of username or fallback
+  // Avatar with profile picture support
   const avatar = user ? (
-    <div className="w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-base font-bold text-white select-none">
+    user.profile_picture_url ? (
+      <img
+        src={user.profile_picture_url}
+        alt={user.username || 'User'}
+        className="w-8 h-8 rounded-full object-cover"
+        onError={(e) => {
+          // Fallback to letter avatar if image fails to load
+          e.target.style.display = 'none';
+          e.target.nextSibling.style.display = 'flex';
+        }}
+      />
+    ) : null
+  ) : null;
+
+  const fallbackAvatar = user ? (
+    <div 
+      className={`w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-base font-bold text-white select-none ${user.profile_picture_url ? 'hidden' : 'flex'}`}
+    >
       {user.username ? user.username.charAt(0).toUpperCase() : '?'}
     </div>
   ) : null;
@@ -35,8 +52,11 @@ const CommentForm = forwardRef(({
       <form onSubmit={handleSubmit} className="flex flex-col w-full">
         {/* Input area: avatar + textarea */}
         <div className="flex flex-row items-start w-full px-2 pt-2 pb-1">
-          {avatar && (
-            <div className="mt-2 ml-1 mr-2">{avatar}</div>
+          {user && (
+            <div className="mt-2 ml-1 mr-2">
+              {avatar}
+              {fallbackAvatar}
+            </div>
           )}
           <textarea
             ref={ref}
