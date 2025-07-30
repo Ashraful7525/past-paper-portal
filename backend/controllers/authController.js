@@ -344,6 +344,110 @@ const authController = {
         message: 'Internal server error'
       });
     }
+  },
+
+  // Get user's questions (posts)
+  async getUserQuestions(req, res) {
+    try {
+      const { student_id } = req.user;
+      const { limit = 20, offset = 0, sortBy = 'recent' } = req.query;
+
+      const Post = (await import('../models/Post.js')).default;
+      const posts = await Post.getFeedPosts({
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        sortBy,
+        student_id,
+        filterByAuthor: true // Filter to only show posts by this user
+      });
+
+      res.json({
+        posts: posts.filter(post => post.student_id === student_id),
+        pagination: {
+          limit: parseInt(limit),
+          offset: parseInt(offset),
+          hasMore: posts.length === parseInt(limit)
+        }
+      });
+    } catch (error) {
+      console.error('Get user questions error:', error);
+      res.status(500).json({
+        message: 'Internal server error'
+      });
+    }
+  },
+
+  // Get user's solutions
+  async getUserSolutions(req, res) {
+    try {
+      const { student_id } = req.user;
+      const { limit = 20, offset = 0, sortBy = 'recent' } = req.query;
+
+      const Solution = (await import('../models/Solution.js')).default;
+      const solutions = await Solution.getSolutionsByStudentId(student_id, {
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        sortBy
+      });
+
+      res.json({
+        solutions,
+        pagination: {
+          limit: parseInt(limit),
+          offset: parseInt(offset),
+          hasMore: solutions.length === parseInt(limit)
+        }
+      });
+    } catch (error) {
+      console.error('Get user solutions error:', error);
+      res.status(500).json({
+        message: 'Internal server error'
+      });
+    }
+  },
+
+  // Get user's bookmarks (saved posts and bookmarked solutions)
+  async getUserBookmarks(req, res) {
+    try {
+      const { student_id } = req.user;
+      const { limit = 20, offset = 0, sortBy = 'recent', type = 'all' } = req.query;
+
+      const Bookmark = (await import('../models/Bookmark.js')).default;
+      
+      let savedPosts = [];
+      let bookmarkedSolutions = [];
+
+      if (type === 'all' || type === 'posts') {
+        savedPosts = await Bookmark.getSavedPosts(student_id, {
+          limit: type === 'posts' ? parseInt(limit) : Math.ceil(parseInt(limit) / 2),
+          offset: parseInt(offset),
+          sortBy
+        });
+      }
+
+      if (type === 'all' || type === 'solutions') {
+        bookmarkedSolutions = await Bookmark.getBookmarkedSolutions(student_id, {
+          limit: type === 'solutions' ? parseInt(limit) : Math.ceil(parseInt(limit) / 2),
+          offset: parseInt(offset),
+          sortBy
+        });
+      }
+
+      res.json({
+        savedPosts,
+        bookmarkedSolutions,
+        pagination: {
+          limit: parseInt(limit),
+          offset: parseInt(offset),
+          hasMore: (savedPosts.length + bookmarkedSolutions.length) === parseInt(limit)
+        }
+      });
+    } catch (error) {
+      console.error('Get user bookmarks error:', error);
+      res.status(500).json({
+        message: 'Internal server error'
+      });
+    }
   }
 };
 

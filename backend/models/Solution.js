@@ -407,14 +407,18 @@ class Solution {
           s.rating,
           s.created_at,
           s.updated_at,
+          s.question_id,
           q.question_title,
           q.question_text,
+          p.post_id,
+          p.title as post_title,
           COUNT(DISTINCT c.comment_id) as comment_count
         FROM public.solutions s
         LEFT JOIN public.questions q ON s.question_id = q.question_id
+        LEFT JOIN public.posts p ON q.question_id = p.question_id
         LEFT JOIN public.comments c ON s.solution_id = c.solution_id
         WHERE s.student_id = $1
-        GROUP BY s.solution_id, q.question_title, q.question_text
+        GROUP BY s.solution_id, s.question_id, q.question_title, q.question_text, p.post_id, p.title
         ${orderClause}
         LIMIT $2 OFFSET $3
       `;

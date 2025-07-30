@@ -121,7 +121,7 @@ const CourseEnrollmentSection = ({
 
       {/* Add Course Section */}
       {showAddCourse && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-600 overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-600 overflow-visible relative">
           <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 px-6 py-4 border-b border-gray-200 dark:border-gray-600">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
@@ -139,9 +139,9 @@ const CourseEnrollmentSection = ({
             </div>
           </div>
           
-          <div className="p-6">
+          <div className="p-6 relative">
             {/* Search Bar */}
-            <div className="relative mb-6">
+            <div className="relative mb-6 z-[1]">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Search for courses
               </label>
@@ -160,7 +160,7 @@ const CourseEnrollmentSection = ({
               
               {/* Course Suggestions Dropdown */}
               {showSuggestions && (
-                <div className="absolute top-full left-0 right-0 z-20 mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-80 overflow-y-auto">
+                <div className="absolute top-full left-0 right-0 z-[9999] mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-xl max-h-80 overflow-y-auto">
                   {filteredCourses.length > 0 ? (
                     <div className="py-2">
                       {filteredCourses.map((course) => (

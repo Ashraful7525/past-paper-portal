@@ -20,6 +20,11 @@ router.post('/logout', authMiddleware, authController.logout);
 router.put('/profile-picture', authMiddleware, authController.updateProfilePictureUrl);
 router.delete('/profile-picture', authMiddleware, authController.removeProfilePicture);
 
+// User content routes for profile pages
+router.get('/my-questions', authMiddleware, authController.getUserQuestions);
+router.get('/my-solutions', authMiddleware, authController.getUserSolutions);
+router.get('/my-bookmarks', authMiddleware, authController.getUserBookmarks);
+
 // Admin routes
 router.get('/admin/test', authMiddleware, adminMiddleware, (req, res) => {
   res.json({

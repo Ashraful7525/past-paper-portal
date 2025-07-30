@@ -18,6 +18,7 @@ class Post {
         term = null,
         year = null,
         question_no = null,
+        filterByAuthor = false, // New parameter to filter by author
       } = options;
 
       // Start with a simple query to ensure it works
@@ -36,6 +37,7 @@ class Post {
           p.is_featured,
           p.created_at,
           p.updated_at,
+          p.student_id,
           u.username as author_username,
           u.profile_picture_url as author_profile_picture,
           d.department_name,
@@ -65,6 +67,13 @@ class Post {
 
       let queryParams = [];
       let paramIndex = 1;
+
+      // Add author filter if requested
+      if (filterByAuthor && student_id) {
+        query += ` AND p.student_id = $${paramIndex}`;
+        queryParams.push(student_id);
+        paramIndex++;
+      }
 
       // Add filters
       if (search) {
@@ -111,6 +120,7 @@ class Post {
           query += ' ORDER BY (p.upvotes - p.downvotes + p.view_count * 0.1) DESC, p.created_at DESC';
           break;
         case 'new':
+        case 'recent':
           query += ' ORDER BY p.created_at DESC';
           break;
         case 'top':

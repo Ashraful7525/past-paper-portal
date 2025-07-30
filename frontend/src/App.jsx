@@ -15,6 +15,7 @@ import Register from './pages/Register';
 import UserDashboard from './pages/UserDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import Profile from './pages/Profile';
+import CoursesPage from './pages/CoursesPage';
 import PostDetail from './pages/PostDetail';
 import './App.css';
 
@@ -142,6 +143,34 @@ function App() {
                 <Layout>
                   <ProtectedRoute>
                     <Profile />
+                  </ProtectedRoute>
+                </Layout>
+              } />
+              <Route path="/profile/questions" element={
+                <Layout>
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                </Layout>
+              } />
+              <Route path="/profile/solutions" element={
+                <Layout>
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                </Layout>
+              } />
+              <Route path="/profile/bookmarks" element={
+                <Layout>
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                </Layout>
+              } />
+              <Route path="/courses" element={
+                <Layout>
+                  <ProtectedRoute>
+                    <CoursesPage />
                   </ProtectedRoute>
                 </Layout>
               } />
