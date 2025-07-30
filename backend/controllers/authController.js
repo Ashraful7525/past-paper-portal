@@ -508,8 +508,19 @@ const authController = {
       
       const unreadCount = await Notification.getUnreadCount(student_id);
 
+      // Process notifications with enhanced JSON for comment notifications
+      const processedNotifications = await Promise.all(
+        notifications.map(async (n) => {
+          if (n.notification_type === 'comment_added' && n.reference_type === 'comment') {
+            return await n.toJSONWithPost();
+          } else {
+            return n.toJSON();
+          }
+        })
+      );
+
       res.json({
-        notifications: notifications.map(n => n.toJSON()),
+        notifications: processedNotifications,
         unreadCount,
         pagination: {
           limit: parseInt(limit),

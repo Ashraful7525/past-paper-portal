@@ -158,6 +158,47 @@ class Notification {
     });
   }
 
+  // Helper method to get post ID from comment ID
+  static async getPostIdFromComment(commentId) {
+    try {
+      const query = `
+        SELECT p.post_id
+        FROM comments c
+        JOIN solutions s ON c.solution_id = s.solution_id
+        JOIN questions q ON s.question_id = q.question_id
+        JOIN posts p ON q.question_id = p.question_id
+        WHERE c.comment_id = $1
+      `;
+      
+      const result = await pool.query(query, [commentId]);
+      
+      if (result.rows.length === 0) {
+        return null;
+      }
+      
+      return result.rows[0].post_id;
+    } catch (error) {
+      console.error('Error getting post ID from comment:', error);
+      return null;
+    }
+  }
+
+  // Enhanced toJSON method that resolves comment to post
+  async toJSONWithPost() {
+    const baseJSON = this.toJSON();
+    
+    // If this is a comment notification, try to resolve the post ID
+    if (this.notification_type === 'comment_added' && this.reference_type === 'comment') {
+      const postId = await Notification.getPostIdFromComment(this.reference_id);
+      if (postId) {
+        baseJSON.related_post_id = postId;
+        baseJSON.navigation_url = `/post/${postId}`;
+      }
+    }
+    
+    return baseJSON;
+  }
+
   toJSON() {
     return {
       id: this.notification_id,
@@ -216,6 +257,11 @@ class Notification {
           return `/post/${this.reference_id}`;
         } else if (this.reference_type === 'solution') {
           return `/solution/${this.reference_id}`;
+        } else if (this.reference_type === 'comment') {
+          // For comment references, we need to find the post that contains this comment
+          // This will be handled asynchronously, so return null for now
+          // The frontend will use the comment ID for highlighting
+          return null;
         }
         return null;
       

@@ -33,11 +33,41 @@ router.post('/:solution_id/comments', authMiddleware, async (req, res) => {
       parent_comment_id ? parseInt(parent_comment_id) : null
     );
 
-    // Create notification for the solution owner about new comment
+    // Create notifications for comment interactions
     try {
       const pool = (await import('../config/db.js')).default;
       
-      // Get solution owner and parent post information
+      // 1. If this is a reply to another comment, notify the parent comment author
+      if (parent_comment_id) {
+        const parentCommentQuery = `
+          SELECT student_id FROM comments WHERE comment_id = $1
+        `;
+        const parentResult = await pool.query(parentCommentQuery, [parseInt(parent_comment_id)]);
+        
+        if (parentResult.rows.length > 0) {
+          const parentCommentAuthorId = parentResult.rows[0].student_id;
+          
+          // Don't notify if user replies to their own comment
+          if (parentCommentAuthorId !== student_id) {
+            const replyNotificationQuery = `
+              INSERT INTO notifications (
+                student_id, message, notification_type, 
+                reference_id, reference_type
+              ) VALUES ($1, $2, $3, $4, $5)
+            `;
+            
+            await pool.query(replyNotificationQuery, [
+              parentCommentAuthorId,
+              'Someone replied to your comment',
+              'comment_added',
+              comment.comment_id, // reference_id is the new comment ID
+              'comment' // reference_type is 'comment'
+            ]);
+          }
+        }
+      }
+      
+      // 2. Notify the solution owner about new comment (if not a reply or if different from parent author)
       const solutionQuery = `
         SELECT s.student_id, p.post_id 
         FROM solutions s
@@ -52,16 +82,32 @@ router.post('/:solution_id/comments', authMiddleware, async (req, res) => {
         const postId = solutionResult.rows[0].post_id;
         
         // Don't notify if user comments on their own solution
-        if (solutionOwnerId !== student_id) {
-          // Import and create notification
-          const Notification = (await import('../models/Notification.js')).default;
-          await Notification.create({
-            student_id: solutionOwnerId,
-            notification_type: 'comment_added',
-            message: 'Someone commented on your solution',
-            reference_id: postId, // Store post ID for navigation
-            reference_type: 'post' // Reference type is post for navigation
-          });
+        // Also don't duplicate notification if solution owner is same as parent comment author
+        let shouldNotifySolutionOwner = solutionOwnerId !== student_id;
+        
+        if (parent_comment_id && shouldNotifySolutionOwner) {
+          const parentCommentQuery = `SELECT student_id FROM comments WHERE comment_id = $1`;
+          const parentResult = await pool.query(parentCommentQuery, [parseInt(parent_comment_id)]);
+          if (parentResult.rows.length > 0 && parentResult.rows[0].student_id === solutionOwnerId) {
+            shouldNotifySolutionOwner = false; // Already notified as parent comment author
+          }
+        }
+        
+        if (shouldNotifySolutionOwner) {
+          const solutionNotificationQuery = `
+            INSERT INTO notifications (
+              student_id, message, notification_type, 
+              reference_id, reference_type
+            ) VALUES ($1, $2, $3, $4, $5)
+          `;
+          
+          await pool.query(solutionNotificationQuery, [
+            solutionOwnerId,
+            parent_comment_id ? 'Someone replied to a comment on your solution' : 'Someone commented on your solution',
+            'comment_added',
+            comment.comment_id, // reference_id is the comment ID
+            'comment' // reference_type is 'comment'
+          ]);
         }
       }
     } catch (notificationError) {

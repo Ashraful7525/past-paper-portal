@@ -103,6 +103,10 @@ const NotificationCard = () => {
   };
 
   const handleNotificationClick = async (notification) => {
+    console.log('🔔 NOTIFICATION CLICKED - START');
+    console.log('🔍 Notification type:', notification.type);
+    console.log('🔍 Full notification object:', notification);
+    
     // Mark as read when clicked
     if (!notification.is_read) {
       markAsRead(notification.id);
@@ -112,15 +116,7 @@ const NotificationCard = () => {
     let navigationUrl = null;
     let highlightParams = null;
 
-    console.log('🔔 Notification clicked:', notification);
-    console.log('🔍 Notification properties:', {
-      id: notification.id,
-      type: notification.type,
-      related_post_id: notification.related_post_id,
-      related_solution_id: notification.related_solution_id,
-      related_comment_id: notification.related_comment_id,
-      navigation_url: notification.navigation_url
-    });
+    console.log('� Processing notification type:', notification.type);
 
     switch (notification.type) {
       case 'solution_upvote':
@@ -152,12 +148,14 @@ const NotificationCard = () => {
           const possibleCommentId = 
             notification.related_comment_id || 
             notification.comment_id || 
+            notification.reference_id || // This should be the actual comment ID from schema
             notification.content_id ||
-            notification.id; // Sometimes the notification ID itself might be the comment ID
+            notification.id; // Fallback to notification ID
             
           console.log('🔍 Possible comment ID sources:', {
             related_comment_id: notification.related_comment_id,
             comment_id: notification.comment_id,
+            reference_id: notification.reference_id,
             content_id: notification.content_id,
             notification_id: notification.id,
             chosen: possibleCommentId
@@ -190,11 +188,43 @@ const NotificationCard = () => {
       case 'post_downvote':
       case 'content_verified':
       default:
-        // For post notifications, navigate directly
-        if (notification.navigation_url) {
-          navigationUrl = notification.navigation_url;
-        } else if (notification.related_post_id) {
-          navigationUrl = `/post/${notification.related_post_id}`;
+        console.log('🔍 DEFAULT CASE - Notification type:', notification.type);
+        console.log('🔍 Using fallback navigation logic');
+        
+        // Check if it's any type of comment-related notification
+        if (notification.type.includes('comment') || notification.message?.toLowerCase().includes('comment')) {
+          console.log('💬 FALLBACK: Detected comment-related notification');
+          if (notification.related_post_id) {
+            const possibleCommentId = 
+              notification.related_comment_id || 
+              notification.comment_id || 
+              notification.reference_id || // Check reference_id from schema
+              notification.content_id ||
+              notification.id;
+              
+            console.log('🔍 FALLBACK comment ID sources:', {
+              related_comment_id: notification.related_comment_id,
+              comment_id: notification.comment_id,
+              reference_id: notification.reference_id,
+              content_id: notification.content_id,
+              notification_id: notification.id,
+              chosen: possibleCommentId
+            });
+              
+            if (possibleCommentId) {
+              navigationUrl = `/post/${notification.related_post_id}?highlight=comment&id=${possibleCommentId}`;
+              console.log('✅ FALLBACK comment URL:', navigationUrl);
+            } else {
+              navigationUrl = `/post/${notification.related_post_id}`;
+            }
+          }
+        } else {
+          // For post notifications, navigate directly
+          if (notification.navigation_url) {
+            navigationUrl = notification.navigation_url;
+          } else if (notification.related_post_id) {
+            navigationUrl = `/post/${notification.related_post_id}`;
+          }
         }
         break;
     }
