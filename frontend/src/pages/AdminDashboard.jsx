@@ -546,39 +546,6 @@ const AdminDashboard = () => {
                     </div>
                   </div>
                 </div>
-
-                {/* Admin Actions */}
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/20 border border-gray-200 dark:border-gray-700">
-                  <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">Quick Actions</h3>
-                  </div>
-                  <div className="p-6">
-                    <div className="space-y-4">
-                      <button 
-                        onClick={() => setActiveTab('questions')}
-                        className="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-                      >
-                        <DocumentTextIcon className="h-5 w-5 mr-3" />
-                        Moderate Questions
-                      </button>
-                      <button 
-                        onClick={() => setActiveTab('reports')}
-                        className="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-                      >
-                        <FlagIcon className="h-5 w-5 mr-3" />
-                        Moderate Reports
-                      </button>
-                      <button className="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
-                        <ChartBarIcon className="h-5 w-5 mr-3" />
-                        Analytics & Reports
-                      </button>
-                      <button className="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
-                        <Cog6ToothIcon className="h-5 w-5 mr-3" />
-                        System Settings
-                      </button>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
           </>

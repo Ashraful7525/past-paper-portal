@@ -22,7 +22,7 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
   }
 
   if (adminOnly && !user.is_admin) {
-    return <Navigate to="/user/dashboard" replace />;
+    return <Navigate to="/feed" replace />;
   }
 
   return children;

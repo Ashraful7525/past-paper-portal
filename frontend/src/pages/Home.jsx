@@ -3,8 +3,9 @@ import { Link } from "react-router-dom";
 
 const Home = () => {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 p-6">
-      <div className="max-w-4xl mx-auto text-center">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="flex flex-col items-center justify-center py-16 px-6">
+        <div className="max-w-4xl mx-auto text-center">
         <h1 className="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-4">
           Welcome to Past Paper Portal!
         </h1>
@@ -59,6 +60,47 @@ const Home = () => {
             Sign In
           </Link>
         </div>
+        
+        {/* Spacing to push footer down */}
+        <div style={{ height: '40vh' }}></div>
+      </div>
+      
+      {/* Professional Footer - Reduced height */}
+      <footer className="w-full py-4 px-6 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        <div className="max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+            {/* Company Info */}
+            <div className="text-center md:text-left">
+              <h4 className="text-base font-semibold text-gray-900 dark:text-white mb-2">
+                Past Paper Portal
+              </h4>
+              <p className="text-xs text-gray-600 dark:text-gray-300">
+                Academic resources for students.
+              </p>
+            </div>
+            
+            {/* Developer Info */}
+            <div className="text-center md:text-right">
+              <h4 className="text-base font-semibold text-gray-900 dark:text-white mb-2">
+                Developer
+              </h4>
+              <p className="text-xs text-gray-600 dark:text-gray-300">
+                Developed by
+              </p>
+              <p className="text-xs font-medium text-blue-600 dark:text-blue-400">
+                Hotasha Software
+              </p>
+            </div>
+          </div>
+          
+          {/* Bottom Copyright */}
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-3 text-center">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              © 2025 Past Paper Portal. All rights reserved. | Developed by Hotasha Software
+            </p>
+          </div>
+        </div>
+      </footer>
       </div>
     </div>
   );

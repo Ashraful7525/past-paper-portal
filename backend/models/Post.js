@@ -101,6 +101,18 @@ class Post {
         paramIndex++;
       }
 
+      // Add forYou filter - only show posts from enrolled courses
+      if (forYou && student_id) {
+        query += ` AND c.course_id IN (
+          SELECT e.course_id 
+          FROM public.enrollments e 
+          WHERE e.student_id = $${paramIndex} 
+          AND e.is_currently_enrolled = true
+        )`;
+        queryParams.push(student_id);
+        paramIndex++;
+      }
+
       // Add time filter
       if (timeRange !== 'all') {
         const timeMap = {

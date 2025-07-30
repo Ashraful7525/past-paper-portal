@@ -22,7 +22,7 @@ const Register = () => {
   // Redirect if already logged in
   useEffect(() => {
     if (user) {
-      navigate(user.is_admin ? '/admin/dashboard' : '/user/dashboard');
+      navigate(user.is_admin ? '/admin/dashboard' : '/feed');
     }
   }, [user, navigate]);
 

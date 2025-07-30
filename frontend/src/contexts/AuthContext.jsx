@@ -206,9 +206,9 @@ export const AuthProvider = ({ children }) => {
       
       // Redirect based on role
       if (userWithBooleanAdmin.is_admin) {
-        navigate('/admin/dashboard');
+        navigate('/admin/dashboard'); // Admins still go to admin dashboard
       } else {
-        navigate('/user/dashboard');
+        navigate('/feed'); // Regular users go to feed/home
       }
       
       toast.success('Registration successful! Welcome to Past Paper Portal!');
@@ -229,9 +229,9 @@ export const AuthProvider = ({ children }) => {
       
       // Redirect based on role
       if (userWithBooleanAdmin.is_admin) {
-        navigate('/admin/dashboard');
+        navigate('/admin/dashboard'); // Admins still go to admin dashboard
       } else {
-        navigate('/user/dashboard');
+        navigate('/feed'); // Regular users go to feed/home
       }
       
       toast.success('Login successful!');

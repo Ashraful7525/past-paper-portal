@@ -18,7 +18,7 @@ const Login = () => {
   // Redirect if already logged in
   useEffect(() => {
     if (user) {
-      const from = location.state?.from?.pathname || (user.is_admin ? '/admin/dashboard' : '/user/dashboard');
+      const from = location.state?.from?.pathname || (user.is_admin ? '/admin/dashboard' : '/feed');
       navigate(from, { replace: true });
     }
   }, [user, navigate, location]);
@@ -35,19 +35,6 @@ const Login = () => {
       ...formData,
       [e.target.name]: e.target.value,
     });
-  };
-
-  // Quick login buttons for testing
-  const quickLogin = (userType) => {
-    if (userType === 'admin') {
-      const adminData = { email: 'admin@example.com', password: '123' };
-      setFormData(adminData);
-      login(adminData);
-    } else {
-      const userData = { email: 'user@example.com', password: '123' };
-      setFormData(userData);
-      login(userData);
-    }
   };
 
   return (
@@ -142,36 +129,6 @@ const Login = () => {
             >
               {isLoggingIn ? 'Signing in...' : 'Sign in'}
             </button>
-          </div>
-
-          {/* Quick login buttons for testing */}
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300 dark:border-gray-600" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-gray-50 dark:bg-gray-900 text-gray-500 dark:text-gray-400">Quick Login (Testing)</span>
-              </div>
-            </div>
-            <div className="mt-6 grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => quickLogin('admin')}
-                disabled={isLoggingIn}
-                className="group relative w-full flex justify-center py-2 px-4 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-              >
-                Admin Login
-              </button>
-              <button
-                type="button"
-                onClick={() => quickLogin('user')}
-                disabled={isLoggingIn}
-                className="group relative w-full flex justify-center py-2 px-4 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-              >
-                User Login
-              </button>
-            </div>
           </div>
 
           <div className="text-center">
