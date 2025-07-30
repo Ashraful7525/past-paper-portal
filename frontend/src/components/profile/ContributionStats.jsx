@@ -2,14 +2,35 @@ import React from 'react';
 import { 
   Award, 
   Trophy,
-  Flame
+  Flame,
+  Zap,
+  Target
 } from 'lucide-react';
 
 const ContributionStats = ({ contributionData, userStats }) => {
-  if (!contributionData && !userStats) return null;
+  try {
+    // Early return if no data available
+    if (!contributionData && !userStats) {
+      return null;
+    }
 
-  // Use contributionData if available, otherwise fall back to userStats
-  const data = contributionData || userStats;
+    // Use contributionData if available, otherwise fall back to userStats
+    const data = contributionData || userStats;
+    
+    // Ensure data is an object and has the required properties
+    if (!data || typeof data !== 'object') {
+      console.error('ContributionStats: Invalid data provided', { contributionData, userStats });
+      return null;
+    }
+
+    // Provide default values for all required properties
+    const safeData = {
+      reputation_tier: data.reputation_tier || 'Bronze',
+      contribution: data.contribution || 0,
+      current_streak: data.current_streak || 0,
+      longest_streak: data.longest_streak || 0,
+      ...data
+    };
   
   // Tier configuration with proper styling
   const getTierConfig = (tier) => {
@@ -53,7 +74,7 @@ const ContributionStats = ({ contributionData, userStats }) => {
     return configs[tier] || configs.Bronze;
   };
 
-  const currentTier = data.reputation_tier || 'Bronze';
+  const currentTier = safeData.reputation_tier || 'Bronze';
   const tierConfig = getTierConfig(currentTier);
   const TierIcon = tierConfig.icon;
 
@@ -74,7 +95,7 @@ const ContributionStats = ({ contributionData, userStats }) => {
       return { nextTier: null, progress: 100, pointsNeeded: 0 };
     }
 
-    const currentPoints = data.contribution || 0;
+    const currentPoints = safeData.contribution || 0;
     const pointsInCurrentTier = currentPoints - tiers[currentTierIndex].min;
     const pointsForNextTier = nextTier.min - tiers[currentTierIndex].min;
     const progress = Math.min((pointsInCurrentTier / pointsForNextTier) * 100, 100);
@@ -112,7 +133,7 @@ const ContributionStats = ({ contributionData, userStats }) => {
             <div className="flex items-center justify-center space-x-2 mb-4">
               <Award className="w-4 h-4 text-amber-500" />
               <span className="text-lg font-bold text-amber-600 dark:text-amber-400">
-                {data.contribution || 0} points
+                {safeData.contribution || 0} points
               </span>
             </div>
 
@@ -147,7 +168,7 @@ const ContributionStats = ({ contributionData, userStats }) => {
       </div>
 
       {/* Streak Information */}
-      {(data.current_streak > 0 || data.longest_streak > 0) && (
+      {(safeData.current_streak > 0 || safeData.longest_streak > 0) && (
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden transition-all duration-200 hover:shadow-md">
           <div className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 px-4 py-3 border-b border-gray-100 dark:border-gray-600">
             <div className="flex items-center">
@@ -164,7 +185,7 @@ const ContributionStats = ({ contributionData, userStats }) => {
                 </div>
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Current Streak</p>
                 <p className="text-xl font-bold text-orange-600 dark:text-orange-400">
-                  {data.current_streak || 0}
+                  {safeData.current_streak || 0}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">days</p>
               </div>
@@ -175,7 +196,7 @@ const ContributionStats = ({ contributionData, userStats }) => {
                 </div>
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Best Streak</p>
                 <p className="text-xl font-bold text-red-600 dark:text-red-400">
-                  {data.longest_streak || 0}
+                  {safeData.longest_streak || 0}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">days</p>
               </div>
@@ -185,6 +206,16 @@ const ContributionStats = ({ contributionData, userStats }) => {
       )}
     </div>
   );
+  } catch (error) {
+    console.error('ContributionStats component error:', error);
+    return (
+      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+        <p className="text-red-600 dark:text-red-400 text-sm">
+          Error loading contribution stats. Please refresh the page.
+        </p>
+      </div>
+    );
+  }
 };
 
 export default ContributionStats;

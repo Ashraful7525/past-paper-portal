@@ -40,14 +40,16 @@ const Header = ({ searchFilters, onSearchChange }) => {
             <nav className="flex items-center h-10 sm:h-12 space-x-1 sm:space-x-2 lg:space-x-3">
               {isAuthenticated && (
                 <>
-                  <Link 
-                    to="/user/dashboard" 
-                    className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-colors font-medium text-sm sm:text-base px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 h-8 sm:h-10 flex items-center gap-1"
-                  >
-                    <UserCircle className="h-4 w-4 mr-1" />
-                    <span className="hidden sm:inline">Dashboard</span>
-                    <span className="sm:hidden">Dash</span>
-                  </Link>
+                  {isAdmin && (
+                    <Link 
+                      to="/admin/dashboard" 
+                      className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors font-medium text-sm sm:text-base px-2 py-1 rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/20 h-8 sm:h-10 flex items-center gap-1"
+                    >
+                      <ShieldCheck className="h-4 w-4 mr-1" />
+                      <span className="hidden sm:inline">Admin Dashboard</span>
+                      <span className="sm:hidden">Admin</span>
+                    </Link>
+                  )}
                   <Link 
                     to="/profile" 
                     className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-colors font-medium text-sm sm:text-base px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-1 h-8 sm:h-10"

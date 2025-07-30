@@ -33,6 +33,10 @@ const PostDetail = () => {
   const highlightType = searchParams.get('highlight'); // 'solution' or 'comment'
   const highlightId = searchParams.get('id');
 
+  console.log('🔍 PostDetail highlight params:', { highlightType, highlightId });
+  console.log('🔍 Current URL:', window.location.href);
+  console.log('🔍 Search params:', searchParams.toString());
+
   const {
     post,
     solutions,
@@ -102,15 +106,22 @@ const PostDetail = () => {
 
   // Scroll to highlighted content when data is loaded
   useEffect(() => {
+    console.log('🎯 PostDetail highlight effect triggered:', { highlightType, highlightId, hasPost: !!post, solutionsCount: solutions.length });
+    
     if (highlightType && highlightId && (post || solutions.length > 0)) {
       // Add a small delay to ensure DOM is rendered
       const timer = setTimeout(() => {
         if (highlightType === 'comment') {
+          console.log('💬 Processing comment highlight:', highlightId);
           // For comments, we need to first expand the comments section
           // Find the comment element to determine which solution it belongs to
           const commentElement = document.getElementById(`comment-${highlightId}`);
           
+          console.log('🔍 Looking for comment element:', `comment-${highlightId}`);
+          console.log('📍 Comment element found:', !!commentElement);
+          
           if (commentElement) {
+            console.log('✅ Comment found, scrolling and highlighting');
             // Comment is already visible, just highlight it
             commentElement.scrollIntoView({ 
               behavior: 'smooth', 
@@ -121,22 +132,28 @@ const PostDetail = () => {
               commentElement.classList.remove('bg-yellow-100', 'dark:bg-yellow-900/30', 'ring-2', 'ring-yellow-400', 'rounded-lg');
             }, 3000);
           } else {
+            console.log('❌ Comment not visible, expanding comment sections');
             // Comment is not visible, need to expand comments sections
-            // Find all comment buttons and click them to expand comments
+            // Try expanding all comment sections first
             const commentButtons = document.querySelectorAll('[data-expand-comments]');
-            let commentsExpanded = false;
+            console.log('🔄 Found comment buttons:', commentButtons.length);
             
-            commentButtons.forEach(button => {
-              if (!commentsExpanded) {
+            // Expand all comment sections
+            commentButtons.forEach((button, index) => {
+              console.log(`🔄 Checking button ${index}, aria-expanded:`, button.getAttribute('aria-expanded'));
+              if (button.getAttribute('aria-expanded') !== 'true') {
+                console.log(`👆 Clicking button ${index}`);
                 button.click();
-                commentsExpanded = true;
               }
             });
             
-            // Try again after a short delay to allow comments to render
+            // Try again after a delay to allow comments to render
             setTimeout(() => {
               const commentElement = document.getElementById(`comment-${highlightId}`);
+              console.log('🔍 Second attempt - Comment element found:', !!commentElement);
+              
               if (commentElement) {
+                console.log('✅ Comment found on second attempt, scrolling and highlighting');
                 commentElement.scrollIntoView({ 
                   behavior: 'smooth', 
                   block: 'center' 
@@ -145,8 +162,37 @@ const PostDetail = () => {
                 setTimeout(() => {
                   commentElement.classList.remove('bg-yellow-100', 'dark:bg-yellow-900/30', 'ring-2', 'ring-yellow-400', 'rounded-lg');
                 }, 3000);
+              } else {
+                console.warn('❌ Comment element not found after expanding:', `comment-${highlightId}`);
+                console.log('🔍 Available comment elements:', 
+                  Array.from(document.querySelectorAll('[id^="comment-"]')).map(el => el.id)
+                );
+                console.log('🔍 Target comment ID:', highlightId);
+                console.log('🔍 Available comment IDs only:', 
+                  Array.from(document.querySelectorAll('[id^="comment-"]')).map(el => el.id.replace('comment-', ''))
+                );
+                
+                // Try to find a close match or show available options
+                const availableIds = Array.from(document.querySelectorAll('[id^="comment-"]')).map(el => el.id.replace('comment-', ''));
+                console.log('❓ Is the target comment ID in available list?', availableIds.includes(highlightId));
+                
+                // Fallback: If comment not found, at least scroll to the first comment or solution section
+                console.log('🔄 Fallback: Scrolling to comments section since target comment not found');
+                const firstComment = document.querySelector('[id^="comment-"]');
+                const solutionsSection = document.querySelector('[id^="solution-"]');
+                
+                if (firstComment) {
+                  console.log('📍 Scrolling to first available comment');
+                  firstComment.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                } else if (solutionsSection) {
+                  console.log('📍 Scrolling to solutions section');
+                  solutionsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else {
+                  console.log('📍 Scrolling to top of page');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
               }
-            }, 300);
+            }, 500); // Increased delay to ensure DOM updates
           }
         } else {
           // For solutions, use the existing logic

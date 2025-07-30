@@ -144,37 +144,35 @@ const NotificationCard = () => {
       case 'comment_added':
       case 'comment_reply':
         console.log('📝 Processing comment notification...');
-        // For comment notifications, navigate to post
-        // After our fix, comment notifications now store the post ID directly
+        console.log('🔍 Full notification object:', notification);
+        
+        // FORCE comment URL construction for testing
         if (notification.related_post_id) {
-          console.log('✅ Using related_post_id:', notification.related_post_id);
-          navigationUrl = `/post/${notification.related_post_id}`;
-        } else if (notification.navigation_url?.startsWith('/post/')) {
-          console.log('✅ Using navigation_url (post):', notification.navigation_url);
-          navigationUrl = notification.navigation_url;
-        } else if (notification.navigation_url?.startsWith('/solution/')) {
-          console.log('🔄 Resolving solution to post...');
-          // Fallback: Comment on solution - resolve to post first
-          const solutionId = notification.navigation_url.split('/')[2];
-          try {
-            const response = await api.get(`/auth/notifications/solution/${solutionId}/post`);
-            navigationUrl = `/post/${response.data.post_id}`;
-            console.log('✅ Resolved to post:', navigationUrl);
-          } catch (error) {
-            console.error('Failed to resolve solution to post:', error);
-          }
-        } else if (notification.related_comment_id) {
-          console.log('🔄 Fallback: Resolving comment ID to post...');
-          // Fallback for old notifications: Use comment ID to find parent post
-          try {
-            const response = await api.get(`/auth/notifications/comment/${notification.related_comment_id}/post`);
-            navigationUrl = `/post/${response.data.post_id}`;
-            console.log('✅ Resolved comment to post:', navigationUrl);
-          } catch (error) {
-            console.error('Failed to resolve comment to post:', error);
+          // Try to find ANY field that might contain the comment ID
+          const possibleCommentId = 
+            notification.related_comment_id || 
+            notification.comment_id || 
+            notification.content_id ||
+            notification.id; // Sometimes the notification ID itself might be the comment ID
+            
+          console.log('🔍 Possible comment ID sources:', {
+            related_comment_id: notification.related_comment_id,
+            comment_id: notification.comment_id,
+            content_id: notification.content_id,
+            notification_id: notification.id,
+            chosen: possibleCommentId
+          });
+          
+          if (possibleCommentId) {
+            navigationUrl = `/post/${notification.related_post_id}?highlight=comment&id=${possibleCommentId}`;
+            highlightParams = null;
+            console.log('✅ FORCED comment URL:', navigationUrl);
+          } else {
+            console.log('❌ No comment ID found, using post URL only');
+            navigationUrl = `/post/${notification.related_post_id}`;
           }
         } else {
-          console.warn('❌ No valid path found for comment notification');
+          console.log('❌ No related_post_id found');
         }
         break;
 
@@ -203,8 +201,10 @@ const NotificationCard = () => {
 
     // Navigate with highlighting parameters
     if (navigationUrl) {
+      // If highlightParams is null, the URL is already complete
       const fullUrl = highlightParams ? `${navigationUrl}${highlightParams}` : navigationUrl;
       console.log('🎯 Navigating to:', fullUrl);
+      console.log('🔍 URL parts:', { navigationUrl, highlightParams, fullUrl });
       navigate(fullUrl);
     } else {
       console.warn('⚠️ No navigation URL found for notification:', notification);
