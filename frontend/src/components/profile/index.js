@@ -5,3 +5,4 @@ export { default as ContributionStats } from './ContributionStats';
 export { default as CourseEnrollmentSection } from './CourseEnrollmentSection';
 export { default as EnrolledCoursesList } from './EnrolledCoursesList';
 export { default as AddCourseSection } from './AddCourseSection';
+export { default as NotificationCard } from './NotificationCard';

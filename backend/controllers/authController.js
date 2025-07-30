@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import pool from '../config/db.js';
 
 const generateToken = (user) => {
   return jwt.sign(
@@ -485,6 +486,180 @@ const authController = {
       console.error('Recalculate contribution error:', error);
       res.status(500).json({
         message: 'Internal server error while recalculating contribution'
+      });
+    }
+  },
+
+  // ===== NOTIFICATION ENDPOINTS =====
+
+  // Get user notifications
+  async getNotifications(req, res) {
+    try {
+      const { student_id } = req.user;
+      const { limit = 20, offset = 0 } = req.query;
+
+      const Notification = (await import('../models/Notification.js')).default;
+      
+      const notifications = await Notification.getUserNotifications(
+        student_id,
+        parseInt(limit),
+        parseInt(offset)
+      );
+      
+      const unreadCount = await Notification.getUnreadCount(student_id);
+
+      res.json({
+        notifications: notifications.map(n => n.toJSON()),
+        unreadCount,
+        pagination: {
+          limit: parseInt(limit),
+          offset: parseInt(offset),
+          hasMore: notifications.length === parseInt(limit)
+        }
+      });
+    } catch (error) {
+      console.error('Get notifications error:', error);
+      res.status(500).json({
+        message: 'Internal server error while fetching notifications'
+      });
+    }
+  },
+
+  // Mark notification as read
+  async markNotificationAsRead(req, res) {
+    try {
+      const { student_id } = req.user;
+      const { notificationId } = req.params;
+
+      const Notification = (await import('../models/Notification.js')).default;
+      
+      const notification = await Notification.markAsRead(parseInt(notificationId), student_id);
+      
+      if (!notification) {
+        return res.status(404).json({
+          message: 'Notification not found'
+        });
+      }
+
+      res.json({
+        notification: notification.toJSON(),
+        message: 'Notification marked as read'
+      });
+    } catch (error) {
+      console.error('Mark notification as read error:', error);
+      res.status(500).json({
+        message: 'Internal server error while marking notification as read'
+      });
+    }
+  },
+
+  // Mark all notifications as read
+  async markAllNotificationsAsRead(req, res) {
+    try {
+      const { student_id } = req.user;
+
+      const Notification = (await import('../models/Notification.js')).default;
+      
+      const updatedCount = await Notification.markAllAsRead(student_id);
+
+      res.json({
+        updatedCount,
+        message: `${updatedCount} notifications marked as read`
+      });
+    } catch (error) {
+      console.error('Mark all notifications as read error:', error);
+      res.status(500).json({
+        message: 'Internal server error while marking all notifications as read'
+      });
+    }
+  },
+
+  // Delete notification
+  async deleteNotification(req, res) {
+    try {
+      const { student_id } = req.user;
+      const { notificationId } = req.params;
+
+      const Notification = (await import('../models/Notification.js')).default;
+      
+      const deleted = await Notification.delete(parseInt(notificationId), student_id);
+      
+      if (!deleted) {
+        return res.status(404).json({
+          message: 'Notification not found'
+        });
+      }
+
+      res.json({
+        message: 'Notification deleted successfully'
+      });
+    } catch (error) {
+      console.error('Delete notification error:', error);
+      res.status(500).json({
+        message: 'Internal server error while deleting notification'
+      });
+    }
+  },
+
+  // Get post ID from solution ID (for navigation)
+  async getPostFromSolution(req, res) {
+    try {
+      const { solutionId } = req.params;
+
+      const Notification = (await import('../models/Notification.js')).default;
+      const postData = await Notification.getPostIdFromSolution(parseInt(solutionId));
+      
+      if (!postData) {
+        return res.status(404).json({
+          message: 'Solution not found or not associated with any post'
+        });
+      }
+
+      res.json({
+        post_id: postData.post_id,
+        post_title: postData.post_title
+      });
+    } catch (error) {
+      console.error('Get post from solution error:', error);
+      res.status(500).json({
+        message: 'Internal server error while resolving solution to post'
+      });
+    }
+  },
+
+  // Get post ID from comment ID (for navigation)
+  async getPostFromComment(req, res) {
+    try {
+      const { commentId } = req.params;
+
+      const pool = (await import('../config/db.js')).default;
+      
+      // Get post ID from comment via solution
+      const query = `
+        SELECT p.post_id, p.title
+        FROM comments c
+        JOIN solutions s ON c.solution_id = s.solution_id
+        JOIN questions q ON s.question_id = q.question_id
+        JOIN posts p ON q.question_id = p.question_id
+        WHERE c.comment_id = $1
+      `;
+      
+      const result = await pool.query(query, [parseInt(commentId)]);
+      
+      if (result.rows.length === 0) {
+        return res.status(404).json({
+          message: 'Comment not found or not associated with any post'
+        });
+      }
+
+      res.json({
+        post_id: result.rows[0].post_id,
+        post_title: result.rows[0].title
+      });
+    } catch (error) {
+      console.error('Get post from comment error:', error);
+      res.status(500).json({
+        message: 'Internal server error while resolving comment to post'
       });
     }
   }

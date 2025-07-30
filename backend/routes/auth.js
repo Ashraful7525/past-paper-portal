@@ -29,6 +29,14 @@ router.get('/my-bookmarks', authMiddleware, authController.getUserBookmarks);
 router.get('/contribution', authMiddleware, authController.getContributionData);
 router.post('/recalculate-contribution', authMiddleware, authController.recalculateContribution);
 
+// Notification routes
+router.get('/notifications', authMiddleware, authController.getNotifications);
+router.patch('/notifications/:notificationId/read', authMiddleware, authController.markNotificationAsRead);
+router.patch('/notifications/read-all', authMiddleware, authController.markAllNotificationsAsRead);
+router.delete('/notifications/:notificationId', authMiddleware, authController.deleteNotification);
+router.get('/notifications/solution/:solutionId/post', authMiddleware, authController.getPostFromSolution);
+router.get('/notifications/comment/:commentId/post', authMiddleware, authController.getPostFromComment);
+
 // Admin routes
 router.get('/admin/test', authMiddleware, adminMiddleware, (req, res) => {
   res.json({

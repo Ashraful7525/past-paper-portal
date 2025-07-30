@@ -326,6 +326,29 @@ const postsController = {
 
       const solution = await Solution.addSolution(parseInt(post_id), student_id, content.trim(), file_url);
       
+      // Create notification for the post owner about new solution
+      try {
+        // Get post owner
+        const postQuery = `SELECT student_id FROM posts WHERE post_id = $1`;
+        const postResult = await pool.query(postQuery, [parseInt(post_id)]);
+        
+        if (postResult.rows.length > 0) {
+          const postOwnerId = postResult.rows[0].student_id;
+          
+          // Import and create notification
+          const Notification = (await import('../models/Notification.js')).default;
+          await Notification.createSolutionNotification(
+            postOwnerId, 
+            student_id, 
+            parseInt(post_id), 
+            solution.solution_id
+          );
+        }
+      } catch (notificationError) {
+        console.error('Error creating solution notification:', notificationError);
+        // Don't fail the solution creation if notification fails
+      }
+      
       res.status(201).json({ 
         success: true,
         message: 'Solution added successfully',
@@ -371,6 +394,32 @@ const postsController = {
       }
 
       const result = await Vote.votePost(parseInt(post_id), student_id, voteType);
+      
+      // Create notification for vote (only for upvotes/downvotes, not for removing votes)
+      if (voteType !== 0) {
+        try {
+          // Get post owner
+          const postQuery = `SELECT student_id FROM posts WHERE post_id = $1`;
+          const postResult = await pool.query(postQuery, [parseInt(post_id)]);
+          
+          if (postResult.rows.length > 0) {
+            const postOwnerId = postResult.rows[0].student_id;
+            
+            // Import and create notification
+            const Notification = (await import('../models/Notification.js')).default;
+            await Notification.createVoteNotification(
+              postOwnerId, 
+              student_id, 
+              parseInt(post_id), 
+              voteType, 
+              'post'
+            );
+          }
+        } catch (notificationError) {
+          console.error('Error creating vote notification:', notificationError);
+          // Don't fail the vote if notification fails
+        }
+      }
       
       res.json({ 
         success: true, 

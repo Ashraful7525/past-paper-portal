@@ -373,6 +373,7 @@ const SolutionCard = ({
                 <button
                   onClick={() => setShowComments(!showComments)}
                   className="flex items-center space-x-1 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+                  data-expand-comments
                 >
                   <ChatBubbleLeftIcon className="h-4 w-4" />
                   <span className="font-medium">Comment</span>

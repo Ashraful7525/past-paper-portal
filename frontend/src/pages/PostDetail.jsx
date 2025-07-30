@@ -105,24 +105,88 @@ const PostDetail = () => {
     if (highlightType && highlightId && (post || solutions.length > 0)) {
       // Add a small delay to ensure DOM is rendered
       const timer = setTimeout(() => {
-        const element = document.getElementById(`${highlightType}-${highlightId}`);
-        if (element) {
-          element.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'center' 
-          });
-          // Add a temporary highlight effect
-          element.classList.add('bg-yellow-100', 'dark:bg-yellow-900/30', 'ring-2', 'ring-yellow-400', 'rounded-lg');
-          // Remove highlight after 3 seconds
-          setTimeout(() => {
-            element.classList.remove('bg-yellow-100', 'dark:bg-yellow-900/30', 'ring-2', 'ring-yellow-400', 'rounded-lg');
-          }, 3000);
+        if (highlightType === 'comment') {
+          // For comments, we need to first expand the comments section
+          // Find the comment element to determine which solution it belongs to
+          const commentElement = document.getElementById(`comment-${highlightId}`);
+          
+          if (commentElement) {
+            // Comment is already visible, just highlight it
+            commentElement.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center' 
+            });
+            commentElement.classList.add('bg-yellow-100', 'dark:bg-yellow-900/30', 'ring-2', 'ring-yellow-400', 'rounded-lg');
+            setTimeout(() => {
+              commentElement.classList.remove('bg-yellow-100', 'dark:bg-yellow-900/30', 'ring-2', 'ring-yellow-400', 'rounded-lg');
+            }, 3000);
+          } else {
+            // Comment is not visible, need to expand comments sections
+            // Find all comment buttons and click them to expand comments
+            const commentButtons = document.querySelectorAll('[data-expand-comments]');
+            let commentsExpanded = false;
+            
+            commentButtons.forEach(button => {
+              if (!commentsExpanded) {
+                button.click();
+                commentsExpanded = true;
+              }
+            });
+            
+            // Try again after a short delay to allow comments to render
+            setTimeout(() => {
+              const commentElement = document.getElementById(`comment-${highlightId}`);
+              if (commentElement) {
+                commentElement.scrollIntoView({ 
+                  behavior: 'smooth', 
+                  block: 'center' 
+                });
+                commentElement.classList.add('bg-yellow-100', 'dark:bg-yellow-900/30', 'ring-2', 'ring-yellow-400', 'rounded-lg');
+                setTimeout(() => {
+                  commentElement.classList.remove('bg-yellow-100', 'dark:bg-yellow-900/30', 'ring-2', 'ring-yellow-400', 'rounded-lg');
+                }, 3000);
+              }
+            }, 300);
+          }
+        } else {
+          // For solutions, use the existing logic
+          const element = document.getElementById(`${highlightType}-${highlightId}`);
+          if (element) {
+            element.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center' 
+            });
+            // Add a temporary highlight effect
+            element.classList.add('bg-yellow-100', 'dark:bg-yellow-900/30', 'ring-2', 'ring-yellow-400', 'rounded-lg');
+            // Remove highlight after 3 seconds
+            setTimeout(() => {
+              element.classList.remove('bg-yellow-100', 'dark:bg-yellow-900/30', 'ring-2', 'ring-yellow-400', 'rounded-lg');
+            }, 3000);
+          }
         }
       }, 500);
       
       return () => clearTimeout(timer);
+    } else {
+      // Check if this is a comment notification navigation (no highlight params but from notification)
+      const isFromCommentNotification = location.state?.fromCommentNotification || 
+        (document.referrer.includes('/profile') && solutions.length > 0);
+      
+      if (isFromCommentNotification) {
+        // Auto-expand all comments sections for comment notifications
+        const timer = setTimeout(() => {
+          const commentButtons = document.querySelectorAll('[data-expand-comments]');
+          commentButtons.forEach(button => {
+            if (button.textContent.includes('Comment') && !button.textContent.includes('0')) {
+              button.click();
+            }
+          });
+        }, 500);
+        
+        return () => clearTimeout(timer);
+      }
     }
-  }, [highlightType, highlightId, post, solutions]);
+  }, [highlightType, highlightId, post, solutions, location.state]);
 
   const handleAddSolutionSubmit = (solutionText, file) => {
     handleAddSolution(solutionText, file);

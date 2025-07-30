@@ -33,6 +33,42 @@ router.post('/:solution_id/comments', authMiddleware, async (req, res) => {
       parent_comment_id ? parseInt(parent_comment_id) : null
     );
 
+    // Create notification for the solution owner about new comment
+    try {
+      const pool = (await import('../config/db.js')).default;
+      
+      // Get solution owner and parent post information
+      const solutionQuery = `
+        SELECT s.student_id, p.post_id 
+        FROM solutions s
+        JOIN questions q ON s.question_id = q.question_id
+        JOIN posts p ON q.question_id = p.question_id
+        WHERE s.solution_id = $1
+      `;
+      const solutionResult = await pool.query(solutionQuery, [parseInt(solution_id)]);
+      
+      if (solutionResult.rows.length > 0) {
+        const solutionOwnerId = solutionResult.rows[0].student_id;
+        const postId = solutionResult.rows[0].post_id;
+        
+        // Don't notify if user comments on their own solution
+        if (solutionOwnerId !== student_id) {
+          // Import and create notification
+          const Notification = (await import('../models/Notification.js')).default;
+          await Notification.create({
+            student_id: solutionOwnerId,
+            notification_type: 'comment_added',
+            message: 'Someone commented on your solution',
+            reference_id: postId, // Store post ID for navigation
+            reference_type: 'post' // Reference type is post for navigation
+          });
+        }
+      }
+    } catch (notificationError) {
+      console.error('Error creating comment notification:', notificationError);
+      // Don't fail the comment creation if notification fails
+    }
+
     res.status(201).json({
       success: true,
       message: 'Comment added successfully',

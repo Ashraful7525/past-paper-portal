@@ -48,6 +48,33 @@ const solutionsController = {
 
       const result = await Vote.voteSolution(parseInt(solution_id), student_id, voteType);
       
+      // Create notification for vote (only for upvotes/downvotes, not for removing votes)
+      if (voteType !== 0) {
+        try {
+          // Get solution owner
+          const pool = (await import('../config/db.js')).default;
+          const solutionQuery = `SELECT student_id FROM solutions WHERE solution_id = $1`;
+          const solutionResult = await pool.query(solutionQuery, [parseInt(solution_id)]);
+          
+          if (solutionResult.rows.length > 0) {
+            const solutionOwnerId = solutionResult.rows[0].student_id;
+            
+            // Import and create notification
+            const Notification = (await import('../models/Notification.js')).default;
+            await Notification.create({
+              student_id: solutionOwnerId,
+              notification_type: `solution_${voteType > 0 ? 'upvote' : 'downvote'}`,
+              message: `Someone ${voteType > 0 ? 'upvoted' : 'downvoted'} your solution`,
+              reference_id: parseInt(solution_id),
+              reference_type: 'solution'
+            });
+          }
+        } catch (notificationError) {
+          console.error('Error creating solution vote notification:', notificationError);
+          // Don't fail the vote if notification fails
+        }
+      }
+      
       console.log('✅ [VOTE SOLUTION] Vote successful:', {
         solution_id: parseInt(solution_id),
         student_id,

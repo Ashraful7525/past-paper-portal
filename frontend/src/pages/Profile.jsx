@@ -11,6 +11,7 @@ import CourseEnrollmentSection from '../components/profile/CourseEnrollmentSecti
 import UserQuestionsList from '../components/profile/UserQuestionsList';
 import UserSolutionsList from '../components/profile/UserSolutionsList';
 import UserBookmarksList from '../components/profile/UserBookmarksList';
+import NotificationCard from '../components/profile/NotificationCard';
 import { 
   MessageCircleIcon, 
   FileTextIcon, 
@@ -396,6 +397,9 @@ const Profile = () => {
 
           {/* Sidebar Column - spans 1 column */}
           <div className="lg:col-span-1 space-y-6">
+            {/* Notifications */}
+            <NotificationCard />
+            
             {/* Enhanced Contribution Stats with Tier Badge */}
             {contributionData ? (
               <ContributionStats 
