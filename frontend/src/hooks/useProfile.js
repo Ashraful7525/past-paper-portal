@@ -62,22 +62,32 @@ export const useProfile = (user) => {
   };
 };
 
+// Hook to fetch detailed contribution data
+export const useContributionData = () => {
+  return useQuery({
+    queryKey: ['contributionData'],
+    queryFn: async () => {
+      const response = await api.get('/auth/contribution');
+      return response.data.contribution;
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnWindowFocus: false,
+  });
+};
+
 // User profile data hooks
 export const useUserQuestions = (options = {}) => {
   const { limit = 20, offset = 0, sortBy = 'recent' } = options;
   
   return useQuery({
-    queryKey: ['userQuestions', { limit, offset, sortBy }],
+    queryKey: ['userQuestions', limit, offset, sortBy],
     queryFn: async () => {
-      const params = new URLSearchParams({
-        limit: limit.toString(),
-        offset: offset.toString(),
-        sortBy
+      const response = await api.get('/auth/my-questions', {
+        params: { limit, offset, sortBy }
       });
-      const response = await api.get(`/auth/my-questions?${params}`);
       return response.data;
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 1000 * 60 * 2, // 2 minutes
   });
 };
 
@@ -85,35 +95,28 @@ export const useUserSolutions = (options = {}) => {
   const { limit = 20, offset = 0, sortBy = 'recent' } = options;
   
   return useQuery({
-    queryKey: ['userSolutions', { limit, offset, sortBy }],
+    queryKey: ['userSolutions', limit, offset, sortBy],
     queryFn: async () => {
-      const params = new URLSearchParams({
-        limit: limit.toString(),
-        offset: offset.toString(),
-        sortBy
+      const response = await api.get('/auth/my-solutions', {
+        params: { limit, offset, sortBy }
       });
-      const response = await api.get(`/auth/my-solutions?${params}`);
       return response.data;
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 1000 * 60 * 2, // 2 minutes
   });
 };
 
 export const useUserBookmarks = (options = {}) => {
-  const { limit = 20, offset = 0, sortBy = 'recent', type = 'all' } = options;
+  const { limit = 20, offset = 0 } = options;
   
   return useQuery({
-    queryKey: ['userBookmarks', { limit, offset, sortBy, type }],
+    queryKey: ['userBookmarks', limit, offset],
     queryFn: async () => {
-      const params = new URLSearchParams({
-        limit: limit.toString(),
-        offset: offset.toString(),
-        sortBy,
-        type
+      const response = await api.get('/auth/my-bookmarks', {
+        params: { limit, offset }
       });
-      const response = await api.get(`/auth/my-bookmarks?${params}`);
       return response.data;
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 1000 * 60 * 2, // 2 minutes
   });
 };

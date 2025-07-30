@@ -1,4 +1,5 @@
 import pool from '../config/db.js';
+import ContributionManager from './ContributionManager.js';
 
 class Comment {
   // Get flagged comments for admin moderation
@@ -211,6 +212,16 @@ class Comment {
       
       const insertResult = await client.query(insertQuery, [solutionId, studentId, content, parentCommentId]);
       
+      // Award contribution points for creating a comment
+      await ContributionManager.awardContentCreationPoints(
+        studentId, 
+        'comment', 
+        false, // isVerified
+        false, // isApproved 
+        false, // isFeatured
+        client
+      );
+
       // Get the author username
       const userQuery = 'SELECT username FROM public.users WHERE student_id = $1';
       const userResult = await client.query(userQuery, [studentId]);

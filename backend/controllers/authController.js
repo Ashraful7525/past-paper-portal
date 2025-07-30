@@ -448,6 +448,45 @@ const authController = {
         message: 'Internal server error'
       });
     }
+  },
+
+  // Get user's contribution data with streaks and reputation tier
+  async getContributionData(req, res) {
+    try {
+      const { student_id } = req.user;
+      
+      const contributionData = await User.getUserContributionData(student_id);
+      
+      res.json({
+        contribution: contributionData,
+        message: 'Contribution data retrieved successfully'
+      });
+    } catch (error) {
+      console.error('Get contribution data error:', error);
+      res.status(500).json({
+        message: 'Internal server error while fetching contribution data'
+      });
+    }
+  },
+
+  // Recalculate user's contribution points (admin or user action)
+  async recalculateContribution(req, res) {
+    try {
+      const { student_id } = req.user;
+      
+      const result = await User.recalculateContribution(student_id);
+      
+      res.json({
+        recalculatedPoints: result.recalculatedPoints,
+        newTier: result.newTier,
+        message: 'Contribution points recalculated successfully'
+      });
+    } catch (error) {
+      console.error('Recalculate contribution error:', error);
+      res.status(500).json({
+        message: 'Internal server error while recalculating contribution'
+      });
+    }
   }
 };
 

@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useCourses } from '../hooks/useCourses';
-import { useProfile, useUserQuestions, useUserSolutions, useUserBookmarks } from '../hooks/useProfile';
+import { useProfile, useUserQuestions, useUserSolutions, useUserBookmarks, useContributionData } from '../hooks/useProfile';
 import toast, { Toaster } from 'react-hot-toast';
 import ProfileHeader from '../components/profile/ProfileHeader';
 import ProfileStats from '../components/profile/ProfileStats';
+import ContributionStats from '../components/profile/ContributionStats';
 import CourseEnrollmentSection from '../components/profile/CourseEnrollmentSection';
 import UserQuestionsList from '../components/profile/UserQuestionsList';
 import UserSolutionsList from '../components/profile/UserSolutionsList';
@@ -50,6 +51,13 @@ const Profile = () => {
     loading: profileLoading
   } = useProfile(user);
 
+  // Fetch detailed contribution data
+  const { 
+    data: contributionData, 
+    isLoading: contributionLoading, 
+    error: contributionError 
+  } = useContributionData();
+
   const {
     courses,
     enrollments,
@@ -86,6 +94,7 @@ const Profile = () => {
     error: bookmarksErrorObj
   } = useUserBookmarks({ limit: 20, offset: 0 });
 
+  // Loading state
   if (profileLoading || !profile || !user) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-50 dark:bg-gray-900">
@@ -387,6 +396,15 @@ const Profile = () => {
 
           {/* Sidebar Column - spans 1 column */}
           <div className="lg:col-span-1 space-y-6">
+            {/* Enhanced Contribution Stats with Tier Badge */}
+            {contributionData ? (
+              <ContributionStats 
+                contributionData={contributionData} 
+                userStats={stats}
+              />
+            ) : (
+              <ProfileStats stats={stats} />
+            )}
           </div>
         </div>
 
@@ -407,32 +425,30 @@ const Profile = () => {
               <div className="p-6 space-y-4">
                 <CourseEnrollmentSection 
                   enrollments={enrollments}
-                  lastRefresh={lastRefresh}
+                  courses={courses}
+                  departments={departments}
                   coursesLoading={coursesLoading}
-                  refreshAll={refreshAll}
+                  enrollmentLoading={enrollmentLoading}
+                  lastRefresh={lastRefresh}
                   showAddCourse={showAddCourse}
                   setShowAddCourse={setShowAddCourse}
-                  enrollmentLoading={enrollmentLoading}
-                  dropCourse={dropCourse}
-                  departments={departments}
                   selectedDepartment={selectedDepartment}
                   setSelectedDepartment={setSelectedDepartment}
-                  courses={courses}
+                  enrollInCourse={enrollInCourse}
+                  dropCourse={dropCourse}
                   getCoursesByDepartment={getCoursesByDepartment}
                   isEnrolledInCourse={isEnrolledInCourse}
-                  enrollInCourse={enrollInCourse}
+                  refreshAll={refreshAll}
                 />
               </div>
             </div>
           </div>
-          <div className="lg:col-span-1">
-            {/* Empty space to maintain layout consistency */}
-          </div>
         </div>
       </div>
 
-      <Toaster 
-        position="top-right"
+      {/* Toast Container */}
+      <Toaster
+        position="bottom-right"
         toastOptions={{
           duration: 3000,
           style: {

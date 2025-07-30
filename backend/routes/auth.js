@@ -25,6 +25,10 @@ router.get('/my-questions', authMiddleware, authController.getUserQuestions);
 router.get('/my-solutions', authMiddleware, authController.getUserSolutions);
 router.get('/my-bookmarks', authMiddleware, authController.getUserBookmarks);
 
+// Contribution system routes
+router.get('/contribution', authMiddleware, authController.getContributionData);
+router.post('/recalculate-contribution', authMiddleware, authController.recalculateContribution);
+
 // Admin routes
 router.get('/admin/test', authMiddleware, adminMiddleware, (req, res) => {
   res.json({

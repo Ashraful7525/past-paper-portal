@@ -1,4 +1,5 @@
 import pool from '../config/db.js';
+import ContributionManager from './ContributionManager.js';
 
 class Solution {
   // Get pending solutions for admin moderation
@@ -245,6 +246,16 @@ class Solution {
       
       const insertResult = await client.query(insertQuery, [questionId, studentId, content, file_url]);
       
+      // Award contribution points for creating a solution
+      await ContributionManager.awardContentCreationPoints(
+        studentId, 
+        'solution', 
+        false, // isVerified - will be updated when admin verifies
+        false, // isApproved - will be updated when admin approves
+        false, // isFeatured
+        client
+      );
+
       // Get the author username
       const userQuery = 'SELECT username FROM public.users WHERE student_id = $1';
       const userResult = await client.query(userQuery, [studentId]);

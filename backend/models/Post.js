@@ -1,4 +1,5 @@
 import pool from '../config/db.js';
+import ContributionManager from './ContributionManager.js';
 
 class Post {
   static async getFeedPosts(options = {}) {
@@ -283,6 +284,16 @@ class Post {
       const result = await client.query(insertQuery, [
         title, content, preview_text, file_url, file_size, student_id, department_id, question_id
       ]);
+
+      // Award contribution points for creating a post
+      await ContributionManager.awardContentCreationPoints(
+        student_id, 
+        'post', 
+        false, // isVerified - will be updated when admin verifies
+        false, // isApproved 
+        false, // isFeatured
+        client
+      );
 
       await client.query('COMMIT');
       return result.rows[0];

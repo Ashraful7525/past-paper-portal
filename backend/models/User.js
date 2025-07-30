@@ -1,5 +1,6 @@
 import pool from '../config/db.js';
 import bcrypt from 'bcryptjs';
+import ContributionManager from './ContributionManager.js';
 
 class User {
   constructor({
@@ -14,7 +15,11 @@ class User {
     profile_picture_filename = null,
     profile_picture_uploaded_at = null,
     created_at = new Date(),
-    updated_at = new Date()
+    updated_at = new Date(),
+    last_activity_date = null,
+    current_streak = 0,
+    longest_streak = 0,
+    reputation_tier = 'Bronze'
   }) {
     this.student_id = student_id;
     this.username = username;
@@ -28,12 +33,24 @@ class User {
     this.profile_picture_uploaded_at = profile_picture_uploaded_at;
     this.created_at = created_at;
     this.updated_at = updated_at;
+    this.last_activity_date = last_activity_date;
+    this.current_streak = current_streak;
+    this.longest_streak = longest_streak;
+    this.reputation_tier = reputation_tier;
   }
 
   // Static methods for database operations
   static async findById(student_id) {
     try {
-      const query = 'SELECT * FROM users WHERE student_id = $1';
+      const query = `
+        SELECT 
+          student_id, username, email, password, is_admin, profile, contribution,
+          profile_picture_url, profile_picture_filename, profile_picture_uploaded_at,
+          created_at, updated_at, last_activity_date, current_streak, 
+          longest_streak, reputation_tier
+        FROM users 
+        WHERE student_id = $1
+      `;
       const result = await pool.query(query, [student_id]);
       
       if (result.rows.length === 0) {
@@ -411,6 +428,26 @@ class User {
     } catch (error) {
       console.error('Error getting user stats:', error);
       throw new Error('Failed to fetch user statistics');
+    }
+  }
+
+  // Get user's contribution summary with new fields
+  static async getUserContributionData(studentId) {
+    try {
+      return await ContributionManager.getUserContributionSummary(studentId);
+    } catch (error) {
+      console.error('Error getting user contribution data:', error);
+      throw new Error('Failed to fetch contribution data');
+    }
+  }
+
+  // Recalculate user's contribution points
+  static async recalculateContribution(studentId) {
+    try {
+      return await ContributionManager.recalculateUserContribution(studentId);
+    } catch (error) {
+      console.error('Error recalculating contribution:', error);
+      throw new Error('Failed to recalculate contribution');
     }
   }
 

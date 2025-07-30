@@ -1,4 +1,5 @@
 import pool from '../config/db.js';
+import ContributionManager from './ContributionManager.js';
 
 class Vote {
   // Post voting methods
@@ -7,15 +8,17 @@ class Vote {
     try {
       await client.query('BEGIN');
 
-      // Check if post exists
+      // Check if post exists and get author info
       const postCheck = await client.query(
-        'SELECT post_id FROM public.posts WHERE post_id = $1',
+        'SELECT post_id, student_id as author_id FROM public.posts WHERE post_id = $1',
         [postId]
       );
 
       if (postCheck.rows.length === 0) {
         throw new Error('Post does not exist');
       }
+
+      const postAuthorId = postCheck.rows[0].author_id;
 
       // Check if user already voted
       const existingVote = await client.query(
@@ -65,6 +68,18 @@ class Vote {
         [upvotes, downvotes, postId]
       );
 
+      // Award contribution points to the post author for receiving the vote
+      if (postAuthorId !== studentId && oldVoteType !== voteType) { // Don't award points for self-votes or non-changes
+        const pointsChange = voteType - oldVoteType; // Net change in vote value
+        if (pointsChange > 0) {
+          // Net positive vote change (upvote or removing downvote)
+          await ContributionManager.awardEngagementPoints(postAuthorId, 'upvote', pointsChange, client);
+        } else if (pointsChange < 0) {
+          // Net negative vote change (downvote or removing upvote)
+          await ContributionManager.awardEngagementPoints(postAuthorId, 'downvote', Math.abs(pointsChange), client);
+        }
+      }
+
       await client.query('COMMIT');
 
       return {
@@ -91,10 +106,10 @@ class Vote {
       await client.query('BEGIN');
       console.log('✅ [VOTE MODEL] Transaction started');
 
-      // Check if solution exists
+      // Check if solution exists and get author info
       console.log('🔍 [VOTE MODEL] Checking if solution exists...');
       const solutionCheck = await client.query(
-        'SELECT solution_id FROM public.solutions WHERE solution_id = $1',
+        'SELECT solution_id, student_id as author_id FROM public.solutions WHERE solution_id = $1',
         [solutionId]
       );
 
@@ -102,7 +117,9 @@ class Vote {
         console.error('❌ [VOTE MODEL] Solution not found:', solutionId);
         throw new Error('Solution does not exist');
       }
-      console.log('✅ [VOTE MODEL] Solution exists');
+      
+      const solutionAuthorId = solutionCheck.rows[0].author_id;
+      console.log('✅ [VOTE MODEL] Solution exists, author:', solutionAuthorId);
 
       // Check if user already voted
       console.log('🔍 [VOTE MODEL] Checking existing vote...');
@@ -166,6 +183,18 @@ class Vote {
       );
       console.log('✅ [VOTE MODEL] Solution updated:', updateResult.rows[0]);
 
+      // Award contribution points to the solution author for receiving the vote
+      if (solutionAuthorId !== studentId && oldVoteType !== voteType) { // Don't award points for self-votes or non-changes
+        const pointsChange = voteType - oldVoteType; // Net change in vote value
+        if (pointsChange > 0) {
+          // Net positive vote change (upvote or removing downvote)
+          await ContributionManager.awardEngagementPoints(solutionAuthorId, 'upvote', pointsChange, client);
+        } else if (pointsChange < 0) {
+          // Net negative vote change (downvote or removing upvote)
+          await ContributionManager.awardEngagementPoints(solutionAuthorId, 'downvote', Math.abs(pointsChange), client);
+        }
+      }
+
       await client.query('COMMIT');
       console.log('✅ [VOTE MODEL] Transaction committed');
 
@@ -201,15 +230,17 @@ class Vote {
     try {
       await client.query('BEGIN');
 
-      // Check if comment exists
+      // Check if comment exists and get author info
       const commentCheck = await client.query(
-        'SELECT comment_id FROM public.comments WHERE comment_id = $1',
+        'SELECT comment_id, student_id as author_id FROM public.comments WHERE comment_id = $1',
         [commentId]
       );
 
       if (commentCheck.rows.length === 0) {
         throw new Error('Comment does not exist');
       }
+
+      const commentAuthorId = commentCheck.rows[0].author_id;
 
       // Check if user already voted
       const existingVote = await client.query(
@@ -258,6 +289,18 @@ class Vote {
         'UPDATE public.comments SET upvotes = $1, downvotes = $2 WHERE comment_id = $3',
         [upvotes, downvotes, commentId]
       );
+
+      // Award contribution points to the comment author for receiving the vote
+      if (commentAuthorId !== studentId && oldVoteType !== voteType) { // Don't award points for self-votes or non-changes
+        const pointsChange = voteType - oldVoteType; // Net change in vote value
+        if (pointsChange > 0) {
+          // Net positive vote change (upvote or removing downvote)
+          await ContributionManager.awardEngagementPoints(commentAuthorId, 'upvote', pointsChange, client);
+        } else if (pointsChange < 0) {
+          // Net negative vote change (downvote or removing upvote)
+          await ContributionManager.awardEngagementPoints(commentAuthorId, 'downvote', Math.abs(pointsChange), client);
+        }
+      }
 
       await client.query('COMMIT');
 
